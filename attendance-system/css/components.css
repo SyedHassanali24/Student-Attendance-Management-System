@@ -1,0 +1,599 @@
+/* ==========================================
+   CONTAINER
+========================================== */
+
+.container{
+
+    width:90%;
+
+    max-width:1280px;
+
+    margin:auto;
+
+}
+
+/* ==========================================
+   HEADER
+========================================== */
+
+.header{
+
+    position:sticky;
+
+    top:0;
+
+    z-index:1000;
+
+    background:#ffffff;
+
+    box-shadow:0 2px 15px rgba(0,0,0,.05);
+
+}
+
+/* ==========================================
+   HEADER CONTAINER
+========================================== */
+
+.header .container{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    height:80px;
+
+}
+
+/* ==========================================
+   LOGO
+========================================== */
+
+.logo{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+}
+
+.logo-icon{
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:50%;
+
+    background:var(--primary-color);
+
+    color:#fff;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-weight:700;
+
+    font-size:20px;
+
+}
+
+.logo-text h2{
+
+    font-size:20px;
+
+}
+
+.logo-text span{
+
+    color:var(--text-light);
+
+    font-size:13px;
+
+}
+
+/* ==========================================
+   NAVIGATION
+========================================== */
+
+.nav-list{
+
+    display:flex;
+
+    gap:35px;
+
+}
+
+.nav-link{
+
+    font-weight:500;
+
+    transition:.3s;
+
+}
+
+.nav-link:hover{
+
+    color:var(--primary-color);
+
+}
+
+/* ==========================================
+   BUTTONS
+========================================== */
+
+.header-actions{
+
+    display:flex;
+
+    gap:15px;
+
+}
+
+.btn{
+
+    padding:10px 18px;
+
+    border-radius:8px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.btn-primary{
+
+    background:var(--primary-color);
+
+    color:#fff;
+
+}
+
+.btn-primary:hover{
+
+    background:var(--primary-hover);
+
+}
+
+.btn-outline{
+
+    border:2px solid var(--primary-color);
+
+    color:var(--primary-color);
+
+}
+
+.btn-outline:hover{
+
+    background:var(--primary-color);
+
+    color:#fff;
+
+}
+
+/* ==========================================
+   MOBILE BUTTON
+========================================== */
+
+.menu-btn{
+
+    display:none;
+
+    border:none;
+
+    background:none;
+
+    font-size:30px;
+
+    cursor:pointer;
+
+}
+
+/* ==========================================
+   HERO SECTION
+========================================== */
+
+.hero{
+
+    padding:90px 0;
+
+}
+
+.hero-container{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:60px;
+
+}
+
+.hero-content{
+
+    flex:1;
+
+}
+
+.hero-badge{
+
+    display:inline-block;
+
+    background:#EEF2FF;
+
+    color:var(--primary-color);
+
+    padding:8px 16px;
+
+    border-radius:30px;
+
+    font-size:14px;
+
+    margin-bottom:20px;
+
+}
+
+.hero-content h1{
+
+    font-size:52px;
+
+    line-height:1.2;
+
+    margin-bottom:25px;
+
+}
+
+.hero-content p{
+
+    color:var(--text-light);
+
+    line-height:1.8;
+
+    margin-bottom:35px;
+
+    max-width:600px;
+
+}
+
+.hero-buttons{
+
+    display:flex;
+
+    gap:20px;
+
+}
+
+.hero-image{
+
+    flex:1;
+
+    text-align:center;
+
+}
+
+.hero-image img{
+
+    max-width:100%;
+
+}
+
+/* ==========================================
+   SECTION TITLE
+========================================== */
+
+.section-title{
+
+    text-align:center;
+
+    margin-bottom:60px;
+
+}
+
+.section-title h2{
+
+    font-size:40px;
+
+    margin-bottom:15px;
+
+}
+
+.section-title p{
+
+    color:var(--text-light);
+
+}
+
+/* ==========================================
+   STATISTICS
+========================================== */
+
+.stats{
+
+    padding:90px 0;
+
+    background:#ffffff;
+
+}
+
+.stats-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:25px;
+
+}
+
+.stat-card{
+
+    background:#ffffff;
+
+    padding:35px;
+
+    border-radius:var(--radius);
+
+    text-align:center;
+
+    box-shadow:var(--shadow);
+
+    transition:.3s;
+
+}
+
+.stat-card:hover{
+
+    transform:translateY(-8px);
+
+}
+
+.stat-card h3{
+
+    font-size:42px;
+
+    color:var(--primary-color);
+
+    margin-bottom:12px;
+
+}
+
+.stat-card p{
+
+    color:var(--text-light);
+
+}
+
+/* ==========================================
+   FEATURES SECTION
+========================================== */
+
+.features{
+
+    padding:100px 0;
+
+    background:#F8FAFC;
+
+}
+
+/* Feature Grid */
+
+.features-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:30px;
+
+}
+
+/* Feature Card */
+
+.feature-card{
+
+    background:#FFFFFF;
+
+    border-radius:16px;
+
+    padding:35px;
+
+    text-align:center;
+
+    box-shadow:var(--shadow);
+
+    transition:.35s;
+
+    border:1px solid var(--border-color);
+
+}
+
+/* Hover Effect */
+
+.feature-card:hover{
+
+    transform:translateY(-10px);
+
+    border-color:var(--primary-color);
+
+}
+
+/* Icon */
+
+.feature-icon{
+
+    width:80px;
+
+    height:80px;
+
+    margin:auto;
+
+    margin-bottom:25px;
+
+    border-radius:50%;
+
+    background:#EEF2FF;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:34px;
+
+}
+
+/* Title */
+
+.feature-card h3{
+
+    margin-bottom:15px;
+
+    font-size:24px;
+
+}
+
+/* Description */
+
+.feature-card p{
+
+    color:var(--text-light);
+
+    line-height:1.8;
+
+}
+
+/* ==========================================
+   WORKFLOW SECTION
+========================================== */
+
+.workflow{
+
+    padding:100px 0;
+
+    background:#FFFFFF;
+
+}
+
+/* Grid */
+
+.workflow-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:30px;
+
+}
+
+/* Card */
+
+.workflow-card{
+
+    position:relative;
+
+    background:#F8FAFC;
+
+    padding:35px;
+
+    border-radius:18px;
+
+    text-align:center;
+
+    box-shadow:var(--shadow);
+
+    transition:.35s;
+
+}
+
+.workflow-card:hover{
+
+    transform:translateY(-10px);
+
+}
+
+/* Step Number */
+
+.step-number{
+
+    position:absolute;
+
+    top:15px;
+
+    right:15px;
+
+    width:35px;
+
+    height:35px;
+
+    border-radius:50%;
+
+    background:var(--primary-color);
+
+    color:#fff;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-weight:700;
+
+}
+
+/* Icon */
+
+.workflow-icon{
+
+    width:90px;
+
+    height:90px;
+
+    margin:auto;
+
+    margin-bottom:25px;
+
+    border-radius:50%;
+
+    background:#EEF2FF;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:40px;
+
+}
+
+/* Heading */
+
+.workflow-card h3{
+
+    margin-bottom:15px;
+
+    font-size:22px;
+
+}
+
+/* Text */
+
+.workflow-card p{
+
+    color:var(--text-light);
+
+    line-height:1.8;
+
+}
