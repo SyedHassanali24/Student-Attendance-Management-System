@@ -1,0 +1,271 @@
+/* ==========================================
+   LOGIN PAGE
+========================================== */
+
+.login-section{
+
+    min-height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:linear-gradient(135deg,#0F172A,#1E293B);
+
+    padding:40px;
+
+}
+
+/* ==========================================
+   LOGIN CARD
+========================================== */
+
+.login-card{
+
+    width:100%;
+
+    max-width:450px;
+
+    background:#FFFFFF;
+
+    padding:45px;
+
+    border-radius:20px;
+
+    box-shadow:0 20px 40px rgba(0,0,0,.15);
+
+}
+
+/* ==========================================
+   LOGO
+========================================== */
+
+.login-logo{
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+}
+
+.login-logo img{
+
+    width:90px;
+
+    height:90px;
+
+    object-fit:contain;
+
+}
+
+/* ==========================================
+   TITLES
+========================================== */
+
+.coaching-name{
+
+    text-align:center;
+
+    font-size:30px;
+
+    margin-bottom:10px;
+
+}
+
+.coaching-subtitle{
+
+    text-align:center;
+
+    color:#64748B;
+
+    margin-bottom:30px;
+
+}
+
+.login-title{
+
+    text-align:center;
+
+    margin-bottom:35px;
+
+}
+
+/* ==========================================
+   INPUTS
+========================================== */
+
+.input-group{
+
+    margin-bottom:22px;
+
+}
+
+.input-group label{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-weight:600;
+
+}
+
+.input-group input{
+
+    width:100%;
+
+    padding:14px;
+
+    border:1px solid #CBD5E1;
+
+    border-radius:10px;
+
+    font-size:16px;
+
+    outline:none;
+
+    transition:.3s;
+
+}
+
+.input-group input:focus{
+
+    border-color:#2563EB;
+
+}
+
+/* ==========================================
+   PASSWORD
+========================================== */
+
+.password-box{
+
+    position:relative;
+
+}
+
+.password-box input{
+
+    padding-right:55px;
+
+}
+
+#togglePassword{
+
+    position:absolute;
+
+    right:15px;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    border:none;
+
+    background:none;
+
+    cursor:pointer;
+
+    font-size:18px;
+
+}
+
+/* ==========================================
+   REMEMBER
+========================================== */
+
+.remember-area{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:25px;
+
+    font-size:14px;
+
+}
+
+.remember-area a{
+
+    text-decoration:none;
+
+    color:#2563EB;
+
+}
+
+/* ==========================================
+   ERROR
+========================================== */
+
+#loginError{
+
+    color:red;
+
+    text-align:center;
+
+    margin-bottom:15px;
+
+    min-height:20px;
+
+}
+
+/* ==========================================
+   LOGIN BUTTON
+========================================== */
+
+.login-btn{
+
+    width:100%;
+
+    padding:15px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#2563EB;
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+.login-btn:hover{
+
+    background:#1D4ED8;
+
+    transform:translateY(-2px);
+
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media(max-width:500px){
+
+    .login-card{
+
+        padding:30px 20px;
+
+    }
+
+    .coaching-name{
+
+        font-size:24px;
+
+    }
+
+}
