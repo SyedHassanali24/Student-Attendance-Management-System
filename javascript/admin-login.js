@@ -5,9 +5,7 @@
 import { auth } from "../firebase/firebase-config.js";
 
 import {
-
     signInWithEmailAndPassword
-
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 
@@ -16,13 +14,9 @@ import {
 ========================================== */
 
 const loginForm = document.getElementById("loginForm");
-
 const email = document.getElementById("email");
-
 const password = document.getElementById("password");
-
 const togglePassword = document.getElementById("togglePassword");
-
 const loginError = document.getElementById("loginError");
 
 
@@ -32,17 +26,19 @@ const loginError = document.getElementById("loginError");
 
 togglePassword.addEventListener("click", () => {
 
-    if(password.type === "password"){
+    if (password.type === "password") {
 
         password.type = "text";
 
-        togglePassword.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+        togglePassword.innerHTML =
+            '<i class="fa-solid fa-eye-slash"></i>';
 
-    }else{
+    } else {
 
         password.type = "password";
 
-        togglePassword.innerHTML = '<i class="fa-solid fa-eye"></i>';
+        togglePassword.innerHTML =
+            '<i class="fa-solid fa-eye"></i>';
 
     }
 
@@ -53,35 +49,30 @@ togglePassword.addEventListener("click", () => {
    LOGIN
 ========================================== */
 
-loginForm.addEventListener("submit", async(e)=>{
+loginForm.addEventListener("submit", async (e) => {
 
     e.preventDefault();
 
     loginError.innerHTML = "";
 
-    try{
+    try {
 
         await signInWithEmailAndPassword(
-
             auth,
-
-            email.value,
-
+            email.value.trim(),
             password.value
-
         );
 
         alert("Login Successful");
 
-        window.location.href="dashboard.html";
+        window.location.href = "admin-dashboard.html";
 
-    }
-
-    catch(error){
-
-        loginError.innerHTML="Invalid Email or Password";
+    } catch (error) {
 
         console.log(error);
+
+        loginError.innerHTML =
+            "Invalid Email or Password";
 
     }
 
