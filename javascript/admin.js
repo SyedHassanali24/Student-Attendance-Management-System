@@ -11,14 +11,10 @@ import {
     updateDoc,
     deleteDoc,
     doc,
-    getDoc,
-    setDoc,
     onSnapshot,
     query,
     orderBy,
-    serverTimestamp,
-    where,
-    getDocs
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
@@ -47,53 +43,33 @@ const batch = document.getElementById("batch");
 const admissionDate = document.getElementById("admissionDate");
 
 const editStudentId = document.getElementById("editStudentId");
+
 const modalTitle = document.getElementById("modalTitle");
 const saveStudentBtn = document.getElementById("saveStudentBtn");
 
-const studentsTableBody = document.getElementById("studentsTableBody");
-const studentSearch = document.getElementById("studentSearch");
-const studentCount = document.getElementById("studentCount");
-const formMessage = document.getElementById("formMessage");
+const studentsTableBody =
+    document.getElementById("studentsTableBody");
+
+const studentSearch =
+    document.getElementById("studentSearch");
+
+const studentCount =
+    document.getElementById("studentCount");
+
+const formMessage =
+    document.getElementById("formMessage");
 
 
 /* =========================
-   QR ELEMENTS
-========================= */
-
-const qrReader = document.getElementById("qr-reader");
-const startScannerBtn = document.getElementById("startScannerBtn");
-const stopScannerBtn = document.getElementById("stopScannerBtn");
-const qrMessage = document.getElementById("qrMessage");
-const scannerStatus = document.getElementById("scannerStatus");
-
-const studentResult = document.getElementById("studentResult");
-const todayAttendanceCount =
-    document.getElementById("todayAttendanceCount");
-
-const lastScanTime =
-    document.getElementById("lastScanTime");
-
-const attendanceTableBody =
-    document.getElementById("attendanceTableBody");
-
-const attendanceSearch =
-    document.getElementById("attendanceSearch");
-
-
-/* =========================
-   DATA
+   STUDENT DATA
 ========================= */
 
 let students = [];
-let attendanceRecords = [];
 let unsubscribeStudents = null;
-let unsubscribeAttendance = null;
-let qrScanner = null;
-let scannerRunning = false;
 
 
 /* =========================
-   AUTH
+   AUTH CHECK
 ========================= */
 
 onAuthStateChanged(auth, user => {
@@ -106,13 +82,12 @@ onAuthStateChanged(auth, user => {
     console.log("Admin authenticated:", user.email);
 
     loadStudents();
-    loadTodayAttendance();
 
 });
 
 
 /* =========================
-   NAVIGATION
+   SIDEBAR
 ========================= */
 
 menuItems.forEach(item => {
@@ -139,17 +114,13 @@ menuItems.forEach(item => {
         pageTitle.textContent =
             item.textContent.trim();
 
-        if (item.dataset.page !== "attendance") {
-            stopScanner();
-        }
-
     });
 
 });
 
 
 /* =========================
-   STUDENT MODAL
+   ADD STUDENT
 ========================= */
 
 addStudentBtn.addEventListener("click", () => {
@@ -157,6 +128,7 @@ addStudentBtn.addEventListener("click", () => {
     resetForm();
 
     modalTitle.textContent = "Add Student";
+
     saveStudentBtn.textContent = "Save Student";
 
     studentModal.classList.add("show");
@@ -164,22 +136,37 @@ addStudentBtn.addEventListener("click", () => {
 });
 
 
+/* =========================
+   CLOSE MODAL
+========================= */
+
 if (closeModal) {
-    closeModal.addEventListener("click", closeStudentModal);
+    closeModal.addEventListener(
+        "click",
+        closeStudentModal
+    );
 }
 
 if (cancelBtn) {
-    cancelBtn.addEventListener("click", closeStudentModal);
+    cancelBtn.addEventListener(
+        "click",
+        closeStudentModal
+    );
 }
 
 
 function closeStudentModal() {
 
     studentModal.classList.remove("show");
+
     resetForm();
 
 }
 
+
+/* =========================
+   RESET FORM
+========================= */
 
 function resetForm() {
 
@@ -197,83 +184,124 @@ function resetForm() {
 
 
 /* =========================
-   SAVE STUDENT
+   SAVE / UPDATE STUDENT
 ========================= */
 
-studentForm.addEventListener("submit", async event => {
+studentForm.addEventListener(
+    "submit",
+    async event => {
 
-    event.preventDefault();
+        event.preventDefault();
 
-    formMessage.textContent = "Saving...";
-    saveStudentBtn.disabled = true;
+        formMessage.textContent = "Saving...";
 
-    const studentData = {
-
-        name: studentName.value.trim(),
-        fatherName: fatherName.value.trim(),
-        phone: phone.value.trim(),
-        course: course.value.trim(),
-        batch: batch.value.trim(),
-        admissionDate: admissionDate.value
-
-    };
+        saveStudentBtn.disabled = true;
 
 
-    try {
+        const studentData = {
 
-        if (editStudentId.value) {
+            name: studentName.value.trim(),
 
-            await updateDoc(
-                doc(db, "students", editStudentId.value),
-                studentData
-            );
+            fatherName: fatherName.value.trim(),
 
-            formMessage.textContent =
-                "Student updated successfully.";
+            phone: phone.value.trim(),
 
-        } else {
+            course: course.value.trim(),
 
-            await addDoc(
-                collection(db, "students"),
-                {
+            batch: batch.value.trim(),
+
+            admissionDate: admissionDate.value
+
+        };
+
+
+        try {
+
+            /* UPDATE */
+
+            if (editStudentId.value) {
+
+                const studentRef = doc(
+                    db,
+                    "students",
+                    editStudentId.value
+                );
+
+                await updateDoc(
+                    studentRef,
+                    studentData
+                );
+
+                formMessage.textContent =
+                    "Student updated successfully.";
+
+            }
+
+
+            /* ADD */
+
+            else {
+
+                const newStudent = {
+
                     ...studentData,
-                    studentId: generateStudentId(),
-                    createdAt: serverTimestamp()
-                }
+
+                    studentId:
+                        generateStudentId(),
+
+                    createdAt:
+                        serverTimestamp()
+
+                };
+
+                await addDoc(
+                    collection(db, "students"),
+                    newStudent
+                );
+
+                formMessage.textContent =
+                    "Student added successfully.";
+
+            }
+
+
+            setTimeout(() => {
+                closeStudentModal();
+            }, 700);
+
+
+        } catch (error) {
+
+            console.error(
+                "Student save error:",
+                error
             );
 
             formMessage.textContent =
-                "Student added successfully.";
+                "Error: " + error.message;
+
+        } finally {
+
+            saveStudentBtn.disabled = false;
 
         }
 
-
-        setTimeout(closeStudentModal, 700);
-
-    } catch (error) {
-
-        console.error(error);
-
-        formMessage.textContent =
-            "Error: " + error.message;
-
-    } finally {
-
-        saveStudentBtn.disabled = false;
-
     }
-
-});
+);
 
 
 /* =========================
-   STUDENT ID
+   GENERATE STUDENT ID
 ========================= */
 
 function generateStudentId() {
 
-    return "STU-" +
-        Math.floor(100000 + Math.random() * 900000);
+    const randomNumber =
+        Math.floor(
+            100000 + Math.random() * 900000
+        );
+
+    return "STU-" + randomNumber;
 
 }
 
@@ -288,45 +316,66 @@ function loadStudents() {
         unsubscribeStudents();
     }
 
-    const studentsQuery = query(
-        collection(db, "students"),
-        orderBy("createdAt", "desc")
-    );
+    const studentsRef =
+        collection(db, "students");
+
+    const studentsQuery =
+        query(
+            studentsRef,
+            orderBy("createdAt", "desc")
+        );
+
 
     unsubscribeStudents = onSnapshot(
+
         studentsQuery,
+
         snapshot => {
 
             students = [];
 
-            snapshot.forEach(docSnapshot => {
+            snapshot.forEach(
+                docSnapshot => {
 
-                students.push({
-                    id: docSnapshot.id,
-                    ...docSnapshot.data()
-                });
+                    students.push({
 
-            });
+                        id: docSnapshot.id,
+
+                        ...docSnapshot.data()
+
+                    });
+
+                }
+            );
+
 
             studentCount.textContent =
                 students.length;
 
+
             renderStudents(students);
 
         },
+
+
         error => {
 
-            console.error(error);
+            console.error(
+                "Firestore error:",
+                error
+            );
 
             studentsTableBody.innerHTML = `
                 <tr>
                     <td colspan="7" class="empty">
                         Unable to load students.
+                        Please check Firestore.
                     </td>
                 </tr>
             `;
 
         }
+
     );
 
 }
@@ -351,33 +400,58 @@ function renderStudents(data) {
         return;
     }
 
+
     studentsTableBody.innerHTML = "";
+
 
     data.forEach(student => {
 
-        const row = document.createElement("tr");
+        const row =
+            document.createElement("tr");
+
 
         row.innerHTML = `
+
             <td>
                 <strong>
-                    ${escapeHTML(student.studentId || "-")}
+                    ${escapeHTML(
+                        student.studentId || "-"
+                    )}
                 </strong>
             </td>
 
-            <td>${escapeHTML(student.name || "-")}</td>
-
-            <td>${escapeHTML(student.fatherName || "-")}</td>
-
-            <td>${escapeHTML(student.phone || "-")}</td>
-
             <td>
-                ${escapeHTML(student.course || "-")}
-                /
-                ${escapeHTML(student.batch || "-")}
+                ${escapeHTML(
+                    student.name || "-"
+                )}
             </td>
 
             <td>
-                ${escapeHTML(student.admissionDate || "-")}
+                ${escapeHTML(
+                    student.fatherName || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHTML(
+                    student.phone || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHTML(
+                    student.course || "-"
+                )}
+                /
+                ${escapeHTML(
+                    student.batch || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHTML(
+                    student.admissionDate || "-"
+                )}
             </td>
 
             <td>
@@ -396,12 +470,22 @@ function renderStudents(data) {
                     🗑️ Delete
                 </button>
 
+                <button
+                    type="button"
+                    class="action-btn id-card-btn"
+                    data-id="${student.id}">
+                    🪪 ID Card
+                </button>
+
             </td>
+
         `;
+
 
         studentsTableBody.appendChild(row);
 
     });
+
 
     attachActionButtons();
 
@@ -409,75 +493,151 @@ function renderStudents(data) {
 
 
 /* =========================
-   EDIT / DELETE
+   ACTION BUTTONS
 ========================= */
 
 function attachActionButtons() {
 
-    document.querySelectorAll(".edit-btn").forEach(button => {
+    document
+        .querySelectorAll(".edit-btn")
+        .forEach(button => {
 
-        button.addEventListener("click", () => {
-            editStudent(button.dataset.id);
+            button.addEventListener(
+                "click",
+                () => editStudent(
+                    button.dataset.id
+                )
+            );
+
         });
 
-    });
 
+    document
+        .querySelectorAll(".delete-btn")
+        .forEach(button => {
 
-    document.querySelectorAll(".delete-btn").forEach(button => {
+            button.addEventListener(
+                "click",
+                () => deleteStudent(
+                    button.dataset.id
+                )
+            );
 
-        button.addEventListener("click", () => {
-            deleteStudent(button.dataset.id);
         });
 
-    });
+
+    document
+        .querySelectorAll(".id-card-btn")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => openStudentIDCard(
+                    button.dataset.id
+                )
+            );
+
+        });
 
 }
 
 
+/* =========================
+   EDIT STUDENT
+========================= */
+
 function editStudent(id) {
 
     const student =
-        students.find(s => s.id === id);
+        students.find(
+            student => student.id === id
+        );
 
-    if (!student) return;
 
-    editStudentId.value = student.id;
+    if (!student) {
 
-    studentName.value = student.name || "";
-    fatherName.value = student.fatherName || "";
-    phone.value = student.phone || "";
-    course.value = student.course || "";
-    batch.value = student.batch || "";
-    admissionDate.value = student.admissionDate || "";
+        alert("Student not found.");
 
-    modalTitle.textContent = "Edit Student";
-    saveStudentBtn.textContent = "Update Student";
+        return;
+
+    }
+
+
+    editStudentId.value =
+        student.id;
+
+    studentName.value =
+        student.name || "";
+
+    fatherName.value =
+        student.fatherName || "";
+
+    phone.value =
+        student.phone || "";
+
+    course.value =
+        student.course || "";
+
+    batch.value =
+        student.batch || "";
+
+    admissionDate.value =
+        student.admissionDate || "";
+
+
+    modalTitle.textContent =
+        "Edit Student";
+
+    saveStudentBtn.textContent =
+        "Update Student";
+
+    formMessage.textContent = "";
 
     studentModal.classList.add("show");
 
 }
 
 
+/* =========================
+   DELETE STUDENT
+========================= */
+
 async function deleteStudent(id) {
 
     const student =
-        students.find(s => s.id === id);
+        students.find(
+            student => student.id === id
+        );
+
 
     if (!student) return;
 
-    if (!confirm(
-        `Are you sure you want to delete "${student.name}"?`
-    )) return;
+
+    const confirmed =
+        confirm(
+            `Are you sure you want to delete "${student.name}"?`
+        );
+
+
+    if (!confirmed) return;
+
 
     try {
 
         await deleteDoc(
-            doc(db, "students", id)
+            doc(
+                db,
+                "students",
+                id
+            )
         );
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Delete error:",
+            error
+        );
 
         alert(
             "Unable to delete student: " +
@@ -490,664 +650,481 @@ async function deleteStudent(id) {
 
 
 /* =========================
-   STUDENT SEARCH
+   SEARCH
 ========================= */
 
-studentSearch.addEventListener("input", () => {
+studentSearch.addEventListener(
+    "input",
+    () => {
 
-    const search =
-        studentSearch.value.toLowerCase().trim();
-
-    if (!search) {
-
-        renderStudents(students);
-        return;
-
-    }
-
-    const filtered = students.filter(student => {
-
-        return (
-
-            (student.name || "")
+        const search =
+            studentSearch.value
                 .toLowerCase()
-                .includes(search)
+                .trim();
 
-            ||
 
-            (student.studentId || "")
-                .toLowerCase()
-                .includes(search)
+        if (!search) {
 
-            ||
-
-            (student.phone || "")
-                .toLowerCase()
-                .includes(search)
-
-            ||
-
-            (student.course || "")
-                .toLowerCase()
-                .includes(search)
-
-            ||
-
-            (student.batch || "")
-                .toLowerCase()
-                .includes(search)
-
-        );
-
-    });
-
-    renderStudents(filtered);
-
-});
-
-
-/* =====================================================
-   QR ATTENDANCE
-===================================================== */
-
-
-/* =========================
-   START SCANNER
-========================= */
-
-if (startScannerBtn) {
-
-    startScannerBtn.addEventListener(
-        "click",
-        startScanner
-    );
-
-}
-
-
-if (stopScannerBtn) {
-
-    stopScannerBtn.addEventListener(
-        "click",
-        stopScanner
-    );
-
-}
-
-
-async function startScanner() {
-
-    if (scannerRunning) return;
-
-    if (typeof Html5Qrcode === "undefined") {
-
-        qrMessage.textContent =
-            "QR Scanner library not loaded.";
-
-        return;
-
-    }
-
-    try {
-
-        qrMessage.textContent =
-            "Starting camera...";
-
-        scannerStatus.textContent =
-            "Scanner Starting...";
-
-
-        qrScanner =
-            new Html5Qrcode("qr-reader");
-
-
-        await qrScanner.start(
-
-            { facingMode: "environment" },
-
-            {
-                fps: 10,
-                qrbox: {
-                    width: 250,
-                    height: 250
-                }
-            },
-
-            decodedText => {
-
-                handleQRScan(decodedText);
-
-            },
-
-            errorMessage => {
-                // Ignore continuous scan errors
-            }
-
-        );
-
-
-        scannerRunning = true;
-
-        scannerStatus.textContent =
-            "Scanner Active";
-
-        qrMessage.textContent =
-            "Point the camera at student's QR code.";
-
-    } catch (error) {
-
-        console.error(
-            "Scanner error:",
-            error
-        );
-
-        scannerStatus.textContent =
-            "Scanner Error";
-
-        qrMessage.textContent =
-            "Unable to start camera. Please allow camera permission.";
-
-    }
-
-}
-
-
-/* =========================
-   STOP SCANNER
-========================= */
-
-async function stopScanner() {
-
-    if (!qrScanner || !scannerRunning) {
-        return;
-    }
-
-    try {
-
-        await qrScanner.stop();
-
-        qrScanner.clear();
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-
-    scannerRunning = false;
-
-    scannerStatus.textContent =
-        "Scanner Ready";
-
-    qrMessage.textContent =
-        'Click "Start Scanner" and allow camera access.';
-
-}
-
-
-/* =========================
-   QR SCAN
-========================= */
-
-let processingScan = false;
-
-
-async function handleQRScan(decodedText) {
-
-    if (processingScan) return;
-
-    processingScan = true;
-
-    const studentId =
-        decodedText.trim();
-
-    console.log(
-        "QR Scanned:",
-        studentId
-    );
-
-
-    qrMessage.textContent =
-        "Checking student...";
-
-
-    try {
-
-        const student =
-            students.find(
-                s => s.studentId === studentId
-            );
-
-
-        if (!student) {
-
-            qrMessage.textContent =
-                "❌ Student not found.";
-
-            showStudentResult(null);
-
-            processingScan = false;
+            renderStudents(students);
 
             return;
 
         }
 
 
-        showStudentResult(student);
+        const filtered =
+            students.filter(student => {
+
+                return (
+
+                    (student.name || "")
+                        .toLowerCase()
+                        .includes(search)
+
+                    ||
+
+                    (student.studentId || "")
+                        .toLowerCase()
+                        .includes(search)
+
+                    ||
+
+                    (student.phone || "")
+                        .toLowerCase()
+                        .includes(search)
+
+                    ||
+
+                    (student.course || "")
+                        .toLowerCase()
+                        .includes(search)
+
+                    ||
+
+                    (student.batch || "")
+                        .toLowerCase()
+                        .includes(search)
+
+                );
+
+            });
 
 
-        await markAttendance(student);
-
-
-    } catch (error) {
-
-        console.error(
-            "Attendance error:",
-            error
-        );
-
-        qrMessage.textContent =
-            "❌ Error: " + error.message;
+        renderStudents(filtered);
 
     }
+);
 
 
-    setTimeout(() => {
+/* =====================================================
+   STUDENT ID CARD
+===================================================== */
 
-        processingScan = false;
+function openStudentIDCard(id) {
 
-    }, 2000);
+    const student =
+        students.find(
+            student => student.id === id
+        );
 
-}
-
-
-/* =========================
-   SHOW STUDENT RESULT
-========================= */
-
-function showStudentResult(student) {
 
     if (!student) {
 
-        studentResult.innerHTML = `
-            <div class="attendance-placeholder">
-                <div class="placeholder-icon">❌</div>
-                <p>Student not found.</p>
-            </div>
-        `;
+        alert("Student not found.");
 
         return;
 
     }
 
 
-    studentResult.innerHTML = `
-        <div class="student-attendance-info">
+    const qrData =
+        JSON.stringify({
 
-            <h3>✅ Student Found</h3>
+            studentId:
+                student.studentId,
 
-            <p>
-                <strong>Student ID:</strong>
-                ${escapeHTML(student.studentId || "-")}
-            </p>
+            name:
+                student.name,
 
-            <p>
-                <strong>Name:</strong>
-                ${escapeHTML(student.name || "-")}
-            </p>
+            course:
+                student.course,
 
-            <p>
-                <strong>Father Name:</strong>
-                ${escapeHTML(student.fatherName || "-")}
-            </p>
+            batch:
+                student.batch
 
-            <p>
+        });
+
+
+    const cardWindow =
+        window.open(
+            "",
+            "_blank",
+            "width=500,height=700"
+        );
+
+
+    if (!cardWindow) {
+
+        alert(
+            "Please allow pop-ups for this website."
+        );
+
+        return;
+
+    }
+
+
+    cardWindow.document.write(`
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+${escapeHTML(student.name)} - Student ID Card
+</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    min-height: 100vh;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    background: #eef2f7;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+}
+
+.id-card {
+
+    width: 430px;
+
+    background: white;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 15px 40px
+        rgba(0,0,0,.18);
+
+}
+
+.id-header {
+
+    padding: 22px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #172554,
+            #2563eb
+        );
+
+    color: white;
+
+    text-align: center;
+
+}
+
+.logo {
+
+    width: 55px;
+
+    height: 55px;
+
+    border-radius: 50%;
+
+    background: white;
+
+    color: #172554;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 20px;
+
+    font-weight: 800;
+
+    margin: auto;
+
+}
+
+.id-header h2 {
+
+    margin: 10px 0 4px;
+
+}
+
+.id-header p {
+
+    margin: 0;
+
+    opacity: .85;
+
+    font-size: 12px;
+
+}
+
+.id-body {
+
+    padding: 25px;
+
+}
+
+.student-name {
+
+    text-align: center;
+
+    font-size: 22px;
+
+    font-weight: 800;
+
+    margin-bottom: 18px;
+
+    color: #172554;
+
+}
+
+.info {
+
+    line-height: 1.8;
+
+    font-size: 14px;
+
+}
+
+.info strong {
+
+    display: inline-block;
+
+    width: 85px;
+
+}
+
+.qr {
+
+    display: flex;
+
+    justify-content: center;
+
+    margin-top: 18px;
+
+}
+
+.qr img {
+
+    width: 145px !important;
+
+    height: 145px !important;
+
+}
+
+.id-footer {
+
+    background: #f1f5f9;
+
+    padding: 12px;
+
+    text-align: center;
+
+    font-size: 11px;
+
+    color: #475569;
+
+}
+
+.download-btn {
+
+    margin-top: 20px;
+
+    width: 100%;
+
+    padding: 13px;
+
+    border: 0;
+
+    border-radius: 9px;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+}
+
+@media print {
+
+    body {
+
+        background: white;
+
+    }
+
+    .download-btn {
+
+        display: none;
+
+    }
+
+    .id-card {
+
+        box-shadow: none;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div>
+
+<div class="id-card" id="printCard">
+
+    <div class="id-header">
+
+        <div class="logo">
+            SS
+        </div>
+
+        <h2>
+            Sir Syed Hassan Ali
+        </h2>
+
+        <p>
+            Coaching Management System
+        </p>
+
+    </div>
+
+
+    <div class="id-body">
+
+        <div class="student-name">
+            ${escapeHTML(student.name)}
+        </div>
+
+
+        <div class="info">
+
+            <div>
+                <strong>ID:</strong>
+                ${escapeHTML(student.studentId)}
+            </div>
+
+            <div>
+                <strong>Father:</strong>
+                ${escapeHTML(student.fatherName)}
+            </div>
+
+            <div>
                 <strong>Course:</strong>
-                ${escapeHTML(student.course || "-")}
-            </p>
+                ${escapeHTML(student.course)}
+            </div>
 
-            <p>
+            <div>
                 <strong>Batch:</strong>
-                ${escapeHTML(student.batch || "-")}
-            </p>
+                ${escapeHTML(student.batch)}
+            </div>
+
+            <div>
+                <strong>Phone:</strong>
+                ${escapeHTML(student.phone)}
+            </div>
 
         </div>
-    `;
-
-}
 
 
-/* =========================
-   MARK ATTENDANCE
-========================= */
+        <div
+            class="qr"
+            id="studentQR">
+        </div>
 
-async function markAttendance(student) {
-
-    const now = new Date();
-
-    const dateKey =
-        now.toISOString().split("T")[0];
-
-    const timeString =
-        now.toLocaleTimeString(
-            "en-PK",
-            {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit"
-            }
-        );
+    </div>
 
 
-    const attendanceId =
-        `${student.studentId}_${dateKey}`;
+    <div class="id-footer">
+
+        Sir Syed Hassan Ali Coaching
+        <br>
+        Student Identity Card
+
+    </div>
+
+</div>
 
 
-    const attendanceRef =
-        doc(
-            db,
-            "attendance",
-            attendanceId
-        );
+<button
+    class="download-btn"
+    onclick="window.print()">
+
+    🖨️ Download / Save as PDF
+
+</button>
+
+</div>
 
 
-    const existing =
-        await getDoc(attendanceRef);
+<script>
 
+window.onload = function() {
 
-    if (existing.exists()) {
-
-        qrMessage.textContent =
-            "⚠️ Attendance already marked today.";
-
-        return;
-
-    }
-
-
-    await setDoc(
-        attendanceRef,
+    new QRCode(
+        document.getElementById("studentQR"),
         {
-
-            studentId: student.studentId,
-
-            studentName: student.name,
-
-            fatherName: student.fatherName || "",
-
-            course: student.course || "",
-
-            batch: student.batch || "",
-
-            date: dateKey,
-
-            time: timeString,
-
-            status: "Present",
-
-            createdAt: serverTimestamp()
-
+            text: ${JSON.stringify(qrData)},
+            width: 145,
+            height: 145,
+            correctLevel: QRCode.CorrectLevel.H
         }
     );
 
+};
 
-    qrMessage.textContent =
-        "✅ Attendance marked successfully!";
+</script>
 
+</body>
 
-    lastScanTime.textContent =
-        timeString;
+</html>
 
-}
+    `);
 
 
-/* =========================
-   LOAD TODAY ATTENDANCE
-========================= */
-
-function loadTodayAttendance() {
-
-    if (unsubscribeAttendance) {
-        unsubscribeAttendance();
-    }
-
-
-    const today =
-        new Date()
-            .toISOString()
-            .split("T")[0];
-
-
-    const attendanceQuery =
-        query(
-            collection(db, "attendance"),
-            where("date", "==", today)
-        );
-
-
-    unsubscribeAttendance =
-        onSnapshot(
-
-            attendanceQuery,
-
-            snapshot => {
-
-                attendanceRecords = [];
-
-                snapshot.forEach(
-                    docSnapshot => {
-
-                        attendanceRecords.push({
-
-                            id: docSnapshot.id,
-
-                            ...docSnapshot.data()
-
-                        });
-
-                    }
-                );
-
-
-                attendanceRecords.sort(
-                    (a, b) =>
-                        (b.time || "")
-                            .localeCompare(
-                                a.time || ""
-                            )
-                );
-
-
-                todayAttendanceCount.textContent =
-                    attendanceRecords.length;
-
-
-                const dashboardCount =
-                    document.getElementById(
-                        "attendanceCount"
-                    );
-
-                if (dashboardCount) {
-
-                    dashboardCount.textContent =
-                        attendanceRecords.length;
-
-                }
-
-
-                renderAttendance(
-                    attendanceRecords
-                );
-
-            },
-
-            error => {
-
-                console.error(
-                    "Attendance error:",
-                    error
-                );
-
-            }
-
-        );
-
-}
-
-
-/* =========================
-   RENDER ATTENDANCE
-========================= */
-
-function renderAttendance(data) {
-
-    if (!data.length) {
-
-        attendanceTableBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="empty">
-                    No attendance recorded today.
-                </td>
-            </tr>
-        `;
-
-        return;
-
-    }
-
-
-    attendanceTableBody.innerHTML = "";
-
-
-    data.forEach(record => {
-
-        const row =
-            document.createElement("tr");
-
-
-        row.innerHTML = `
-
-            <td>
-                <strong>
-                    ${escapeHTML(
-                        record.studentId || "-"
-                    )}
-                </strong>
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    record.studentName || "-"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    record.course || "-"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    record.batch || "-"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    record.date || "-"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    record.time || "-"
-                )}
-            </td>
-
-            <td>
-                <strong>
-                    ✅ ${escapeHTML(
-                        record.status || "Present"
-                    )}
-                </strong>
-            </td>
-
-        `;
-
-
-        attendanceTableBody.appendChild(row);
-
-    });
-
-}
-
-
-/* =========================
-   ATTENDANCE SEARCH
-========================= */
-
-if (attendanceSearch) {
-
-    attendanceSearch.addEventListener(
-        "input",
-        () => {
-
-            const search =
-                attendanceSearch.value
-                    .toLowerCase()
-                    .trim();
-
-
-            if (!search) {
-
-                renderAttendance(
-                    attendanceRecords
-                );
-
-                return;
-
-            }
-
-
-            const filtered =
-                attendanceRecords.filter(
-                    record => {
-
-                        return (
-
-                            (record.studentName || "")
-                                .toLowerCase()
-                                .includes(search)
-
-                            ||
-
-                            (record.studentId || "")
-                                .toLowerCase()
-                                .includes(search)
-
-                            ||
-
-                            (record.course || "")
-                                .toLowerCase()
-                                .includes(search)
-
-                            ||
-
-                            (record.batch || "")
-                                .toLowerCase()
-                                .includes(search)
-
-                        );
-
-                    }
-                );
-
-
-            renderAttendance(filtered);
-
-        }
-    );
+    cardWindow.document.close();
 
 }
 
@@ -1169,9 +1146,14 @@ logoutBtn.addEventListener(
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "Logout error:",
+                error
+            );
 
-            alert("Logout failed.");
+            alert(
+                "Logout failed."
+            );
 
         }
 
@@ -1189,8 +1171,12 @@ if (studentModal) {
         "click",
         event => {
 
-            if (event.target === studentModal) {
+            if (
+                event.target === studentModal
+            ) {
+
                 closeStudentModal();
+
             }
 
         }
@@ -1206,6 +1192,7 @@ if (studentModal) {
 function escapeHTML(value) {
 
     return String(value)
+
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
