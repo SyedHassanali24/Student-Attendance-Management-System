@@ -710,52 +710,125 @@
 
 
 
-        <!-- =================================================
-             FEES
-        ================================================== -->
+      <!-- =================================================
+     FEES MANAGEMENT
+================================================= -->
+<section id="fees" class="page">
 
-        <section
-            id="fees"
-            class="page">
+    <div class="panel">
 
-            <div class="panel">
+        <div class="panel-header">
 
-                <div class="panel-header">
-
-                    <div>
-
-                        <h2>
-                            💰 Fee Management
-                        </h2>
-
-                        <p>
-                            Manage monthly student fees
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="coming-soon">
-
-                    <div>
-                        💰
-                    </div>
-
-                    <h3>
-                        Fee Management
-                    </h3>
-
-                    <p>
-                        Monthly fee management will be added here.
-                    </p>
-
-                </div>
-
+            <div>
+                <h2>💰 Fee Management</h2>
+                <p>Manage monthly student fees and payment records</p>
             </div>
 
-        </section>
+            <div class="fee-month-box">
+                <label for="feeMonth">Month</label>
+                <input type="month" id="feeMonth">
+            </div>
+
+        </div>
+
+
+        <!-- FEE SUMMARY -->
+
+        <div class="fee-summary-grid">
+
+            <div class="fee-summary-card">
+                <div class="fee-summary-icon">👨‍🎓</div>
+                <div>
+                    <span>Total Students</span>
+                    <strong id="feeTotalStudents">0</strong>
+                </div>
+            </div>
+
+            <div class="fee-summary-card">
+                <div class="fee-summary-icon paid">✓</div>
+                <div>
+                    <span>Paid This Month</span>
+                    <strong id="feePaidStudents">0</strong>
+                </div>
+            </div>
+
+            <div class="fee-summary-card">
+                <div class="fee-summary-icon pending">!</div>
+                <div>
+                    <span>Pending</span>
+                    <strong id="feePendingStudents">0</strong>
+                </div>
+            </div>
+
+            <div class="fee-summary-card">
+                <div class="fee-summary-icon amount">₨</div>
+                <div>
+                    <span>Collected</span>
+                    <strong id="feeCollectedAmount">₨ 0</strong>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- SEARCH -->
+
+        <div class="fee-tools">
+
+            <input
+                type="text"
+                id="feeStudentSearch"
+                placeholder="Search student by name, ID, phone, course or batch..."
+            >
+
+            <select id="feeStatusFilter">
+                <option value="all">All Students</option>
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+            </select>
+
+        </div>
+
+
+        <!-- FEE TABLE -->
+
+        <div class="table-wrapper">
+
+            <table class="fees-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Batch</th>
+                        <th>Monthly Fee</th>
+                        <th>Status</th>
+                        <th>Last Paid Month</th>
+                        <th>Payment Date</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="feesTableBody">
+
+                    <tr>
+                        <td colspan="9" class="empty">
+                            Loading fee records...
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
 
 
 
