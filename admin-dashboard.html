@@ -8,6 +8,7 @@
     <!-- Dashboard styles: root-relative paths + cache bust -->
     <link rel="stylesheet" href="./css/style.css?v=3">
     <link rel="stylesheet" href="./css/admin.css?v=3">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 
 <body>
@@ -94,12 +95,192 @@
             </div>
         </section>
 
-        <section id="attendance" class="page">
-            <div class="panel">
+    <section id="attendance" class="page">
+
+    <div class="panel">
+
+        <div class="panel-header">
+
+            <div>
                 <h2>📷 QR Attendance</h2>
-                <p>QR attendance system will be connected here.</p>
+                <p>Scan student QR code to mark attendance</p>
             </div>
-        </section>
+
+            <div>
+                <span id="scannerStatus" class="scanner-status">
+                    Scanner Ready
+                </span>
+            </div>
+
+        </div>
+
+
+        <!-- QR SCANNER -->
+
+        <div class="qr-attendance-grid">
+
+            <div class="qr-scanner-card">
+
+                <h3>Scan Student QR</h3>
+
+                <div id="qr-reader"></div>
+
+                <div class="scanner-controls">
+
+                    <button
+                        type="button"
+                        id="startScannerBtn"
+                        class="primary-btn">
+                        📷 Start Scanner
+                    </button>
+
+                    <button
+                        type="button"
+                        id="stopScannerBtn"
+                        class="secondary-btn">
+                        ⛔ Stop Scanner
+                    </button>
+
+                </div>
+
+                <p id="qrMessage" class="qr-message">
+                    Click "Start Scanner" and allow camera access.
+                </p>
+
+            </div>
+
+
+            <!-- STUDENT RESULT -->
+
+            <div class="attendance-result-card">
+
+                <h3>Student Information</h3>
+
+                <div id="studentResult">
+
+                    <div class="attendance-placeholder">
+
+                        <div class="placeholder-icon">
+                            📷
+                        </div>
+
+                        <p>
+                            Scan a student's QR code
+                            to display information.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TODAY'S ATTENDANCE -->
+
+        <div class="attendance-summary">
+
+            <div class="attendance-stat">
+
+                <span>Today's Attendance</span>
+
+                <strong id="todayAttendanceCount">
+                    0
+                </strong>
+
+            </div>
+
+            <div class="attendance-stat">
+
+                <span>Last Scan</span>
+
+                <strong id="lastScanTime">
+                    --
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- ATTENDANCE TABLE -->
+
+        <div class="attendance-history">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h3>Today's Attendance</h3>
+
+                    <p>
+                        Students marked present today
+                    </p>
+
+                </div>
+
+                <input
+                    type="text"
+                    id="attendanceSearch"
+                    class="attendance-search"
+                    placeholder="Search student...">
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Student ID</th>
+
+                            <th>Student Name</th>
+
+                            <th>Course</th>
+
+                            <th>Batch</th>
+
+                            <th>Date</th>
+
+                            <th>Time</th>
+
+                            <th>Status</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="attendanceTableBody">
+
+                        <tr>
+
+                            <td
+                                colspan="7"
+                                class="empty">
+
+                                No attendance recorded today.
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
 
         <section id="fees" class="page">
             <div class="panel">
