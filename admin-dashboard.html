@@ -899,14 +899,458 @@ td{
 
 
 <!-- OTHER SECTIONS -->
+<!-- =====================================================
+     FEE MANAGEMENT
+===================================================== -->
+
 <section id="fees" class="page">
-    <div class="panel">
-        <h2>💰 Fee Management</h2>
-        <p style="margin-top:8px;color:#718096;">
-            Monthly fee management will be added here.
-        </p>
+
+    <!-- HEADER -->
+    <div class="panel-header">
+
+        <div>
+            <h2>💰 Fee Management</h2>
+            <p>Manage monthly fees, payments and student receipts</p>
+        </div>
+
+        <button
+            id="addFeeBtn"
+            class="primary-btn"
+            type="button">
+            + Add Fee Payment
+        </button>
+
     </div>
+
+
+    <!-- FEE SUMMARY -->
+    <div class="stats-grid fee-stats">
+
+        <div class="stat-card">
+            <span>Total Students</span>
+            <h2 id="feeTotalStudents">0</h2>
+        </div>
+
+
+        <div class="stat-card">
+            <span>Paid This Month</span>
+            <h2 id="feePaidCount">0</h2>
+        </div>
+
+
+        <div class="stat-card">
+            <span>Pending This Month</span>
+            <h2 id="feePendingCount">0</h2>
+        </div>
+
+
+        <div class="stat-card">
+            <span>Total Collected</span>
+            <h2 id="feeCollectedAmount">
+                Rs. 0
+            </h2>
+        </div>
+
+    </div>
+
+
+    <!-- SEARCH / FILTER -->
+    <div class="panel fee-filter-panel">
+
+        <div class="fee-tools">
+
+            <input
+                type="text"
+                id="feeSearch"
+                placeholder="Search student by name or ID...">
+
+
+            <select id="feeStatusFilter">
+
+                <option value="all">
+                    All Status
+                </option>
+
+                <option value="paid">
+                    Paid
+                </option>
+
+                <option value="pending">
+                    Pending
+                </option>
+
+            </select>
+
+
+            <select id="feeMonthFilter">
+
+                <option value="current">
+                    Current Month
+                </option>
+
+                <option value="all">
+                    All Months
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- FEE RECORDS -->
+    <div class="panel">
+
+        <div class="panel-header">
+
+            <div>
+                <h2>Student Fee Records</h2>
+
+                <p>
+                    Monthly payment and verification history
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Student ID</th>
+
+                        <th>Student</th>
+
+                        <th>Course / Batch</th>
+
+                        <th>Fee Month</th>
+
+                        <th>Amount</th>
+
+                        <th>Status</th>
+
+                        <th>Payment Date</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="feeTableBody">
+
+                    <tr>
+
+                        <td
+                            colspan="8"
+                            class="empty">
+
+                            Loading fee records...
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
 </section>
+
+
+<!-- =====================================================
+     ADD / VERIFY FEE MODAL
+===================================================== -->
+
+<div
+    id="feeModal"
+    class="modal">
+
+    <div class="modal-content fee-modal-content">
+
+
+        <!-- MODAL HEADER -->
+
+        <div class="modal-header">
+
+            <div>
+
+                <h2>
+                    Verify Student Fee
+                </h2>
+
+                <p class="modal-subtitle">
+                    Verify payment and generate receipt
+                    automatically.
+                </p>
+
+            </div>
+
+
+            <button
+                id="closeFeeModal"
+                class="close-btn"
+                type="button">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <!-- FEE FORM -->
+
+        <form id="feeForm">
+
+
+            <div class="form-grid">
+
+
+                <!-- STUDENT -->
+
+                <div class="form-group">
+
+                    <label>
+                        Student
+                    </label>
+
+
+                    <select
+                        id="feeStudent"
+                        required>
+
+                        <option value="">
+                            Select Student
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- MONTH -->
+
+                <div class="form-group">
+
+                    <label>
+                        Fee Month
+                    </label>
+
+
+                    <input
+                        type="month"
+                        id="feeMonth"
+                        required>
+
+                </div>
+
+
+                <!-- AMOUNT -->
+
+                <div class="form-group">
+
+                    <label>
+                        Fee Amount
+                    </label>
+
+
+                    <input
+                        type="number"
+                        id="feeAmount"
+                        min="1"
+                        placeholder="3000"
+                        required>
+
+                </div>
+
+
+                <!-- PAYMENT METHOD -->
+
+                <div class="form-group">
+
+                    <label>
+                        Payment Method
+                    </label>
+
+
+                    <select
+                        id="paymentMethod"
+                        required>
+
+                        <option value="">
+                            Select Payment Method
+                        </option>
+
+                        <option value="Cash">
+                            Cash
+                        </option>
+
+                        <option value="Bank Transfer">
+                            Bank Transfer
+                        </option>
+
+                        <option value="Online">
+                            Online
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- PAYMENT DATE -->
+
+                <div class="form-group">
+
+                    <label>
+                        Payment Date
+                    </label>
+
+
+                    <input
+                        type="date"
+                        id="paymentDate"
+                        required>
+
+                </div>
+
+
+                <!-- NOTES -->
+
+                <div class="form-group">
+
+                    <label>
+                        Notes
+                    </label>
+
+
+                    <input
+                        type="text"
+                        id="feeNotes"
+                        placeholder="Optional">
+
+                </div>
+
+            </div>
+
+
+            <!-- MESSAGE -->
+
+            <div
+                id="feeFormMessage"
+                class="form-message">
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="cancelFeeBtn"
+                    class="secondary-btn">
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="submit"
+                    id="verifyFeeBtn"
+                    class="primary-btn">
+
+                    ✓ Verify & Mark Paid
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     RECEIPT MODAL
+===================================================== -->
+
+<div
+    id="receiptModal"
+    class="modal">
+
+    <div class="modal-content receipt-modal-content">
+
+
+        <div class="modal-header">
+
+            <h2>
+                🧾 Fee Receipt
+            </h2>
+
+
+            <button
+                id="closeReceiptModal"
+                class="close-btn"
+                type="button">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="receiptContent"
+            class="receipt-content">
+
+            <!-- Receipt generated by fees.js -->
+
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                id="closeReceiptBtn"
+                type="button"
+                class="secondary-btn">
+
+                Close
+
+            </button>
+
+
+            <button
+                id="downloadReceiptBtn"
+                type="button"
+                class="primary-btn">
+
+                📄 Download PDF
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 
 <section id="tests" class="page">
     <div class="panel">
