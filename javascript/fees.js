@@ -1,1071 +1,160 @@
-
-/* =========================================================
-   FEE MANAGEMENT
-   Sir Syed Hassan Ali Coaching Management System
-========================================================= */
-
-import { auth, db } from "../firebase/firebase-config.js";
-
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-import {
-    collection,
-    addDoc,
-    updateDoc,
-    doc,
-    onSnapshot,
-    query,
-    where,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-
-/* =========================================================
-   ELEMENTS
-========================================================= */
-
-const $ = id => document.getElementById(id);
-
-const feeMonth = $("feeMonth");
-const feeStudentSearch = $("feeStudentSearch");
-const feeStatusFilter = $("feeStatusFilter");
-const feesTableBody = $("feesTableBody");
-
-const feeTotalStudents = $("feeTotalStudents");
-const feePaidStudents = $("feePaidStudents");
-const feePendingStudents = $("feePendingStudents");
-const feeCollectedAmount = $("feeCollectedAmount");
-
-const feeModal = $("feeModal");
-const feeModalStudentName = $("feeModalStudentName");
-const feeModalStudentInfo = $("feeModalStudentInfo");
-const feeAmount = $("feeAmount");
-const feePaymentDate = $("feePaymentDate");
-const feeCancelBtn = $("feeCancelBtn");
-const feeSaveBtn = $("feeSaveBtn");
-
-
-/* =========================================================
-   DATA
-========================================================= */
-
-let students = [];
-let fees = [];
-let selectedStudent = null;
-
-
-/* =========================================================
-   DEFAULT MONTH
-========================================================= */
-
-function currentMonth() {
-
-    const now = new Date();
-
-    const year = now.getFullYear();
-
-    const month = String(
-        now.getMonth() + 1
-    ).padStart(2, "0");
-
-    return `${year}-${month}`;
-}
-
-
-function todayDate() {
-
-    const now = new Date();
-
-    const year = now.getFullYear();
-
-    const month = String(
-        now.getMonth() + 1
-    ).padStart(2, "0");
-
-    const day = String(
-        now.getDate()
-    ).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-}
-
-
-if (feeMonth) {
-
-    feeMonth.value = currentMonth();
-
-}
-
-
-/* =========================================================
-   AUTH
-========================================================= */
-
-onAuthStateChanged(auth, user => {
-
-    if (!user) {
-
-        return;
-
-    }
-
-    loadFeeStudents();
-
-    loadFees();
-
-});
-
-
-/* =========================================================
-   LOAD STUDENTS
-========================================================= */
-
-function loadFeeStudents() {
-
-    onSnapshot(
-        collection(db, "students"),
-
-        snapshot => {
-
-            students = snapshot.docs.map(item => ({
-
-                id: item.id,
-
-                ...item.data()
-
-            }));
-
-            renderFees();
-
-        },
-
-        error => {
-
-            console.error(
-                "Fee students error:",
-                error
-            );
-
-            showError(
-                "Unable to load students."
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   LOAD FEE RECORDS
-========================================================= */
-
-function loadFees() {
-
-    onSnapshot(
-        collection(db, "fees"),
-
-        snapshot => {
-
-            fees = snapshot.docs.map(item => ({
-
-                id: item.id,
-
-                ...item.data()
-
-            }));
-
-            renderFees();
-
-        },
-
-        error => {
-
-            console.error(
-                "Fee records error:",
-                error
-            );
-
-            showError(
-                "Unable to load fee records."
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   RENDER FEES
-========================================================= */
-
-function renderFees() {
-
-    if (!feesTableBody) return;
-
-    const selectedMonth =
-        feeMonth?.value || currentMonth();
-
-    let data = students.map(student => {
-
-        const payment = fees.find(record =>
-
-            record.studentDocId === student.id &&
-
-            record.month === selectedMonth
-
-        );
-
-        const allStudentPayments = fees
-
-            .filter(record =>
-                record.studentDocId === student.id
-            )
-
-            .sort((a, b) =>
-                String(b.month || "")
-                    .localeCompare(
-                        String(a.month || "")
-                    )
-            );
-
-        const lastPayment =
-            allStudentPayments[0] || null;
-
-        return {
-
-            student,
-
-            payment,
-
-            lastPayment,
-
-            paid: Boolean(payment)
-
-        };
-
-    });
-
-
-    /* SEARCH */
-
-    const search =
-        feeStudentSearch?.value
-            .toLowerCase()
-            .trim() || "";
-
-
-    if (search) {
-
-        data = data.filter(item => {
-
-            const student = item.student;
-
-            return [
-
-                student.name,
-
-                student.studentId,
-
-                student.phone,
-
-                student.course,
-
-                student.batch,
-
-                student.fatherName
-
-            ]
-
-                .some(value =>
-                    String(value || "")
-                        .toLowerCase()
-                        .includes(search)
-                );
-
+import { db } from "../firebase/firebase-config.js";
+import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+(() => {
+    const start = () => {
+        const tableBody = document.getElementById("feesTableBody");
+        if (!tableBody) return;
+        injectFeeStyles();
+        const monthInput = document.getElementById("feeMonth");
+        const searchInput = document.getElementById("feeStudentSearch");
+        const statusFilter = document.getElementById("feeStatusFilter");
+        const totalEl = document.getElementById("feeTotalStudents");
+        const paidEl = document.getElementById("feePaidStudents");
+        const pendingEl = document.getElementById("feePendingStudents");
+        const collectedEl = document.getElementById("feeCollectedAmount");
+        let students = [];
+        let records = [];
+        let month = currentMonth();
+        monthInput.value = month;
+
+        onSnapshot(collection(db, "students"), snap => {
+            students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            render();
+        }, err => {
+            console.error(err);
+            tableBody.innerHTML = `<tr><td colspan="9" class="empty">Unable to load students.</td></tr>`;
         });
 
-    }
-
-
-    /* STATUS FILTER */
-
-    const status =
-        feeStatusFilter?.value || "all";
-
-
-    if (status === "paid") {
-
-        data = data.filter(
-            item => item.paid
-        );
-
-    }
-
-
-    if (status === "unpaid") {
-
-        data = data.filter(
-            item => !item.paid
-        );
-
-    }
-
-
-    /* SUMMARY */
-
-    updateSummary(
-        selectedMonth
-    );
-
-
-    /* EMPTY */
-
-    if (!data.length) {
-
-        feesTableBody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="9"
-                    class="empty">
-
-                    No students found.
-
-                </td>
-
-            </tr>
-
-        `;
-
-        return;
-
-    }
-
-
-    /* TABLE */
-
-    feesTableBody.innerHTML =
-        data.map(item => {
-
-            const student =
-                item.student;
-
-            const payment =
-                item.payment;
-
-            const lastPayment =
-                item.lastPayment;
-
-
-            const amount =
-                payment?.amount
-                    ? `₨ ${Number(
-                        payment.amount
-                    ).toLocaleString()}`
-                    : "—";
-
-
-            const lastMonth =
-                lastPayment?.month
-                    ? formatMonth(
-                        lastPayment.month
-                    )
-                    : "Never";
-
-
-            const paymentDate =
-                payment?.paymentDate
-                    ? formatDate(
-                        payment.paymentDate
-                    )
-                    : "—";
-
-
-            return `
-
-                <tr>
-
-                    <td>
-
-                        <strong>
-
-                            ${escapeHTML(
-                                student.studentId || "-"
-                            )}
-
-                        </strong>
-
-                    </td>
-
-
-                    <td>
-
-                        ${escapeHTML(
-                            student.name || "-"
-                        )}
-
-                    </td>
-
-
-                    <td>
-
-                        ${escapeHTML(
-                            student.course || "-"
-                        )}
-
-                    </td>
-
-
-                    <td>
-
-                        ${escapeHTML(
-                            student.batch || "-"
-                        )}
-
-                    </td>
-
-
-                    <td>
-
-                        ${amount}
-
-                    </td>
-
-
-                    <td>
-
-                        ${
-                            payment
-
-                            ?
-
-                            `<span
-                                class="fee-status paid">
-                                ✓ Paid
-                            </span>`
-
-                            :
-
-                            `<span
-                                class="fee-status unpaid">
-                                Unpaid
-                            </span>`
-                        }
-
-                    </td>
-
-
-                    <td>
-
-                        ${lastMonth}
-
-                    </td>
-
-
-                    <td>
-
-                        ${paymentDate}
-
-                    </td>
-
-
-                    <td>
-
-                        ${
-                            payment
-
-                            ?
-
-                            `<button
-                                class="mark-fee-btn paid-btn"
-                                disabled>
-                                ✓ Paid
-                            </button>`
-
-                            :
-
-                            `<button
-                                class="mark-fee-btn"
-                                data-student-id="${student.id}">
-                                💰 Mark Paid
-                            </button>`
-                        }
-
-                    </td>
-
-                </tr>
-
-            `;
-
-        }).join("");
-
-
-    attachFeeButtons();
-
-}
-
-
-/* =========================================================
-   SUMMARY
-========================================================= */
-
-function updateSummary(month) {
-
-    const total =
-        students.length;
-
-
-    const paidRecords =
-        students.map(student =>
-
-            fees.find(record =>
-
-                record.studentDocId ===
-                student.id &&
-
-                record.month === month
-
-            )
-
-        ).filter(Boolean);
-
-
-    const paid =
-        paidRecords.length;
-
-
-    const pending =
-        Math.max(
-            total - paid,
-            0
-        );
-
-
-    const collected =
-        paidRecords.reduce(
-            (sum, record) =>
-                sum +
-                Number(
-                    record.amount || 0
-                ),
-            0
-        );
-
-
-    if (feeTotalStudents) {
-
-        feeTotalStudents.textContent =
-            total;
-
-    }
-
-
-    if (feePaidStudents) {
-
-        feePaidStudents.textContent =
-            paid;
-
-    }
-
-
-    if (feePendingStudents) {
-
-        feePendingStudents.textContent =
-            pending;
-
-    }
-
-
-    if (feeCollectedAmount) {
-
-        feeCollectedAmount.textContent =
-            `₨ ${collected.toLocaleString()}`;
-
-    }
-
-}
-
-
-/* =========================================================
-   FEE BUTTONS
-========================================================= */
-
-function attachFeeButtons() {
-
-    document
-        .querySelectorAll(".mark-fee-btn:not(.paid-btn)")
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    openFeeModal(
-                        button.dataset.studentId
-                    );
-
-                }
-            );
-
+        onSnapshot(collection(db, "fees"), snap => {
+            records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            render();
+        }, err => {
+            console.error(err);
+            tableBody.innerHTML = `<tr><td colspan="9" class="empty">Unable to load fee records. Check Firestore rules.</td></tr>`;
         });
 
-}
+        monthInput.addEventListener("change", () => { month = monthInput.value || currentMonth(); render(); });
+        searchInput.addEventListener("input", render);
+        statusFilter.addEventListener("change", render);
 
+        function render() {
+            const search = searchInput.value.toLowerCase().trim();
+            const filter = statusFilter.value;
+            const rows = students.map(student => {
+                const payment = records.find(r => r.studentDocId === student.id && r.month === month && r.status === "paid");
+                const lastPaid = records.filter(r => r.studentDocId === student.id && r.status === "paid" && r.month).sort((a,b) => String(b.month).localeCompare(String(a.month)))[0];
+                return { student, payment, lastPaid, status: payment ? "paid" : "unpaid" };
+            }).filter(row => {
+                const s = row.student;
+                const text = [s.name,s.studentId,s.phone,s.course,s.batch,s.fatherName].join(" ").toLowerCase();
+                return (!search || text.includes(search)) && (filter === "all" || filter === row.status);
+            });
 
-/* =========================================================
-   OPEN MODAL
-========================================================= */
+            const paid = students.map(s => records.find(r => r.studentDocId === s.id && r.month === month && r.status === "paid")).filter(Boolean);
+            totalEl.textContent = students.length;
+            paidEl.textContent = paid.length;
+            pendingEl.textContent = Math.max(students.length - paid.length, 0);
+            collectedEl.textContent = `₨ ${money(paid.reduce((sum,r) => sum + Number(r.amount || 0), 0))}`;
 
-function openFeeModal(studentId) {
-
-    selectedStudent =
-        students.find(
-            student =>
-                student.id === studentId
-        );
-
-
-    if (!selectedStudent) {
-
-        alert(
-            "Student not found."
-        );
-
-        return;
-
-    }
-
-
-    const selectedMonth =
-        feeMonth?.value ||
-        currentMonth();
-
-
-    if (feeModalStudentName) {
-
-        feeModalStudentName.textContent =
-            selectedStudent.name ||
-            "Student";
-
-    }
-
-
-    if (feeModalStudentInfo) {
-
-        feeModalStudentInfo.textContent =
-
-            `${selectedStudent.studentId || "-"} • ` +
-
-            `${selectedStudent.course || "-"} • ` +
-
-            `${selectedStudent.batch || "-"}`;
-
-    }
-
-
-    if (feeAmount) {
-
-        feeAmount.value =
-            selectedStudent.monthlyFee ||
-            "";
-
-    }
-
-
-    if (feePaymentDate) {
-
-        feePaymentDate.value =
-            todayDate();
-
-    }
-
-
-    if (feeModal) {
-
-        feeModal.classList.add("show");
-
-    }
-
-}
-
-
-/* =========================================================
-   CLOSE MODAL
-========================================================= */
-
-function closeFeeModal() {
-
-    selectedStudent = null;
-
-    feeModal?.classList.remove(
-        "show"
-    );
-
-}
-
-
-feeCancelBtn?.addEventListener(
-    "click",
-    closeFeeModal
-);
-
-
-feeModal?.addEventListener(
-    "click",
-    event => {
-
-        if (
-            event.target ===
-            feeModal
-        ) {
-
-            closeFeeModal();
-
+            tableBody.innerHTML = rows.length ? rows.map(buildRow).join("") : `<tr><td colspan="9" class="empty">No students found.</td></tr>`;
+            tableBody.querySelectorAll("[data-fee-action]").forEach(btn => btn.addEventListener("click", () => {
+                const student = students.find(s => s.id === btn.dataset.studentId);
+                if (!student) return;
+                if (btn.dataset.feeAction === "paid") openPayment(student);
+                if (btn.dataset.feeAction === "undo") undoPayment(student);
+                if (btn.dataset.feeAction === "fee") setFee(student);
+                if (btn.dataset.feeAction === "history") history(student);
+            }));
         }
 
-    }
-);
-
-
-/* =========================================================
-   SAVE PAYMENT
-========================================================= */
-
-feeSaveBtn?.addEventListener(
-    "click",
-    async () => {
-
-        if (!selectedStudent) {
-
-            return;
-
+        function buildRow({student,payment,lastPaid}) {
+            const amount = Number(student.monthlyFee || payment?.amount || 0);
+            return `<tr>
+                <td><strong>${esc(student.studentId || "—")}</strong></td>
+                <td><div class="fee-student-name">${esc(student.name || "—")}</div><div class="fee-student-phone">${esc(student.phone || "")}</div></td>
+                <td>${esc(student.course || "—")}</td><td>${esc(student.batch || "—")}</td>
+                <td><div class="fee-amount">₨ ${money(amount)}</div><button class="fee-link-btn" data-fee-action="fee" data-student-id="${escAttr(student.id)}">Set Fee</button></td>
+                <td>${payment ? '<span class="fee-badge paid">✓ Paid</span>' : '<span class="fee-badge unpaid">● Unpaid</span>'}</td>
+                <td>${lastPaid ? formatMonth(lastPaid.month) : "—"}</td>
+                <td>${payment?.paymentDate ? formatDate(payment.paymentDate) : "—"}</td>
+                <td><div class="fee-actions">${payment ? `<button class="fee-action danger" data-fee-action="undo" data-student-id="${escAttr(student.id)}">Undo</button>` : `<button class="fee-action success" data-fee-action="paid" data-student-id="${escAttr(student.id)}">✓ Mark Paid</button>`}<button class="fee-action secondary" data-fee-action="history" data-student-id="${escAttr(student.id)}">History</button></div></td>
+            </tr>`;
         }
 
-
-        const amount =
-            Number(
-                feeAmount?.value || 0
-            );
-
-
-        const paymentDate =
-            feePaymentDate?.value ||
-            todayDate();
-
-
-        const month =
-            feeMonth?.value ||
-            currentMonth();
-
-
-        if (amount <= 0) {
-
-            alert(
-                "Please enter a valid fee amount."
-            );
-
-            return;
-
+        async function setFee(student) {
+            const value = prompt(`Monthly fee for ${student.name}:`, student.monthlyFee || "");
+            if (value === null) return;
+            const amount = Number(String(value).replace(/,/g, "").trim());
+            if (!Number.isFinite(amount) || amount < 0) return alert("Please enter a valid fee amount.");
+            try { await updateDoc(doc(db,"students",student.id),{monthlyFee:amount,feeUpdatedAt:serverTimestamp()}); toast("Monthly fee updated."); }
+            catch(e){ console.error(e); alert("Unable to update fee: " + e.message); }
         }
 
-
-        /* Prevent duplicate */
-
-        const existing =
-            fees.find(record =>
-
-                record.studentDocId ===
-                selectedStudent.id &&
-
-                record.month ===
-                month
-
-            );
-
-
-        if (existing) {
-
-            alert(
-                "This month's fee is already marked as paid."
-            );
-
-            closeFeeModal();
-
-            return;
-
+        function openPayment(student) {
+            const existing = records.find(r => r.studentDocId === student.id && r.month === month);
+            const overlay = document.createElement("div");
+            overlay.className = "fee-modal-overlay";
+            overlay.innerHTML = `<div class="fee-modal">
+                <div class="fee-modal-head"><div><div class="fee-modal-title">Mark Fee Paid</div><div class="fee-modal-subtitle">${esc(student.name || "Student")} • ${formatMonth(month)}</div></div><button type="button" class="fee-modal-close">×</button></div>
+                <form class="fee-payment-form"><div class="fee-form-grid">
+                    <label>Student ID<input value="${escAttr(student.studentId || "")}" disabled></label>
+                    <label>Amount (PKR)<input name="amount" type="number" min="1" step="1" value="${Number(student.monthlyFee || existing?.amount || 0)}" required></label>
+                    <label>Payment Date<input name="paymentDate" type="date" value="${today()}" required></label>
+                    <label>Month<input value="${formatMonth(month)}" disabled></label>
+                </div><label class="fee-note-label">Note (optional)<textarea name="note" rows="3" placeholder="e.g. Paid in cash"></textarea></label>
+                <div class="fee-modal-actions"><button type="button" class="secondary-btn fee-cancel">Cancel</button><button type="submit" class="primary-btn">Save Payment</button></div></form>
+            </div>`;
+            document.body.appendChild(overlay);
+            const close = () => overlay.remove();
+            overlay.querySelector(".fee-modal-close").onclick = close;
+            overlay.querySelector(".fee-cancel").onclick = close;
+            overlay.onclick = e => { if (e.target === overlay) close(); };
+            overlay.querySelector("form").onsubmit = async e => {
+                e.preventDefault();
+                const form=e.currentTarget, amount=Number(form.elements.amount.value), paymentDate=form.elements.paymentDate.value, note=form.elements.note.value.trim();
+                if (!Number.isFinite(amount) || amount <= 0 || !paymentDate) return alert("Please enter a valid amount and payment date.");
+                const submit=form.querySelector("button[type=submit]"); submit.disabled=true; submit.textContent="Saving...";
+                try {
+                    const old=records.find(r=>r.studentDocId===student.id && r.month===month);
+                    const data={studentDocId:student.id,studentId:student.studentId||"",studentName:student.name||"",course:student.course||"",batch:student.batch||"",month,amount,paymentDate,note,status:"paid",updatedAt:serverTimestamp()};
+                    if(old) await updateDoc(doc(db,"fees",old.id),data); else await addDoc(collection(db,"fees"),{...data,createdAt:serverTimestamp()});
+                    if(Number(student.monthlyFee||0)!==amount) await updateDoc(doc(db,"students",student.id),{monthlyFee:amount});
+                    close(); toast("Fee payment saved successfully.");
+                } catch(err){ console.error(err); alert("Unable to save payment: " + err.message); submit.disabled=false; submit.textContent="Save Payment"; }
+            };
         }
 
-
-        feeSaveBtn.disabled =
-            true;
-
-        feeSaveBtn.textContent =
-            "Saving...";
-
-
-        try {
-
-            await addDoc(
-                collection(
-                    db,
-                    "fees"
-                ),
-                {
-
-                    studentDocId:
-                        selectedStudent.id,
-
-                    studentId:
-                        selectedStudent.studentId ||
-                        "",
-
-                    studentName:
-                        selectedStudent.name ||
-                        "",
-
-                    fatherName:
-                        selectedStudent.fatherName ||
-                        "",
-
-                    phone:
-                        selectedStudent.phone ||
-                        "",
-
-                    course:
-                        selectedStudent.course ||
-                        "",
-
-                    batch:
-                        selectedStudent.batch ||
-                        "",
-
-                    month:
-
-                        month,
-
-                    amount:
-
-                        amount,
-
-                    paymentDate:
-
-                        paymentDate,
-
-                    status:
-
-                        "Paid",
-
-                    paidAt:
-
-                        serverTimestamp()
-
-                }
-
-            );
-
-
-            alert(
-                `${selectedStudent.name}'s fee for ${formatMonth(month)} has been marked as PAID.`
-            );
-
-
-            closeFeeModal();
-
-
-        } catch (error) {
-
-            console.error(
-                "Fee save error:",
-                error
-            );
-
-            alert(
-                "Fee could not be saved: " +
-                error.message
-            );
-
-        } finally {
-
-            feeSaveBtn.disabled =
-                false;
-
-            feeSaveBtn.textContent =
-                "✓ Mark as Paid";
-
+        async function undoPayment(student) {
+            const record=records.find(r=>r.studentDocId===student.id && r.month===month);
+            if(!record) return;
+            if(!confirm(`Undo ${formatMonth(record.month)} fee payment for ${student.name || "this student"}?`)) return;
+            try{ await deleteDoc(doc(db,"fees",record.id)); toast("Payment marked as unpaid."); }
+            catch(e){ console.error(e); alert("Unable to undo payment: " + e.message); }
         }
 
-    }
-);
-
-
-/* =========================================================
-   FILTER EVENTS
-========================================================= */
-
-feeMonth?.addEventListener(
-    "change",
-    renderFees
-);
-
-
-feeStudentSearch?.addEventListener(
-    "input",
-    renderFees
-);
-
-
-feeStatusFilter?.addEventListener(
-    "change",
-    renderFees
-);
-
-
-/* =========================================================
-   FORMAT MONTH
-========================================================= */
-
-function formatMonth(value) {
-
-    if (!value) return "-";
-
-
-    const parts =
-        value.split("-");
-
-
-    if (parts.length !== 2) {
-
-        return value;
-
-    }
-
-
-    const date =
-        new Date(
-            Number(parts[0]),
-            Number(parts[1]) - 1,
-            1
-        );
-
-
-    return date.toLocaleDateString(
-        "en-US",
-        {
-            month: "long",
-            year: "numeric"
+        function history(student) {
+            const list=records.filter(r=>r.studentDocId===student.id && r.status==="paid").sort((a,b)=>String(b.month).localeCompare(String(a.month)));
+            const overlay=document.createElement("div"); overlay.className="fee-modal-overlay";
+            overlay.innerHTML=`<div class="fee-modal fee-history-modal"><div class="fee-modal-head"><div><div class="fee-modal-title">Payment History</div><div class="fee-modal-subtitle">${esc(student.name||"Student")} • ${esc(student.studentId||"")}</div></div><button class="fee-modal-close">×</button></div><div class="fee-history-body">${list.length?list.map(r=>`<div class="fee-history-item"><div><strong>${formatMonth(r.month)}</strong><span>${esc(r.paymentDate||"—")}</span></div><strong>₨ ${money(r.amount)}</strong></div>`).join(""):'<div class="fee-history-empty">No payment history found.</div>'}</div></div>`;
+            document.body.appendChild(overlay); const close=()=>overlay.remove(); overlay.querySelector(".fee-modal-close").onclick=close; overlay.onclick=e=>{if(e.target===overlay)close();};
         }
-    );
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded",start,{once:true}); else start();
+})();
 
-}
-
-
-/* =========================================================
-   FORMAT DATE
-========================================================= */
-
-function formatDate(value) {
-
-    if (!value) return "—";
-
-
-    const date =
-        new Date(value);
-
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-
-        return value;
-
-    }
-
-
-    return date.toLocaleDateString(
-        "en-GB",
-        {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-        }
-    );
-
-}
-
-
-/* =========================================================
-   HTML ESCAPE
-========================================================= */
-
-function escapeHTML(value) {
-
-    return String(
-        value ?? ""
-    )
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-/* =========================================================
-   ERROR
-========================================================= */
-
-function showError(message) {
-
-    if (!feesTableBody) return;
-
-
-    feesTableBody.innerHTML = `
-
-        <tr>
-
-            <td
-                colspan="9"
-                class="empty">
-
-                ${escapeHTML(message)}
-
-            </td>
-
-        </tr>
-
-    `;
-
-}
-
-
-console.log(
-    "✅ Fee Management loaded successfully"
-);
+function currentMonth(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;}
+function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+function formatMonth(v){const [y,m]=String(v||"").split("-");return y&&m?new Date(Number(y),Number(m)-1,1).toLocaleDateString("en-US",{month:"short",year:"numeric"}):"—";}
+function formatDate(v){const d=new Date(`${v}T00:00:00`);return Number.isNaN(d.getTime())?v:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});}
+function money(v){return Number(v||0).toLocaleString("en-PK");}
+function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#039;");}
+function escAttr(v){return esc(v).replace(/`/g,"&#096;");}
+function toast(message){const old=document.querySelector(".fee-toast");old?.remove();const n=document.createElement("div");n.className="fee-toast show";n.textContent=message;document.body.appendChild(n);setTimeout(()=>n.remove(),2500);}
+function injectFeeStyles(){if(document.getElementById("fee-management-styles"))return;const s=document.createElement("style");s.id="fee-management-styles";s.textContent=`
+.fee-month-box{display:flex;align-items:center;gap:9px;background:#f8fafc;border:1px solid #e5e7eb;padding:8px 10px;border-radius:10px}.fee-month-box label{font-size:12px;font-weight:700;color:#475569}.fee-month-box input{border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;background:#fff;color:#172033;outline:none}
+.fee-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin:0 0 20px}.fee-summary-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:17px;display:flex;align-items:center;gap:12px}.fee-summary-icon{width:44px;height:44px;border-radius:12px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}.fee-summary-icon.paid{background:#ecfdf5;color:#059669}.fee-summary-icon.pending{background:#fff7ed;color:#ea580c}.fee-summary-icon.amount{background:#f5f3ff;color:#6d28d9}.fee-summary-card span{display:block;font-size:11px;color:#64748b;margin-bottom:5px}.fee-summary-card strong{font-size:21px;color:#111827}
+.fee-tools{display:grid;grid-template-columns:1fr 180px;gap:10px;margin-bottom:16px}.fee-tools input,.fee-tools select{width:100%;padding:12px 13px;border:1px solid #d1d5db;border-radius:9px;background:#fff;outline:none;font-size:13px}.fees-table{min-width:1080px}.fee-student-name{font-weight:700;color:#172033}.fee-student-phone{font-size:10px;color:#94a3b8;margin-top:3px}.fee-amount{font-weight:800;color:#172554}.fee-link-btn{border:0;background:none;color:#2563eb;font-size:10px;font-weight:700;padding:3px 0;cursor:pointer}.fee-badge{display:inline-flex;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:800}.fee-badge.paid{background:#ecfdf5;color:#047857}.fee-badge.unpaid{background:#fff7ed;color:#c2410c}.fee-actions{display:flex;gap:5px;flex-wrap:wrap}.fee-action{border:0;border-radius:7px;padding:7px 9px;font-size:10px;font-weight:800;cursor:pointer}.fee-action.success{background:#dcfce7;color:#166534}.fee-action.danger{background:#fee2e2;color:#b91c1c}.fee-action.secondary{background:#eff6ff;color:#1d4ed8}
+.fee-modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;z-index:2000}.fee-modal{width:100%;max-width:620px;background:#fff;border-radius:18px;box-shadow:0 25px 70px rgba(0,0,0,.22);overflow:hidden}.fee-history-modal{max-width:520px}.fee-modal-head{display:flex;justify-content:space-between;align-items:center;padding:19px 21px;border-bottom:1px solid #e5e7eb}.fee-modal-title{font-size:18px;font-weight:800;color:#111827}.fee-modal-subtitle{font-size:11px;color:#64748b;margin-top:4px}.fee-modal-close{width:34px;height:34px;border:0;border-radius:8px;background:#f3f4f6;color:#374151;font-size:23px;cursor:pointer}.fee-payment-form{padding:21px}.fee-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.fee-form-grid label,.fee-note-label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:700;color:#374151}.fee-form-grid input,.fee-note-label textarea{width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 11px;outline:none;font:inherit;font-size:13px}.fee-note-label{margin-top:14px}.fee-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}.fee-history-body{padding:18px 21px;max-height:55vh;overflow:auto}.fee-history-item{display:flex;align-items:center;justify-content:space-between;padding:12px 13px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px}.fee-history-item strong{color:#172554;font-size:12px}.fee-history-item span{display:block;color:#64748b;font-size:10px;margin-top:3px}.fee-history-empty{text-align:center;padding:35px 15px;color:#94a3b8}.fee-toast{position:fixed;right:22px;bottom:22px;z-index:3000;background:#047857;color:#fff;padding:12px 16px;border-radius:10px;font-size:12px;font-weight:700;box-shadow:0 10px 25px rgba(15,23,42,.18)}
+@media(max-width:1000px){.fee-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:650px){.fee-summary-grid{grid-template-columns:1fr}.fee-tools{grid-template-columns:1fr}.fee-form-grid{grid-template-columns:1fr}.fee-modal-overlay{padding:10px}}
+`;document.head.appendChild(s);}
