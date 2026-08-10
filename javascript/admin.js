@@ -13,7 +13,8 @@ import {
     doc,
     onSnapshot,
     query,
-    orderBy
+    orderBy,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
@@ -46,11 +47,17 @@ const editStudentId = document.getElementById("editStudentId");
 const modalTitle = document.getElementById("modalTitle");
 const saveStudentBtn = document.getElementById("saveStudentBtn");
 
-const studentsTableBody = document.getElementById("studentsTableBody");
-const studentSearch = document.getElementById("studentSearch");
+const studentsTableBody =
+    document.getElementById("studentsTableBody");
 
-const studentCount = document.getElementById("studentCount");
-const formMessage = document.getElementById("formMessage");
+const studentSearch =
+    document.getElementById("studentSearch");
+
+const studentCount =
+    document.getElementById("studentCount");
+
+const formMessage =
+    document.getElementById("formMessage");
 
 
 /* =========================
@@ -58,6 +65,7 @@ const formMessage = document.getElementById("formMessage");
 ========================= */
 
 let students = [];
+let unsubscribeStudents = null;
 
 
 /* =========================
@@ -76,6 +84,7 @@ onAuthStateChanged(auth, user => {
     console.log("Admin authenticated:", user.email);
 
     loadStudents();
+
 });
 
 
@@ -87,13 +96,13 @@ menuItems.forEach(item => {
 
     item.addEventListener("click", () => {
 
-        menuItems.forEach(i =>
-            i.classList.remove("active")
-        );
+        menuItems.forEach(i => {
+            i.classList.remove("active");
+        });
 
-        pages.forEach(page =>
-            page.classList.remove("active")
-        );
+        pages.forEach(page => {
+            page.classList.remove("active");
+        });
 
         item.classList.add("active");
 
@@ -104,7 +113,8 @@ menuItems.forEach(item => {
             selectedPage.classList.add("active");
         }
 
-        pageTitle.textContent = item.textContent.trim();
+        pageTitle.textContent =
+            item.textContent.trim();
 
     });
 
@@ -112,7 +122,7 @@ menuItems.forEach(item => {
 
 
 /* =========================
-   OPEN MODAL
+   OPEN ADD STUDENT MODAL
 ========================= */
 
 addStudentBtn.addEventListener("click", () => {
@@ -132,9 +142,23 @@ addStudentBtn.addEventListener("click", () => {
    CLOSE MODAL
 ========================= */
 
-closeModal.addEventListener("click", closeStudentModal);
+if (closeModal) {
 
-cancelBtn.addEventListener("click", closeStudentModal);
+    closeModal.addEventListener(
+        "click",
+        closeStudentModal
+    );
+
+}
+
+if (cancelBtn) {
+
+    cancelBtn.addEventListener(
+        "click",
+        closeStudentModal
+    );
+
+}
 
 
 function closeStudentModal() {
@@ -158,97 +182,124 @@ function resetForm() {
 
     formMessage.textContent = "";
 
+    modalTitle.textContent = "Add Student";
+
+    saveStudentBtn.textContent = "Save Student";
+
 }
 
 
 /* =========================
-   SAVE STUDENT
+   SAVE / UPDATE STUDENT
 ========================= */
 
-studentForm.addEventListener("submit", async event => {
+studentForm.addEventListener(
+    "submit",
+    async event => {
 
-    event.preventDefault();
+        event.preventDefault();
 
-    formMessage.textContent = "Saving...";
+        formMessage.textContent = "Saving...";
 
-    const studentData = {
-
-        name: studentName.value.trim(),
-
-        fatherName: fatherName.value.trim(),
-
-        phone: phone.value.trim(),
-
-        course: course.value.trim(),
-
-        batch: batch.value.trim(),
-
-        admissionDate: admissionDate.value
-
-    };
+        saveStudentBtn.disabled = true;
 
 
-    try {
+        const studentData = {
 
-        /* EDIT */
+            name: studentName.value.trim(),
 
-        if (editStudentId.value) {
+            fatherName: fatherName.value.trim(),
 
-            const studentRef =
-                doc(db, "students", editStudentId.value);
+            phone: phone.value.trim(),
 
-            await updateDoc(
-                studentRef,
-                studentData
+            course: course.value.trim(),
+
+            batch: batch.value.trim(),
+
+            admissionDate: admissionDate.value
+
+        };
+
+
+        try {
+
+            /* =====================
+               UPDATE EXISTING
+            ===================== */
+
+            if (editStudentId.value) {
+
+                const studentRef = doc(
+                    db,
+                    "students",
+                    editStudentId.value
+                );
+
+                await updateDoc(
+                    studentRef,
+                    studentData
+                );
+
+                formMessage.textContent =
+                    "Student updated successfully.";
+
+            }
+
+
+            /* =====================
+               ADD NEW
+            ===================== */
+
+            else {
+
+                const newStudent = {
+
+                    ...studentData,
+
+                    studentId:
+                        generateStudentId(),
+
+                    createdAt:
+                        serverTimestamp()
+
+                };
+
+                await addDoc(
+                    collection(db, "students"),
+                    newStudent
+                );
+
+                formMessage.textContent =
+                    "Student added successfully.";
+
+            }
+
+
+            setTimeout(() => {
+
+                closeStudentModal();
+
+            }, 700);
+
+
+        } catch (error) {
+
+            console.error(
+                "Student save error:",
+                error
             );
 
             formMessage.textContent =
-                "Student updated successfully.";
+                "Error: " + error.message;
+
+        } finally {
+
+            saveStudentBtn.disabled = false;
 
         }
-
-        /* ADD */
-
-        else {
-
-            const newStudent = {
-
-                ...studentData,
-
-                studentId: generateStudentId(),
-
-                createdAt: new Date()
-
-            };
-
-            await addDoc(
-                collection(db, "students"),
-                newStudent
-            );
-
-            formMessage.textContent =
-                "Student added successfully.";
-
-        }
-
-
-        setTimeout(() => {
-
-            closeStudentModal();
-
-        }, 700);
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        formMessage.textContent =
-            "Error: " + error.message;
 
     }
-
-});
+);
 
 
 /* =========================
@@ -257,10 +308,12 @@ studentForm.addEventListener("submit", async event => {
 
 function generateStudentId() {
 
-    const random =
-        Math.floor(100000 + Math.random() * 900000);
+    const randomNumber =
+        Math.floor(
+            100000 + Math.random() * 900000
+        );
 
-    return "STU-" + random;
+    return "STU-" + randomNumber;
 
 }
 
@@ -270,6 +323,10 @@ function generateStudentId() {
 ========================= */
 
 function loadStudents() {
+
+    if (unsubscribeStudents) {
+        unsubscribeStudents();
+    }
 
     const studentsRef =
         collection(db, "students");
@@ -281,7 +338,7 @@ function loadStudents() {
         );
 
 
-    onSnapshot(
+    unsubscribeStudents = onSnapshot(
 
         studentsQuery,
 
@@ -289,25 +346,29 @@ function loadStudents() {
 
             students = [];
 
-            snapshot.forEach(docSnapshot => {
+            snapshot.forEach(
+                docSnapshot => {
 
-                students.push({
+                    students.push({
 
-                    id: docSnapshot.id,
+                        id: docSnapshot.id,
 
-                    ...docSnapshot.data()
+                        ...docSnapshot.data()
 
-                });
+                    });
 
-            });
+                }
+            );
 
 
             studentCount.textContent =
                 students.length;
 
+
             renderStudents(students);
 
         },
+
 
         error => {
 
@@ -316,13 +377,20 @@ function loadStudents() {
                 error
             );
 
+
             studentsTableBody.innerHTML = `
 
                 <tr>
-                    <td colspan="7" class="empty">
+
+                    <td
+                        colspan="7"
+                        class="empty">
+
                         Unable to load students.
-                        Check Firebase Firestore.
+                        Please check Firestore.
+
                     </td>
+
                 </tr>
 
             `;
@@ -335,7 +403,7 @@ function loadStudents() {
 
 
 /* =========================
-   DISPLAY STUDENTS
+   RENDER STUDENTS
 ========================= */
 
 function renderStudents(data) {
@@ -346,7 +414,9 @@ function renderStudents(data) {
 
             <tr>
 
-                <td colspan="7" class="empty">
+                <td
+                    colspan="7"
+                    class="empty">
 
                     No students found.
 
@@ -374,44 +444,60 @@ function renderStudents(data) {
 
             <td>
                 <strong>
-                    ${escapeHTML(student.studentId || "-")}
+                    ${escapeHTML(
+                        student.studentId || "-"
+                    )}
                 </strong>
             </td>
 
             <td>
-                ${escapeHTML(student.name || "-")}
+                ${escapeHTML(
+                    student.name || "-"
+                )}
             </td>
 
             <td>
-                ${escapeHTML(student.fatherName || "-")}
+                ${escapeHTML(
+                    student.fatherName || "-"
+                )}
             </td>
 
             <td>
-                ${escapeHTML(student.phone || "-")}
+                ${escapeHTML(
+                    student.phone || "-"
+                )}
             </td>
 
             <td>
-                ${escapeHTML(student.course || "-")}
+                ${escapeHTML(
+                    student.course || "-"
+                )}
                 /
-                ${escapeHTML(student.batch || "-")}
+                ${escapeHTML(
+                    student.batch || "-"
+                )}
             </td>
 
             <td>
-                ${escapeHTML(student.admissionDate || "-")}
+                ${escapeHTML(
+                    student.admissionDate || "-"
+                )}
             </td>
 
             <td>
 
                 <button
+                    type="button"
                     class="action-btn edit-btn"
                     data-id="${student.id}">
-                    Edit
+                    ✏️ Edit
                 </button>
 
                 <button
+                    type="button"
                     class="action-btn delete-btn"
                     data-id="${student.id}">
-                    Delete
+                    🗑️ Delete
                 </button>
 
             </td>
@@ -430,7 +516,7 @@ function renderStudents(data) {
 
 
 /* =========================
-   EDIT / DELETE BUTTONS
+   ACTION BUTTONS
 ========================= */
 
 function attachActionButtons() {
@@ -441,7 +527,13 @@ function attachActionButtons() {
 
             button.addEventListener(
                 "click",
-                () => editStudent(button.dataset.id)
+                () => {
+
+                    editStudent(
+                        button.dataset.id
+                    );
+
+                }
             );
 
         });
@@ -453,7 +545,13 @@ function attachActionButtons() {
 
             button.addEventListener(
                 "click",
-                () => deleteStudent(button.dataset.id)
+                () => {
+
+                    deleteStudent(
+                        button.dataset.id
+                    );
+
+                }
             );
 
         });
@@ -468,12 +566,22 @@ function attachActionButtons() {
 function editStudent(id) {
 
     const student =
-        students.find(s => s.id === id);
+        students.find(
+            student => student.id === id
+        );
 
-    if (!student) return;
+
+    if (!student) {
+
+        alert("Student not found.");
+
+        return;
+
+    }
 
 
-    editStudentId.value = student.id;
+    editStudentId.value =
+        student.id;
 
     studentName.value =
         student.name || "";
@@ -514,28 +622,55 @@ function editStudent(id) {
 async function deleteStudent(id) {
 
     const student =
-        students.find(s => s.id === id);
+        students.find(
+            student => student.id === id
+        );
 
-    if (!student) return;
+
+    if (!student) {
+
+        alert("Student not found.");
+
+        return;
+
+    }
 
 
     const confirmed =
         confirm(
-            `Delete ${student.name}?`
+            `Are you sure you want to delete "${student.name}"?`
         );
 
-    if (!confirmed) return;
+
+    if (!confirmed) {
+        return;
+    }
 
 
     try {
 
         await deleteDoc(
-            doc(db, "students", id)
+            doc(
+                db,
+                "students",
+                id
+            )
         );
+
+
+        console.log(
+            "Student deleted:",
+            id
+        );
+
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Delete error:",
+            error
+        );
+
 
         alert(
             "Unable to delete student: " +
@@ -548,7 +683,7 @@ async function deleteStudent(id) {
 
 
 /* =========================
-   SEARCH
+   SEARCH STUDENTS
 ========================= */
 
 studentSearch.addEventListener(
@@ -561,32 +696,55 @@ studentSearch.addEventListener(
                 .trim();
 
 
+        if (!search) {
+
+            renderStudents(students);
+
+            return;
+
+        }
+
+
         const filtered =
             students.filter(student => {
 
+                const name =
+                    (
+                        student.name || ""
+                    ).toLowerCase();
+
+                const studentId =
+                    (
+                        student.studentId || ""
+                    ).toLowerCase();
+
+                const phoneNumber =
+                    (
+                        student.phone || ""
+                    ).toLowerCase();
+
+                const courseName =
+                    (
+                        student.course || ""
+                    ).toLowerCase();
+
+                const batchName =
+                    (
+                        student.batch || ""
+                    ).toLowerCase();
+
+
                 return (
 
-                    (student.name || "")
-                        .toLowerCase()
-                        .includes(search)
+                    name.includes(search) ||
 
-                    ||
+                    studentId.includes(search) ||
 
-                    (student.studentId || "")
-                        .toLowerCase()
-                        .includes(search)
+                    phoneNumber.includes(search) ||
 
-                    ||
+                    courseName.includes(search) ||
 
-                    (student.phone || "")
-                        .toLowerCase()
-                        .includes(search)
-
-                    ||
-
-                    (student.course || "")
-                        .toLowerCase()
-                        .includes(search)
+                    batchName.includes(search)
 
                 );
 
@@ -616,7 +774,10 @@ logoutBtn.addEventListener(
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "Logout error:",
+                error
+            );
 
             alert(
                 "Logout failed."
@@ -629,21 +790,60 @@ logoutBtn.addEventListener(
 
 
 /* =========================
-   SECURITY
+   CLOSE MODAL ON OUTSIDE CLICK
+========================= */
+
+if (studentModal) {
+
+    studentModal.addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target === studentModal
+            ) {
+
+                closeStudentModal();
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================
+   ESCAPE HTML
 ========================= */
 
 function escapeHTML(value) {
 
     return String(value)
 
-        .replace(/&/g, "&amp;")
+        .replace(
+            /&/g,
+            "&amp;"
+        )
 
-        .replace(/</g, "&lt;")
+        .replace(
+            /</g,
+            "&lt;"
+        )
 
-        .replace(/>/g, "&gt;")
+        .replace(
+            />/g,
+            "&gt;"
+        )
 
-        .replace(/"/g, "&quot;")
+        .replace(
+            /"/g,
+            "&quot;"
+        )
 
-        .replace(/'/g, "&#039;");
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
