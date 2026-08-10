@@ -2,33 +2,31 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Admin Dashboard | Sir Syed Hassan Ali Coaching</title>
 
     <!-- Main CSS -->
-    <link rel="stylesheet" href="./css/style.css?v=5">
+    <link rel="stylesheet" href="./css/style.css?v=6">
 
     <!-- Admin Dashboard CSS -->
-    <link rel="stylesheet" href="./css/admin.css?v=5">
+    <link rel="stylesheet" href="./css/admin.css?v=6">
 
-    <!-- QR Scanner -->
+    <!-- QR Scanner Library -->
     <script
         src="https://unpkg.com/html5-qrcode"
         type="text/javascript">
     </script>
 
-    <!-- QR Generator -->
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
-    </script>
-
 </head>
+
 
 <body>
 
 <div class="dashboard">
+
 
     <!-- =====================================================
          SIDEBAR
@@ -43,8 +41,15 @@
             </div>
 
             <div class="brand-text">
-                <h2>Sir Syed Hassan Ali</h2>
-                <span>Coaching Management</span>
+
+                <h2>
+                    Sir Syed Hassan Ali
+                </h2>
+
+                <span>
+                    Coaching Management
+                </span>
+
             </div>
 
         </div>
@@ -55,50 +60,70 @@
             <button
                 class="menu-item active"
                 data-page="overview">
+
                 📊
                 <span>Dashboard</span>
+
             </button>
+
 
             <button
                 class="menu-item"
                 data-page="students">
+
                 👨‍🎓
                 <span>Student Management</span>
+
             </button>
+
 
             <button
                 class="menu-item"
                 data-page="attendance">
+
                 📷
                 <span>QR Attendance</span>
+
             </button>
+
 
             <button
                 class="menu-item"
                 data-page="fees">
+
                 💰
                 <span>Fee Management</span>
+
             </button>
+
 
             <button
                 class="menu-item"
                 data-page="tests">
+
                 📝
                 <span>Monthly Tests</span>
+
             </button>
+
 
             <button
                 class="menu-item"
                 data-page="results">
+
                 🎓
                 <span>Results</span>
+
             </button>
+
 
             <button
                 class="menu-item"
                 data-page="announcements">
+
                 📢
                 <span>Announcements</span>
+
             </button>
 
         </nav>
@@ -107,18 +132,22 @@
         <button
             id="logoutBtn"
             class="logout">
+
             🚪
             <span>Logout</span>
+
         </button>
 
     </aside>
 
 
+
     <!-- =====================================================
-         MAIN
+         MAIN CONTENT
     ====================================================== -->
 
     <main class="main">
+
 
         <!-- TOPBAR -->
 
@@ -144,13 +173,21 @@
                 </div>
 
                 <div class="admin-details">
-                    <strong>Administrator</strong>
-                    <span>Admin</span>
+
+                    <strong>
+                        Administrator
+                    </strong>
+
+                    <span>
+                        Admin
+                    </span>
+
                 </div>
 
             </div>
 
         </header>
+
 
 
         <!-- =================================================
@@ -161,7 +198,9 @@
             id="overview"
             class="page active">
 
+
             <div class="stats-grid">
+
 
                 <div class="stat-card">
 
@@ -170,11 +209,19 @@
                     </div>
 
                     <div>
-                        <span>Total Students</span>
-                        <h2 id="studentCount">0</h2>
+
+                        <span>
+                            Total Students
+                        </span>
+
+                        <h2 id="studentCount">
+                            0
+                        </h2>
+
                     </div>
 
                 </div>
+
 
 
                 <div class="stat-card">
@@ -184,11 +231,19 @@
                     </div>
 
                     <div>
-                        <span>Today's Attendance</span>
-                        <h2 id="attendanceCount">0</h2>
+
+                        <span>
+                            Today's Attendance
+                        </span>
+
+                        <h2 id="attendanceCount">
+                            0
+                        </h2>
+
                     </div>
 
                 </div>
+
 
 
                 <div class="stat-card">
@@ -198,11 +253,19 @@
                     </div>
 
                     <div>
-                        <span>Active Courses</span>
-                        <h2 id="courseCount">0</h2>
+
+                        <span>
+                            Active Courses
+                        </span>
+
+                        <h2 id="courseCount">
+                            0
+                        </h2>
+
                     </div>
 
                 </div>
+
 
 
                 <div class="stat-card">
@@ -212,8 +275,15 @@
                     </div>
 
                     <div>
-                        <span>Success Rate</span>
-                        <h2 id="successRate">0%</h2>
+
+                        <span>
+                            Success Rate
+                        </span>
+
+                        <h2 id="successRate">
+                            0%
+                        </h2>
+
                     </div>
 
                 </div>
@@ -221,13 +291,21 @@
             </div>
 
 
+
             <div class="panel">
 
                 <div class="panel-header">
 
                     <div>
-                        <h2>Recent Activity</h2>
-                        <p>Latest activity from the system</p>
+
+                        <h2>
+                            Recent Activity
+                        </h2>
+
+                        <p>
+                            Latest activity from the system
+                        </p>
+
                     </div>
 
                 </div>
@@ -254,6 +332,7 @@
         </section>
 
 
+
         <!-- =================================================
              STUDENT MANAGEMENT
         ================================================== -->
@@ -262,7 +341,9 @@
             id="students"
             class="page">
 
+
             <div class="panel">
+
 
                 <div class="panel-header">
 
@@ -290,6 +371,9 @@
                 </div>
 
 
+
+                <!-- SEARCH -->
+
                 <div class="student-tools">
 
                     <input
@@ -300,6 +384,9 @@
                 </div>
 
 
+
+                <!-- STUDENTS TABLE -->
+
                 <div class="table-wrapper">
 
                     <table>
@@ -308,13 +395,33 @@
 
                             <tr>
 
-                                <th>Student ID</th>
-                                <th>Name</th>
-                                <th>Father Name</th>
-                                <th>Phone</th>
-                                <th>Course / Batch</th>
-                                <th>Admission Date</th>
-                                <th>Actions</th>
+                                <th>
+                                    Student ID
+                                </th>
+
+                                <th>
+                                    Name
+                                </th>
+
+                                <th>
+                                    Father Name
+                                </th>
+
+                                <th>
+                                    Phone
+                                </th>
+
+                                <th>
+                                    Course / Batch
+                                </th>
+
+                                <th>
+                                    Admission Date
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
 
                             </tr>
 
@@ -342,210 +449,10 @@
                 </div>
 
 
-                <!-- =================================================
-                     STUDENT ID CARD
-                ================================================== -->
-
-                <div class="id-card-section">
-
-                    <div class="panel-header">
-
-                        <div>
-
-                            <h2>
-                                🎫 Student ID Card
-                            </h2>
-
-                            <p>
-                                Select a student to generate their ID card
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="id-card-tools">
-
-                        <select id="idCardStudentSelect">
-
-                            <option value="">
-                                Select Student
-                            </option>
-
-                        </select>
-
-
-                        <button
-                            type="button"
-                            id="generateIdCardBtn"
-                            class="primary-btn">
-
-                            🎫 Generate ID Card
-
-                        </button>
-
-                    </div>
-
-
-                    <!-- ID CARD PREVIEW -->
-
-                    <div
-                        id="idCardPreview"
-                        class="id-card-preview"
-                        style="display:none;">
-
-                        <div class="id-card">
-
-                            <!-- CARD HEADER -->
-
-                            <div class="id-card-header">
-
-                                <div class="id-card-logo">
-                                    SS
-                                </div>
-
-                                <div>
-
-                                    <h2>
-                                        Sir Syed Hassan Ali
-                                    </h2>
-
-                                    <p>
-                                        Coaching Management System
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- CARD BODY -->
-
-                            <div class="id-card-body">
-
-                                <div class="student-photo">
-
-                                    <span>
-                                        STUDENT
-                                    </span>
-
-                                </div>
-
-
-                                <div class="student-info">
-
-                                    <h3 id="cardStudentName">
-                                        Student Name
-                                    </h3>
-
-
-                                    <p>
-
-                                        <strong>
-                                            ID:
-                                        </strong>
-
-                                        <span id="cardStudentId">
-                                            STU-000000
-                                        </span>
-
-                                    </p>
-
-
-                                    <p>
-
-                                        <strong>
-                                            Father:
-                                        </strong>
-
-                                        <span id="cardFatherName">
-                                            Father Name
-                                        </span>
-
-                                    </p>
-
-
-                                    <p>
-
-                                        <strong>
-                                            Course:
-                                        </strong>
-
-                                        <span id="cardCourse">
-                                            Course
-                                        </span>
-
-                                    </p>
-
-
-                                    <p>
-
-                                        <strong>
-                                            Batch:
-                                        </strong>
-
-                                        <span id="cardBatch">
-                                            Batch
-                                        </span>
-
-                                    </p>
-
-                                </div>
-
-
-                                <!-- QR -->
-
-                                <div class="student-qr">
-
-                                    <div
-                                        id="cardQRCode">
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- CARD FOOTER -->
-
-                            <div class="id-card-footer">
-
-                                <span>
-                                    Sir Syed Hassan Ali Coaching
-                                </span>
-
-                                <span>
-                                    Student ID Card
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- CARD BUTTONS -->
-
-                        <div class="id-card-actions">
-
-                            <button
-                                type="button"
-                                id="printIdCardBtn"
-                                class="primary-btn">
-
-                                🖨️ Print ID Card
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
             </div>
 
         </section>
+
 
 
         <!-- =================================================
@@ -556,7 +463,9 @@
             id="attendance"
             class="page">
 
+
             <div class="panel">
+
 
                 <div class="panel-header">
 
@@ -582,6 +491,7 @@
                     </span>
 
                 </div>
+
 
 
                 <div class="qr-attendance-grid">
@@ -634,7 +544,8 @@
                     </div>
 
 
-                    <!-- RESULT -->
+
+                    <!-- STUDENT RESULT -->
 
                     <div class="attendance-result-card">
 
@@ -665,9 +576,11 @@
                 </div>
 
 
-                <!-- SUMMARY -->
+
+                <!-- ATTENDANCE SUMMARY -->
 
                 <div class="attendance-summary">
+
 
                     <div class="attendance-stat">
 
@@ -680,6 +593,7 @@
                         </strong>
 
                     </div>
+
 
 
                     <div class="attendance-stat">
@@ -697,9 +611,11 @@
                 </div>
 
 
-                <!-- HISTORY -->
+
+                <!-- ATTENDANCE HISTORY -->
 
                 <div class="attendance-history">
+
 
                     <div class="panel-header">
 
@@ -725,6 +641,7 @@
                     </div>
 
 
+
                     <div class="table-wrapper">
 
                         <table>
@@ -734,12 +651,30 @@
                                 <tr>
 
                                     <th>#</th>
-                                    <th>Student ID</th>
-                                    <th>Student Name</th>
-                                    <th>Course</th>
-                                    <th>Batch</th>
-                                    <th>Time</th>
-                                    <th>Status</th>
+
+                                    <th>
+                                        Student ID
+                                    </th>
+
+                                    <th>
+                                        Student Name
+                                    </th>
+
+                                    <th>
+                                        Course
+                                    </th>
+
+                                    <th>
+                                        Batch
+                                    </th>
+
+                                    <th>
+                                        Time
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
 
                                 </tr>
 
@@ -768,9 +703,11 @@
 
                 </div>
 
+
             </div>
 
         </section>
+
 
 
         <!-- =================================================
@@ -821,8 +758,9 @@
         </section>
 
 
+
         <!-- =================================================
-             TESTS
+             MONTHLY TESTS
         ================================================== -->
 
         <section
@@ -867,6 +805,7 @@
             </div>
 
         </section>
+
 
 
         <!-- =================================================
@@ -917,6 +856,7 @@
         </section>
 
 
+
         <!-- =================================================
              ANNOUNCEMENTS
         ================================================== -->
@@ -964,9 +904,11 @@
 
         </section>
 
+
     </main>
 
 </div>
+
 
 
 <!-- =========================================================
@@ -977,7 +919,9 @@
     id="studentModal"
     class="modal">
 
+
     <div class="modal-content">
+
 
         <div class="modal-header">
 
@@ -1007,14 +951,18 @@
         </div>
 
 
+
         <form id="studentForm">
+
 
             <input
                 type="hidden"
                 id="editStudentId">
 
 
+
             <div class="form-grid">
+
 
                 <div class="form-group">
 
@@ -1029,6 +977,7 @@
                         required>
 
                 </div>
+
 
 
                 <div class="form-group">
@@ -1046,6 +995,7 @@
                 </div>
 
 
+
                 <div class="form-group">
 
                     <label for="phone">
@@ -1059,6 +1009,7 @@
                         required>
 
                 </div>
+
 
 
                 <div class="form-group">
@@ -1076,6 +1027,7 @@
                 </div>
 
 
+
                 <div class="form-group">
 
                     <label for="batch">
@@ -1089,6 +1041,7 @@
                         required>
 
                 </div>
+
 
 
                 <div class="form-group">
@@ -1107,13 +1060,16 @@
             </div>
 
 
+
             <div
                 id="formMessage"
                 class="form-message">
             </div>
 
 
+
             <div class="modal-actions">
+
 
                 <button
                     type="button"
@@ -1136,11 +1092,13 @@
 
             </div>
 
+
         </form>
 
     </div>
 
 </div>
+
 
 
 <!-- =========================================================
@@ -1149,9 +1107,10 @@
 
 <script
     type="module"
-    src="./javascript/admin.js?v=5">
+    src="./javascript/admin.js?v=6">
 </script>
 
 
 </body>
+
 </html>
