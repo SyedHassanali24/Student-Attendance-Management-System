@@ -1,130 +1,435 @@
-{`<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard | Sir Syed Hassan Ali Coaching</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/admin.css">
+    <title>Admin Dashboard | Sir Syed Hassan Ali Coaching</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
 </head>
+
 <body>
 
 <div class="dashboard">
 
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-icon">SS</div>
-      <div>
-        <h2>Sir Syed Hassan Ali</h2>
-        <span>Admin Panel</span>
-      </div>
-    </div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-    <nav class="menu">
-      <button class="menu-item active" data-page="overview">Dashboard</button>
-      <button class="menu-item" data-page="students">Student Management</button>
-      <button class="menu-item" data-page="attendance">QR Attendance</button>
-      <button class="menu-item" data-page="fees">Fee Management</button>
-      <button class="menu-item" data-page="tests">Monthly Tests</button>
-      <button class="menu-item" data-page="results">Results</button>
-      <button class="menu-item" data-page="announcements">Announcements</button>
-    </nav>
+        <div class="brand">
+            <div class="brand-icon">SS</div>
 
-    <button id="logoutBtn" class="logout">Logout</button>
-  </aside>
-
-  <main class="main">
-
-    <header class="topbar">
-      <div>
-        <h1 id="pageTitle">Dashboard</h1>
-        <p>Manage your coaching system</p>
-      </div>
-      <div class="admin-user">
-        <span>Admin</span>
-      </div>
-    </header>
-
-    <section id="overview" class="page active">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span>Total Students</span>
-          <h2 id="studentCount">0</h2>
+            <div>
+                <h2>Sir Syed Hassan Ali</h2>
+                <span>Admin Panel</span>
+            </div>
         </div>
 
-        <div class="stat-card">
-          <span>Today's Attendance</span>
-          <h2 id="attendanceCount">0</h2>
-        </div>
+        <nav class="menu">
 
-        <div class="stat-card">
-          <span>Active Courses</span>
-          <h2 id="courseCount">0</h2>
-        </div>
+            <button class="menu-item active" data-page="overview">
+                📊 Dashboard
+            </button>
 
-        <div class="stat-card">
-          <span>Success Rate</span>
-          <h2 id="successRate">0%</h2>
-        </div>
-      </div>
+            <button class="menu-item" data-page="students">
+                👨‍🎓 Student Management
+            </button>
 
-      <div class="panel">
-        <h2>Recent Activity</h2>
-        <div id="recentActivity">
-          <p>No recent activity yet.</p>
-        </div>
-      </div>
-    </section>
+            <button class="menu-item" data-page="attendance">
+                📷 QR Attendance
+            </button>
 
-    <section id="students" class="page">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Student Management</h2>
-          <button class="primary-btn">Add Student</button>
-        </div>
-        <p>Students will be loaded from Firebase here.</p>
-      </div>
-    </section>
+            <button class="menu-item" data-page="fees">
+                💰 Fee Management
+            </button>
 
-    <section id="attendance" class="page">
-      <div class="panel">
-        <h2>QR Attendance</h2>
-        <p>Scan student QR cards and manage attendance records.</p>
-      </div>
-    </section>
+            <button class="menu-item" data-page="tests">
+                📝 Monthly Tests
+            </button>
 
-    <section id="fees" class="page">
-      <div class="panel">
-        <h2>Fee Management</h2>
-        <p>Track paid and unpaid monthly fees with complete history.</p>
-      </div>
-    </section>
+            <button class="menu-item" data-page="results">
+                🎓 Results
+            </button>
 
-    <section id="tests" class="page">
-      <div class="panel">
-        <h2>Monthly Tests</h2>
-        <p>Upload and manage monthly test marks.</p>
-      </div>
-    </section>
+            <button class="menu-item" data-page="announcements">
+                📢 Announcements
+            </button>
 
-    <section id="results" class="page">
-      <div class="panel">
-        <h2>Results</h2>
-        <p>Publish student results securely.</p>
-      </div>
-    </section>
+        </nav>
 
-    <section id="announcements" class="page">
-      <div class="panel">
-        <h2>Announcements</h2>
-        <p>Send notices to student dashboards.</p>
-      </div>
-    </section>
+        <button id="logoutBtn" class="logout">
+            🚪 Logout
+        </button>
 
-  </main>
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <h1 id="pageTitle">Dashboard</h1>
+                <p>Sir Syed Hassan Ali Coaching Management System</p>
+            </div>
+
+            <div class="admin-user">
+                👤 Admin
+            </div>
+
+        </header>
+
+
+        <!-- ================= DASHBOARD ================= -->
+
+        <section id="overview" class="page active">
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+                    <span>Total Students</span>
+                    <h2 id="studentCount">0</h2>
+                </div>
+
+                <div class="stat-card">
+                    <span>Today's Attendance</span>
+                    <h2 id="attendanceCount">0</h2>
+                </div>
+
+                <div class="stat-card">
+                    <span>Active Courses</span>
+                    <h2 id="courseCount">0</h2>
+                </div>
+
+                <div class="stat-card">
+                    <span>Success Rate</span>
+                    <h2 id="successRate">0%</h2>
+                </div>
+
+            </div>
+
+
+            <div class="panel">
+
+                <h2>Recent Activity</h2>
+
+                <div id="recentActivity">
+                    <p>No recent activity yet.</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= STUDENTS ================= -->
+
+        <section id="students" class="page">
+
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>Student Management</h2>
+                        <p>Manage all registered students</p>
+                    </div>
+
+                    <button id="addStudentBtn" class="primary-btn">
+                        + Add Student
+                    </button>
+
+                </div>
+
+
+                <!-- SEARCH -->
+
+                <div class="student-tools">
+
+                    <input
+                        type="text"
+                        id="studentSearch"
+                        placeholder="Search student by name, ID or phone..."
+                    >
+
+                </div>
+
+
+                <!-- STUDENT TABLE -->
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Father Name</th>
+                                <th>Phone</th>
+                                <th>Course / Batch</th>
+                                <th>Admission Date</th>
+                                <th>Actions</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="studentsTableBody">
+
+                            <tr>
+
+                                <td colspan="7" class="empty">
+                                    Loading students...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ATTENDANCE ================= -->
+
+        <section id="attendance" class="page">
+
+            <div class="panel">
+
+                <h2>📷 QR Attendance</h2>
+
+                <p>
+                    QR attendance system will be connected here.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= FEES ================= -->
+
+        <section id="fees" class="page">
+
+            <div class="panel">
+
+                <h2>💰 Fee Management</h2>
+
+                <p>
+                    Monthly fee management will be available here.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= TESTS ================= -->
+
+        <section id="tests" class="page">
+
+            <div class="panel">
+
+                <h2>📝 Monthly Tests</h2>
+
+                <p>
+                    Monthly test marks will be managed here.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RESULTS ================= -->
+
+        <section id="results" class="page">
+
+            <div class="panel">
+
+                <h2>🎓 Results</h2>
+
+                <p>
+                    Student results will be managed here.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ANNOUNCEMENTS ================= -->
+
+        <section id="announcements" class="page">
+
+            <div class="panel">
+
+                <h2>📢 Announcements</h2>
+
+                <p>
+                    Announcements will be managed here.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
 </div>
 
+
+<!-- ================= STUDENT MODAL ================= -->
+
+<div id="studentModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="modalTitle">Add Student</h2>
+
+            <button id="closeModal" class="close-btn">
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="studentForm">
+
+            <input type="hidden" id="editStudentId">
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>Student Name</label>
+
+                    <input
+                        type="text"
+                        id="studentName"
+                        placeholder="Enter student name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Father Name</label>
+
+                    <input
+                        type="text"
+                        id="fatherName"
+                        placeholder="Enter father name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Phone Number</label>
+
+                    <input
+                        type="tel"
+                        id="phone"
+                        placeholder="03XXXXXXXXX"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Course</label>
+
+                    <input
+                        type="text"
+                        id="course"
+                        placeholder="e.g. Computer Networking"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Batch</label>
+
+                    <input
+                        type="text"
+                        id="batch"
+                        placeholder="e.g. Morning"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Admission Date</label>
+
+                    <input
+                        type="date"
+                        id="admissionDate"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div id="formMessage" class="form-message"></div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="cancelBtn"
+                    class="secondary-btn"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="primary-btn"
+                    id="saveStudentBtn"
+                >
+                    Save Student
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
 <script type="module" src="javascript/admin.js"></script>
+
 </body>
-</html>`}
+</html>
