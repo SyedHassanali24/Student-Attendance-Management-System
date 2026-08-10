@@ -1,61 +1,107 @@
-/* ==========================================
-   RESET
-========================================== */
+/* =========================================================
+   GLOBAL STYLES
+   Sir Syed Hassan Ali Coaching Management System
+========================================================= */
 
-*{
-
-    margin:0;
-
-    padding:0;
-
-    box-sizing:border-box;
-
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-/* ==========================================
-   BODY
-========================================== */
-
-body{
-
-    font-family:'Poppins',sans-serif;
-
-    background:var(--background);
-
-    color:var(--text-dark);
-
+html {
+    scroll-behavior: smooth;
 }
 
-/* ==========================================
-   LINKS
-========================================== */
-
-a{
-
-    text-decoration:none;
-
-    color:inherit;
-
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f7fb;
+    color: #172033;
+    line-height: 1.5;
 }
 
-/* ==========================================
-   LIST
-========================================== */
-
-ul{
-
-    list-style:none;
-
+img {
+    max-width: 100%;
+    display: block;
 }
 
-/* ==========================================
-   IMAGE
-========================================== */
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
 
-img{
+button {
+    cursor: pointer;
+}
 
-    max-width:100%;
+a {
+    color: inherit;
+    text-decoration: none;
+}
 
-    display:block;
+/* =========================================================
+   COMMON
+========================================================= */
+
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: #6b7280;
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* =========================================================
+   FORM BASE
+========================================================= */
+
+input,
+textarea,
+select {
+    outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #9ca3af;
+}
+
+/* =========================================================
+   RESPONSIVE BASE
+========================================================= */
+
+@media (max-width: 768px) {
+
+    body {
+        overflow-x: hidden;
+    }
 
 }
