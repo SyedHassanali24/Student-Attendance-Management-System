@@ -879,3 +879,226 @@ td strong {
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   PROFESSIONAL STUDENT ID CARD
+========================================================= */
+
+.id-card-page {
+    min-height: 100vh;
+    padding: 30px;
+    background: #eef2f7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.student-id-card {
+    width: 85.6mm;
+    height: 54mm;
+    background: #ffffff;
+    border-radius: 5mm;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.20);
+    border: 1px solid #dbe3ef;
+}
+
+/* Header */
+
+.student-id-header {
+    height: 16mm;
+    padding: 3mm 4mm;
+    color: #ffffff;
+    background: linear-gradient(
+        135deg,
+        #172554,
+        #1d4ed8
+    );
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+}
+
+.student-id-logo {
+    width: 10mm;
+    height: 10mm;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #172554;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.student-id-heading h2 {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 800;
+}
+
+.student-id-heading p {
+    margin: 1.5mm 0 0;
+    font-size: 7px;
+    opacity: 0.9;
+}
+
+/* Body */
+
+.student-id-body {
+    height: 31mm;
+    padding: 3mm 4mm;
+    display: grid;
+    grid-template-columns: 20mm 1fr 22mm;
+    gap: 3mm;
+    align-items: center;
+}
+
+/* Photo */
+
+.student-id-photo {
+    width: 20mm;
+    height: 25mm;
+    border-radius: 2mm;
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #64748b;
+    font-size: 6px;
+    font-weight: 700;
+}
+
+/* Student information */
+
+.student-id-info {
+    min-width: 0;
+}
+
+.student-id-info h3 {
+    margin: 0 0 2mm;
+    color: #172554;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.student-id-info p {
+    margin: 1mm 0;
+    color: #475569;
+    font-size: 6.8px;
+    line-height: 1.25;
+}
+
+.student-id-info strong {
+    color: #172554;
+}
+
+/* QR */
+
+.student-id-qr {
+    width: 22mm;
+    height: 22mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.student-id-qr img {
+    width: 22mm !important;
+    height: 22mm !important;
+}
+
+/* Footer */
+
+.student-id-footer {
+    height: 7mm;
+    padding: 0 4mm;
+    background: #f1f5f9;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #475569;
+    font-size: 5.5px;
+    font-weight: 600;
+}
+
+/* Download button */
+
+.id-card-download {
+    margin-top: 20px;
+    width: 85.6mm;
+    padding: 11px 15px;
+    border: 0;
+    border-radius: 8px;
+    background: #1d4ed8;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(29, 78, 216, 0.25);
+}
+
+.id-card-download:hover {
+    background: #1e40af;
+}
+
+/* Print / PDF */
+
+@media print {
+
+    @page {
+        size: 85.6mm 54mm;
+        margin: 0;
+    }
+
+    html,
+    body {
+        width: 85.6mm;
+        height: 54mm;
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+    }
+
+    .id-card-page {
+        width: 85.6mm;
+        height: 54mm;
+        min-height: 54mm;
+        padding: 0;
+        margin: 0;
+        display: block;
+        background: #ffffff;
+    }
+
+    .student-id-card {
+        width: 85.6mm;
+        height: 54mm;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .id-card-download {
+        display: none;
+    }
+}
