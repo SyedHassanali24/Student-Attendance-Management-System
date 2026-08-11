@@ -16,16 +16,16 @@ import {
 
 (() => {
 
+    let feeModuleStarted = false;
+
     const start = () => {
 
-        const tableBody = document.getElementById("feesTableBody");
-
-        if (!tableBody) {
-            console.error("❌ feesTableBody not found.");
+        if (feeModuleStarted) {
+            console.warn("⚠️ Fee Management already initialized. Skipping duplicate start.");
             return;
         }
 
-        injectFeeStyles();
+        feeModuleStarted = true;
 
         const monthInput = document.getElementById("feeMonth");
         const searchInput = document.getElementById("feeStudentSearch");
