@@ -1,15 +1,11 @@
-/* =========================================================
-   STUDENT DASHBOARD
-   Firebase + Firestore
-========================================================= */
-
-import { db, auth } from "../firebase/firebase-config.js";
+import { auth, db } from "../firebase/firebase-config.js";
 
 import {
     collection,
     query,
     where,
-    onSnapshot
+    onSnapshot,
+    getDocs
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 import {
@@ -18,10 +14,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 
-/* =========================================================
-   STATE
-========================================================= */
-
 let currentStudent = null;
 
 let attendanceRecords = [];
@@ -29,376 +21,276 @@ let feeRecords = [];
 let resultRecords = [];
 let announcementRecords = [];
 
-let pieChart = null;
-let lineChart = null;
+let attendancePieChart = null;
+let attendanceLineChart = null;
 
 
 /* =========================================================
-   ELEMENT HELPER
+   AUTH
 ========================================================= */
 
-const $ = id =>
-    document.getElementById(id);
+onAuthStateChanged(auth, async (user) => {
 
+    if (!user) {
 
-/* =========================================================
-   CURRENT MONTH
-========================================================= */
+        window.location.href = "./login.html";
 
-function currentMonth() {
-
-    const date = new Date();
-
-    return (
-        date.getFullYear() +
-        "-" +
-        String(date.getMonth() + 1).padStart(2, "0")
-    );
-}
-
-
-/* =========================================================
-   DATE FORMAT
-========================================================= */
-
-function formatDate(value) {
-
-    if (!value) return "—";
-
-    let date;
-
-    if (
-        typeof value.toDate === "function"
-    ) {
-        date = value.toDate();
+        return;
     }
 
-    else if (
-        value.seconds
-    ) {
-        date =
-            new Date(
-                value.seconds * 1000
-            );
+    try {
+
+        await loadStudent(user);
+
+    } catch (error) {
+
+        console.error(
+            "Student Dashboard Error:",
+            error
+        );
+
+        showDashboardError(
+            "Unable to load student information."
+        );
+
     }
 
-    else {
-        date =
-            new Date(
-                `${value}T00:00:00`
-            );
-    }
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-        return String(value);
-    }
-
-    return date.toLocaleDateString(
-        "en-GB",
-        {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-        }
-    );
-}
-
-
-/* =========================================================
-   MONTH FORMAT
-========================================================= */
-
-function formatMonth(value) {
-
-    if (!value) return "—";
-
-    const parts =
-        String(value).split("-");
-
-    if (parts.length !== 2) {
-        return value;
-    }
-
-    return new Date(
-        Number(parts[0]),
-        Number(parts[1]) - 1,
-        1
-    ).toLocaleDateString(
-        "en-US",
-        {
-            month: "long",
-            year: "numeric"
-        }
-    );
-}
-
-
-/* =========================================================
-   AUTHENTICATION
-========================================================= */
-
-onAuthStateChanged(
-    auth,
-    user => {
-
-        if (!user) {
-
-            window.location.href =
-                "student-login.html";
-
-            return;
-        }
-
-        loadStudent(user);
-    }
-);
+});
 
 
 /* =========================================================
    LOAD STUDENT
 ========================================================= */
 
-function loadStudent(user) {
+async function loadStudent(user) {
 
-    const studentsRef =
-        collection(
-            db,
-            "students"
-        );
+    let student = null;
+
+    /*
+     * First try Firebase Auth UID.
+     */
+
+    const uidQuery = query(
+        collection(db, "students"),
+        where("uid", "==", user.uid)
+    );
+
+    const uidSnapshot =
+        await getDocs(uidQuery);
+
+
+    if (!uidSnapshot.empty) {
+
+        const item =
+            uidSnapshot.docs[0];
+
+        student = {
+            id: item.id,
+            ...item.data()
+        };
+
+    }
 
 
     /*
-       The student login should authenticate
-       the Firebase user and the student's
-       document should contain the user's uid.
+     * If UID is not stored in student document,
+     * try email.
+     */
 
-       We first try uid.
-    */
+    if (!student && user.email) {
 
-    const studentQuery =
-        query(
-            studentsRef,
-            where(
-                "uid",
-                "==",
-                user.uid
-            )
+        const emailQuery = query(
+            collection(db, "students"),
+            where("email", "==", user.email)
         );
 
-
-    onSnapshot(
-        studentQuery,
-
-        snapshot => {
-
-            if (!snapshot.empty) {
-
-                currentStudent = {
-                    id:
-                        snapshot.docs[0].id,
-
-                    ...snapshot.docs[0].data()
-                };
-
-                initializeDashboard();
-
-                return;
-            }
+        const emailSnapshot =
+            await getDocs(emailQuery);
 
 
-            /*
-               Fallback:
-               If the current student document
-               does not yet have uid, try email.
-            */
+        if (!emailSnapshot.empty) {
 
-            if (user.email) {
+            const item =
+                emailSnapshot.docs[0];
 
-                const emailQuery =
-                    query(
-                        studentsRef,
-                        where(
-                            "email",
-                            "==",
-                            user.email
-                        )
-                    );
-
-
-                onSnapshot(
-                    emailQuery,
-
-                    emailSnapshot => {
-
-                        if (
-                            !emailSnapshot.empty
-                        ) {
-
-                            currentStudent = {
-                                id:
-                                    emailSnapshot.docs[0].id,
-
-                                ...emailSnapshot.docs[0].data()
-                            };
-
-                            initializeDashboard();
-
-                        }
-
-                        else {
-
-                            showError(
-                                "Student profile was not found."
-                            );
-
-                        }
-
-                    },
-
-                    error => {
-
-                        console.error(
-                            "Student email query error:",
-                            error
-                        );
-
-                        showError(
-                            "Unable to load student profile."
-                        );
-
-                    }
-                );
-
-            }
-
-            else {
-
-                showError(
-                    "Student profile was not found."
-                );
-
-            }
-
-        },
-
-        error => {
-
-            console.error(
-                "Student query error:",
-                error
-            );
-
-            showError(
-                "Unable to load your student profile."
-            );
+            student = {
+                id: item.id,
+                ...item.data()
+            };
 
         }
+
+    }
+
+
+    /*
+     * Final fallback:
+     * studentId saved in localStorage.
+     */
+
+    if (!student) {
+
+        const savedStudentId =
+            localStorage.getItem(
+                "studentId"
+            );
+
+
+        if (savedStudentId) {
+
+            const idQuery = query(
+                collection(db, "students"),
+                where(
+                    "studentId",
+                    "==",
+                    savedStudentId
+                )
+            );
+
+            const idSnapshot =
+                await getDocs(idQuery);
+
+
+            if (!idSnapshot.empty) {
+
+                const item =
+                    idSnapshot.docs[0];
+
+                student = {
+                    id: item.id,
+                    ...item.data()
+                };
+
+            }
+
+        }
+
+    }
+
+
+    if (!student) {
+
+        showDashboardError(
+            "Student profile was not found. Please contact administration."
+        );
+
+        return;
+
+    }
+
+
+    currentStudent = student;
+
+
+    localStorage.setItem(
+        "studentId",
+        student.studentId || ""
     );
-}
 
 
-/* =========================================================
-   INITIALIZE
-========================================================= */
+    renderStudentProfile(
+        student
+    );
 
-function initializeDashboard() {
 
-    renderStudentProfile();
-
-    loadAttendance();
-
-    loadFees();
-
-    loadResults();
-
-    loadAnnouncements();
-
-    setupNavigation();
+    await Promise.all([
+        loadAttendance(student),
+        loadFees(student),
+        loadResults(student),
+        loadAnnouncements()
+    ]);
 
 }
 
 
 /* =========================================================
-   PROFILE
+   STUDENT PROFILE
 ========================================================= */
 
-function renderStudentProfile() {
-
-    const student =
-        currentStudent;
-
-    if (!student) return;
-
+function renderStudentProfile(student) {
 
     const name =
         student.name ||
+        student.studentName ||
         "Student";
+
 
     const studentId =
         student.studentId ||
         "—";
 
 
-    if ($("welcomeName")) {
-        $("welcomeName").textContent =
-            name;
-    }
+    setText(
+        "welcomeName",
+        name
+    );
 
-    if ($("welcomeStudentId")) {
-        $("welcomeStudentId").textContent =
-            studentId;
-    }
+    setText(
+        "welcomeStudentId",
+        studentId
+    );
 
-    if ($("topStudentName")) {
-        $("topStudentName").textContent =
-            name;
-    }
+    setText(
+        "topStudentName",
+        name
+    );
 
-    if ($("topStudentId")) {
-        $("topStudentId").textContent =
-            studentId;
-    }
+    setText(
+        "topStudentId",
+        studentId
+    );
 
-    if ($("profileAvatar")) {
-        $("profileAvatar").textContent =
+
+    setText(
+        "profileName",
+        name
+    );
+
+    setText(
+        "profileStudentId",
+        studentId
+    );
+
+    setText(
+        "profileFatherName",
+        student.fatherName ||
+        "—"
+    );
+
+    setText(
+        "profilePhone",
+        student.phone ||
+        "—"
+    );
+
+    setText(
+        "profileCourse",
+        student.course ||
+        "—"
+    );
+
+    setText(
+        "profileBatch",
+        student.batch ||
+        "—"
+    );
+
+
+    const avatar =
+        document.querySelector(
+            "#profileAvatar"
+        );
+
+
+    if (avatar) {
+
+        avatar.textContent =
             name
+                .trim()
                 .charAt(0)
-                .toUpperCase();
-    }
+                .toUpperCase() ||
+            "S";
 
-
-    if ($("profileName")) {
-        $("profileName").textContent =
-            name;
-    }
-
-    if ($("profileStudentId")) {
-        $("profileStudentId").textContent =
-            studentId;
-    }
-
-    if ($("profileFatherName")) {
-        $("profileFatherName").textContent =
-            student.fatherName || "—";
-    }
-
-    if ($("profileCourse")) {
-        $("profileCourse").textContent =
-            student.course || "—";
-    }
-
-    if ($("profileBatch")) {
-        $("profileBatch").textContent =
-            student.batch || "—";
-    }
-
-    if ($("profilePhone")) {
-        $("profilePhone").textContent =
-            student.phone || "—";
     }
 
 }
@@ -408,77 +300,105 @@ function renderStudentProfile() {
    ATTENDANCE
 ========================================================= */
 
-function loadAttendance() {
+async function loadAttendance(student) {
 
-    if (!currentStudent) return;
-
-
-    const attendanceRef =
-        collection(
-            db,
-            "attendance"
-        );
+    attendanceRecords = [];
 
 
-    /*
-       Existing admin attendance records
-       use studentDocId and studentId.
-    */
+    const queries = [];
 
-    const studentQuery =
+
+    queries.push(
         query(
-            attendanceRef,
+            collection(db, "attendance"),
             where(
                 "studentDocId",
                 "==",
-                currentStudent.id
+                student.id
+            )
+        )
+    );
+
+
+    if (student.studentId) {
+
+        queries.push(
+            query(
+                collection(db, "attendance"),
+                where(
+                    "studentId",
+                    "==",
+                    student.studentId
+                )
             )
         );
 
+    }
 
-    onSnapshot(
-        studentQuery,
 
-        snapshot => {
+    let found = false;
 
-            attendanceRecords =
-                snapshot.docs
-                    .map(
-                        doc => ({
-                            id: doc.id,
-                            ...doc.data()
+
+    for (
+        const attendanceQuery
+        of queries
+    ) {
+
+        try {
+
+            const snapshot =
+                await getDocs(
+                    attendanceQuery
+                );
+
+
+            if (!snapshot.empty) {
+
+                attendanceRecords =
+                    snapshot.docs.map(
+                        item => ({
+                            id: item.id,
+                            ...item.data()
                         })
                     );
 
+                found = true;
 
-            /*
-               If no records by document ID,
-               the dashboard will still remain usable.
-            */
+                break;
 
-            renderAttendance();
+            }
 
-        },
+        } catch (error) {
 
-        error => {
-
-            console.error(
-                "Attendance error:",
+            console.warn(
+                "Attendance query failed:",
                 error
             );
 
-            renderAttendance();
-
         }
+
+    }
+
+
+    if (!found) {
+
+        attendanceRecords = [];
+
+    }
+
+
+    renderAttendance(
+        attendanceRecords
     );
+
 }
 
 
 /* =========================================================
-   ATTENDANCE ANALYTICS
+   RENDER ATTENDANCE
 ========================================================= */
 
-function calculateAttendance() {
+function renderAttendance(records) {
 
     let present = 0;
     let absent = 0;
@@ -486,47 +406,49 @@ function calculateAttendance() {
     let leave = 0;
 
 
-    attendanceRecords.forEach(
-        record => {
+    records.forEach(record => {
 
-            const status =
-                String(
-                    record.status || ""
-                ).toLowerCase();
+        const status =
+            String(
+                record.status ||
+                ""
+            )
+                .toLowerCase()
+                .trim();
 
 
-            if (
-                status === "present"
-            ) {
-                present++;
-            }
+        if (
+            status === "present" ||
+            status === "p"
+        ) {
 
-            else if (
-                status === "absent"
-            ) {
-                absent++;
-            }
+            present++;
 
-            else if (
-                status === "late"
-            ) {
-                late++;
-            }
+        } else if (
+            status === "absent" ||
+            status === "a"
+        ) {
 
-            else if (
-                status === "leave"
-            ) {
-                leave++;
-            }
+            absent++;
+
+        } else if (
+            status === "late" ||
+            status === "l"
+        ) {
+
+            late++;
+
+        } else if (
+            status === "leave" ||
+            status === "on leave"
+        ) {
+
+            leave++;
 
         }
-    );
 
+    });
 
-    /*
-       Older admin scanner records are saved
-       with status = Present.
-    */
 
     const total =
         present +
@@ -535,142 +457,378 @@ function calculateAttendance() {
         leave;
 
 
-    const attendancePercent =
-        total
+    const percentage =
+        total > 0
             ? Math.round(
-                (
-                    present +
-                    late
-                ) /
-                total *
-                100
+                (present / total) * 100
             )
             : 0;
 
 
-    return {
+    setText(
+        "attendancePercent",
+        `${percentage}%`
+    );
+
+    setText(
+        "attendancePagePercent",
+        `${percentage}%`
+    );
+
+
+    setText(
+        "presentDays",
+        present
+    );
+
+    setText(
+        "absentDays",
+        absent
+    );
+
+
+    setText(
+        "attendancePagePresent",
+        present
+    );
+
+    setText(
+        "attendancePageAbsent",
+        absent
+    );
+
+    setText(
+        "attendancePageLate",
+        late
+    );
+
+    setText(
+        "attendancePageLeave",
+        leave
+    );
+
+
+    setText(
+        "legendPresent",
+        present
+    );
+
+    setText(
+        "legendAbsent",
+        absent
+    );
+
+    setText(
+        "legendLate",
+        late
+    );
+
+    setText(
+        "legendLeave",
+        leave
+    );
+
+
+    setText(
+        "attendanceStatus",
+        total
+            ? `${present} of ${total} days present`
+            : "No attendance data"
+    );
+
+
+    setText(
+        "overviewAttendance",
+        `${percentage}% attendance`
+    );
+
+
+    createAttendancePie(
         present,
         absent,
         late,
-        leave,
-        total,
-        attendancePercent
-    };
+        leave
+    );
+
+
+    createAttendanceLine(
+        records
+    );
+
+
+    renderAttendanceTable(
+        records
+    );
+
 }
 
 
 /* =========================================================
-   RENDER ATTENDANCE
+   ATTENDANCE PIE
 ========================================================= */
 
-function renderAttendance() {
+function createAttendancePie(
+    present,
+    absent,
+    late,
+    leave
+) {
 
-    const stats =
-        calculateAttendance();
-
-
-    /* DASHBOARD */
-
-    if ($("attendancePercent")) {
-        $("attendancePercent").textContent =
-            `${stats.attendancePercent}%`;
-    }
-
-    if ($("presentDays")) {
-        $("presentDays").textContent =
-            stats.present;
-    }
-
-    if ($("absentDays")) {
-        $("absentDays").textContent =
-            stats.absent;
-    }
+    const canvas =
+        document.getElementById(
+            "attendancePieChart"
+        );
 
 
-    /* PAGE */
-
-    if ($("attendancePagePercent")) {
-        $("attendancePagePercent").textContent =
-            `${stats.attendancePercent}%`;
-    }
-
-    if ($("attendancePagePresent")) {
-        $("attendancePagePresent").textContent =
-            stats.present;
-    }
-
-    if ($("attendancePageAbsent")) {
-        $("attendancePageAbsent").textContent =
-            stats.absent;
-    }
-
-    if ($("attendancePageLate")) {
-        $("attendancePageLate").textContent =
-            stats.late;
-    }
-
-    if ($("attendancePageLeave")) {
-        $("attendancePageLeave").textContent =
-            stats.leave;
-    }
+    if (!canvas) return;
 
 
-    /* STATUS */
+    if (
+        typeof Chart ===
+        "undefined"
+    ) {
 
-    if ($("attendanceStatus")) {
+        console.warn(
+            "Chart.js not loaded."
+        );
 
-        if (
-            stats.attendancePercent >= 80
-        ) {
-            $("attendanceStatus").textContent =
-                "Excellent";
-        }
-
-        else if (
-            stats.attendancePercent >= 60
-        ) {
-            $("attendanceStatus").textContent =
-                "Good";
-        }
-
-        else {
-            $("attendanceStatus").textContent =
-                "Needs Attention";
-        }
+        return;
 
     }
 
 
-    /* LEGEND */
+    if (attendancePieChart) {
 
-    if ($("legendPresent")) {
-        $("legendPresent").textContent =
-            stats.present;
-    }
+        attendancePieChart.destroy();
 
-    if ($("legendAbsent")) {
-        $("legendAbsent").textContent =
-            stats.absent;
-    }
-
-    if ($("legendLate")) {
-        $("legendLate").textContent =
-            stats.late;
-    }
-
-    if ($("legendLeave")) {
-        $("legendLeave").textContent =
-            stats.leave;
     }
 
 
-    renderAttendanceTable();
+    attendancePieChart =
+        new Chart(
+            canvas,
+            {
+                type: "doughnut",
 
-    renderCharts();
+                data: {
 
-    updateAttendanceOverview(
-        stats
-    );
+                    labels: [
+                        "Present",
+                        "Absent",
+                        "Late",
+                        "Leave"
+                    ],
+
+                    datasets: [
+                        {
+                            data: [
+                                present,
+                                absent,
+                                late,
+                                leave
+                            ],
+
+                            borderWidth: 0
+                        }
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    cutout: "68%",
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   ATTENDANCE LINE
+========================================================= */
+
+function createAttendanceLine(
+    records
+) {
+
+    const canvas =
+        document.getElementById(
+            "attendanceLineChart"
+        );
+
+
+    if (!canvas) return;
+
+
+    if (
+        typeof Chart ===
+        "undefined"
+    ) return;
+
+
+    if (attendanceLineChart) {
+
+        attendanceLineChart.destroy();
+
+    }
+
+
+    const sorted =
+        [...records]
+            .sort(
+                (a, b) =>
+                    getRecordDate(a)
+                        .localeCompare(
+                            getRecordDate(b)
+                        )
+            )
+            .slice(-12);
+
+
+    const labels =
+        sorted.map(
+            record =>
+                formatShortDate(
+                    getRecordDate(record)
+                )
+        );
+
+
+    const values =
+        sorted.map(
+            record => {
+
+                const status =
+                    String(
+                        record.status ||
+                        ""
+                    )
+                        .toLowerCase();
+
+
+                if (
+                    status === "present" ||
+                    status === "p"
+                ) return 1;
+
+
+                if (
+                    status === "late" ||
+                    status === "l"
+                ) return 0.5;
+
+
+                return 0;
+
+            }
+        );
+
+
+    attendanceLineChart =
+        new Chart(
+            canvas,
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels,
+
+                    datasets: [
+                        {
+                            label:
+                                "Attendance",
+
+                            data:
+                                values,
+
+                            tension:
+                                0.35,
+
+                            fill:
+                                false,
+
+                            pointRadius:
+                                4,
+
+                            pointHoverRadius:
+                                6
+
+                        }
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        y: {
+
+                            min: 0,
+
+                            max: 1,
+
+                            ticks: {
+
+                                callback:
+                                    value => {
+
+                                        if (
+                                            value === 1
+                                        ) {
+                                            return "Present";
+                                        }
+
+                                        if (
+                                            value === 0.5
+                                        ) {
+                                            return "Late";
+                                        }
+
+                                        return "Absent";
+
+                                    }
+
+                            }
+
+                        }
+
+                    },
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
 }
 
 
@@ -678,26 +836,17 @@ function renderAttendance() {
    ATTENDANCE TABLE
 ========================================================= */
 
-function renderAttendanceTable() {
+function renderAttendanceTable(
+    records
+) {
 
     const body =
-        $("attendanceTableBody");
+        document.getElementById(
+            "attendanceTableBody"
+        );
+
 
     if (!body) return;
-
-
-    const records =
-        [...attendanceRecords]
-            .sort(
-                (a, b) =>
-                    String(
-                        b.date || ""
-                    ).localeCompare(
-                        String(
-                            a.date || ""
-                        )
-                    )
-            );
 
 
     if (!records.length) {
@@ -711,302 +860,70 @@ function renderAttendanceTable() {
         `;
 
         return;
+
     }
+
+
+    const sorted =
+        [...records]
+            .sort(
+                (a, b) =>
+                    getRecordDate(b)
+                        .localeCompare(
+                            getRecordDate(a)
+                        )
+            );
 
 
     body.innerHTML =
-        records
-            .map(
-                record => {
+        sorted
+            .map(record => {
 
-                    const status =
-                        String(
-                            record.status ||
-                            "Present"
-                        );
-
-                    const statusClass =
-                        status
-                            .toLowerCase();
-
-
-                    return `
-                        <tr>
-
-                            <td>
-                                ${escapeHTML(
-                                    formatDate(
-                                        record.date
-                                    )
-                                )}
-                            </td>
-
-                            <td>
-                                <span
-                                    class="status-badge status-${statusClass}"
-                                >
-                                    ${escapeHTML(
-                                        status
-                                    )}
-                                </span>
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    record.course ||
-                                    currentStudent.course ||
-                                    "—"
-                                )}
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    record.batch ||
-                                    currentStudent.batch ||
-                                    "—"
-                                )}
-                            </td>
-
-                        </tr>
-                    `;
-                }
-            )
-            .join("");
-}
-
-
-/* =========================================================
-   CHARTS
-========================================================= */
-
-function renderCharts() {
-
-    if (
-        typeof Chart ===
-        "undefined"
-    ) {
-        console.warn(
-            "Chart.js not loaded."
-        );
-
-        return;
-    }
-
-
-    const stats =
-        calculateAttendance();
-
-
-    const pieCanvas =
-        $("attendancePieChart");
-
-
-    if (pieCanvas) {
-
-        if (pieChart) {
-            pieChart.destroy();
-        }
-
-
-        pieChart =
-            new Chart(
-                pieCanvas,
-                {
-                    type: "doughnut",
-
-                    data: {
-                        labels: [
-                            "Present",
-                            "Absent",
-                            "Late",
-                            "Leave"
-                        ],
-
-                        datasets: [
-                            {
-                                data: [
-                                    stats.present,
-                                    stats.absent,
-                                    stats.late,
-                                    stats.leave
-                                ],
-
-                                backgroundColor: [
-                                    "#10b981",
-                                    "#ef4444",
-                                    "#f59e0b",
-                                    "#6366f1"
-                                ],
-
-                                borderWidth: 0
-                            }
-                        ]
-                    },
-
-                    options: {
-                        responsive: true,
-
-                        maintainAspectRatio:
-                            false,
-
-                        cutout: "70%",
-
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            );
-
-    }
-
-
-    const lineCanvas =
-        $("attendanceLineChart");
-
-
-    if (lineCanvas) {
-
-        if (lineChart) {
-            lineChart.destroy();
-        }
-
-
-        const sorted =
-            [...attendanceRecords]
-                .sort(
-                    (a, b) =>
-                        String(
-                            a.date || ""
-                        ).localeCompare(
-                            String(
-                                b.date || ""
-                            )
-                        )
-                )
-                .slice(-10);
-
-
-        const labels =
-            sorted.map(
-                record =>
+                const status =
                     String(
-                        record.date ||
-                        ""
-                    ).slice(5)
-            );
+                        record.status ||
+                        "Unknown"
+                    );
 
 
-        let runningPresent = 0;
+                return `
+                    <tr>
 
-        const values =
-            sorted.map(
-                record => {
+                        <td>
+                            ${escapeHtml(
+                                formatDate(
+                                    getRecordDate(record)
+                                )
+                            )}
+                        </td>
 
-                    const status =
-                        String(
-                            record.status ||
-                            "Present"
-                        ).toLowerCase();
+                        <td>
+                            <span class="attendance-status ${statusClass(status)}">
+                                ${escapeHtml(status)}
+                            </span>
+                        </td>
 
-                    if (
-                        status === "present" ||
-                        status === "late"
-                    ) {
-                        runningPresent++;
-                    }
+                        <td>
+                            ${escapeHtml(
+                                record.course ||
+                                currentStudent?.course ||
+                                "—"
+                            )}
+                        </td>
 
-                    return runningPresent;
-                }
-            );
+                        <td>
+                            ${escapeHtml(
+                                record.batch ||
+                                currentStudent?.batch ||
+                                "—"
+                            )}
+                        </td>
 
+                    </tr>
+                `;
 
-        lineChart =
-            new Chart(
-                lineCanvas,
-                {
-                    type: "line",
-
-                    data: {
-
-                        labels,
-
-                        datasets: [
-                            {
-                                label:
-                                    "Attendance",
-
-                                data:
-                                    values,
-
-                                borderColor:
-                                    "#2563eb",
-
-                                backgroundColor:
-                                    "rgba(37,99,235,.08)",
-
-                                fill: true,
-
-                                tension: .35,
-
-                                pointRadius: 3,
-
-                                pointBackgroundColor:
-                                    "#2563eb"
-                            }
-                        ]
-                    },
-
-                    options: {
-
-                        responsive: true,
-
-                        maintainAspectRatio:
-                            false,
-
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-
-                        scales: {
-
-                            y: {
-                                beginAtZero:
-                                    true,
-
-                                ticks: {
-                                    precision: 0
-                                }
-                            }
-
-                        }
-                    }
-                }
-            );
-
-    }
-
-}
-
-
-/* =========================================================
-   ATTENDANCE OVERVIEW
-========================================================= */
-
-function updateAttendanceOverview(
-    stats
-) {
-
-    if ($("overviewAttendance")) {
-
-        $("overviewAttendance").textContent =
-            `${stats.attendancePercent}% attendance`;
-
-    }
+            })
+            .join("");
 
 }
 
@@ -1015,58 +932,85 @@ function updateAttendanceOverview(
    FEES
 ========================================================= */
 
-function loadFees() {
+async function loadFees(student) {
 
-    if (!currentStudent) return;
-
-
-    const feesRef =
-        collection(
-            db,
-            "fees"
-        );
+    feeRecords = [];
 
 
-    const feeQuery =
+    const queries = [];
+
+
+    queries.push(
         query(
-            feesRef,
+            collection(db, "fees"),
             where(
                 "studentDocId",
                 "==",
-                currentStudent.id
+                student.id
+            )
+        )
+    );
+
+
+    if (student.studentId) {
+
+        queries.push(
+            query(
+                collection(db, "fees"),
+                where(
+                    "studentId",
+                    "==",
+                    student.studentId
+                )
             )
         );
 
+    }
 
-    onSnapshot(
-        feeQuery,
 
-        snapshot => {
+    for (
+        const feeQuery
+        of queries
+    ) {
 
-            feeRecords =
-                snapshot.docs.map(
-                    doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    })
+        try {
+
+            const snapshot =
+                await getDocs(
+                    feeQuery
                 );
 
 
-            renderFees();
+            if (!snapshot.empty) {
 
-        },
+                feeRecords =
+                    snapshot.docs.map(
+                        item => ({
+                            id: item.id,
+                            ...item.data()
+                        })
+                    );
 
-        error => {
+                break;
 
-            console.error(
-                "Fees error:",
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Fee query failed:",
                 error
             );
 
-            renderFees();
-
         }
+
+    }
+
+
+    renderFees(
+        feeRecords
     );
+
 }
 
 
@@ -1074,36 +1018,28 @@ function loadFees() {
    RENDER FEES
 ========================================================= */
 
-function renderFees() {
+function renderFees(records) {
 
-    const month =
-        currentMonth();
+    const currentMonth =
+        getCurrentMonth();
 
 
     const currentPayment =
-        feeRecords.find(
+        records.find(
             record =>
                 record.month ===
-                    month &&
+                    currentMonth &&
                 record.status ===
                     "paid"
         );
 
 
-    const monthLabel =
-        formatMonth(month);
-
-
-    if ($("feeMonthLabel")) {
-        $("feeMonthLabel").textContent =
-            monthLabel;
-    }
-
-
-    if ($("feePageMonth")) {
-        $("feePageMonth").textContent =
-            monthLabel;
-    }
+    const monthlyFee =
+        Number(
+            currentPayment?.amount ||
+            currentStudent?.monthlyFee ||
+            0
+        );
 
 
     const paid =
@@ -1112,53 +1048,68 @@ function renderFees() {
         );
 
 
-    if ($("feeStatus")) {
+    setText(
+        "feeStatus",
+        paid
+            ? "Paid"
+            : "Pending"
+    );
 
-        $("feeStatus").textContent =
+
+    setText(
+        "overviewFee",
+        paid
+            ? `₨ ${money(monthlyFee)} paid`
+            : monthlyFee
+                ? `₨ ${money(monthlyFee)} pending`
+                : "Fee pending"
+    );
+
+
+    setText(
+        "feeMonthLabel",
+        formatMonth(
+            currentMonth
+        )
+    );
+
+
+    setText(
+        "feePageStatus",
+        paid
+            ? `Your fee of ₨ ${money(monthlyFee)} has been paid.`
+            : monthlyFee
+                ? `Your monthly fee of ₨ ${money(monthlyFee)} is pending.`
+                : "Your fee is pending for this month."
+    );
+
+
+    const badge =
+        document.getElementById(
+            "feePageBadge"
+        );
+
+
+    if (badge) {
+
+        badge.textContent =
             paid
-                ? "Paid"
+                ? "✓ Paid"
                 : "Pending";
 
-    }
 
-
-    if ($("feePageStatus")) {
-
-        $("feePageStatus").textContent =
+        badge.classList.toggle(
+            "paid",
             paid
-                ? "Your fee has been paid for this month."
-                : "Your fee is pending for this month.";
+        );
 
     }
 
 
-    if ($("feePageBadge")) {
+    renderFeeTable(
+        records
+    );
 
-        $("feePageBadge").textContent =
-            paid
-                ? "Paid"
-                : "Pending";
-
-        $("feePageBadge")
-            .classList.toggle(
-                "paid",
-                paid
-            );
-
-    }
-
-
-    if ($("overviewFee")) {
-
-        $("overviewFee").textContent =
-            paid
-                ? "Fee paid for this month"
-                : "Fee pending for this month";
-
-    }
-
-
-    renderFeeTable();
 }
 
 
@@ -1166,26 +1117,17 @@ function renderFees() {
    FEE TABLE
 ========================================================= */
 
-function renderFeeTable() {
+function renderFeeTable(
+    records
+) {
 
     const body =
-        $("feeTableBody");
+        document.getElementById(
+            "feeTableBody"
+        );
+
 
     if (!body) return;
-
-
-    const records =
-        [...feeRecords]
-            .sort(
-                (a, b) =>
-                    String(
-                        b.month || ""
-                    ).localeCompare(
-                        String(
-                            a.month || ""
-                        )
-                    )
-            );
 
 
     if (!records.length) {
@@ -1199,17 +1141,39 @@ function renderFeeTable() {
         `;
 
         return;
+
     }
 
 
+    const sorted =
+        [...records]
+            .sort(
+                (a, b) =>
+                    String(
+                        b.month || ""
+                    )
+                        .localeCompare(
+                            String(
+                                a.month || ""
+                            )
+                        )
+            );
+
+
     body.innerHTML =
-        records
-            .map(
-                record => `
+        sorted
+            .map(record => {
+
+                const paid =
+                    record.status ===
+                    "paid";
+
+
+                return `
                     <tr>
 
                         <td>
-                            ${escapeHTML(
+                            ${escapeHtml(
                                 formatMonth(
                                     record.month
                                 )
@@ -1217,15 +1181,13 @@ function renderFeeTable() {
                         </td>
 
                         <td>
-                            ₨ ${Number(
-                                record.amount || 0
-                            ).toLocaleString(
-                                "en-PK"
+                            ₨ ${money(
+                                record.amount
                             )}
                         </td>
 
                         <td>
-                            ${escapeHTML(
+                            ${escapeHtml(
                                 formatDate(
                                     record.paymentDate
                                 )
@@ -1235,17 +1197,27 @@ function renderFeeTable() {
                         <td>
 
                             <span
-                                class="status-badge status-present"
+                                class="fee-badge ${
+                                    paid
+                                        ? "paid"
+                                        : ""
+                                }"
                             >
-                                Paid
+                                ${
+                                    paid
+                                        ? "✓ Paid"
+                                        : "Pending"
+                                }
                             </span>
 
                         </td>
 
                     </tr>
-                `
-            )
+                `;
+
+            })
             .join("");
+
 }
 
 
@@ -1253,160 +1225,199 @@ function renderFeeTable() {
    RESULTS
 ========================================================= */
 
-function loadResults() {
+async function loadResults(student) {
 
-    if (!currentStudent) return;
-
-
-    const resultsRef =
-        collection(
-            db,
-            "results"
-        );
+    resultRecords = [];
 
 
-    const resultQuery =
+    const queries = [];
+
+
+    queries.push(
         query(
-            resultsRef,
+            collection(db, "results"),
             where(
                 "studentDocId",
                 "==",
-                currentStudent.id
+                student.id
+            )
+        )
+    );
+
+
+    if (student.studentId) {
+
+        queries.push(
+            query(
+                collection(db, "results"),
+                where(
+                    "studentId",
+                    "==",
+                    student.studentId
+                )
             )
         );
 
+    }
 
-    onSnapshot(
-        resultQuery,
 
-        snapshot => {
+    for (
+        const resultQuery
+        of queries
+    ) {
 
-            resultRecords =
-                snapshot.docs.map(
-                    doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    })
+        try {
+
+            const snapshot =
+                await getDocs(
+                    resultQuery
                 );
 
 
-            renderResults();
+            if (!snapshot.empty) {
 
-        },
+                resultRecords =
+                    snapshot.docs.map(
+                        item => ({
+                            id: item.id,
+                            ...item.data()
+                        })
+                    );
 
-        error => {
+                break;
 
-            console.error(
-                "Results error:",
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Results query failed:",
                 error
             );
 
-            renderResults();
-
         }
+
+    }
+
+
+    renderResults(
+        resultRecords
     );
+
 }
 
 
 /* =========================================================
-   RESULTS UI
+   RENDER RESULTS
 ========================================================= */
 
-function renderResults() {
+function renderResults(
+    records
+) {
 
     const container =
-        $("resultsContainer");
+        document.getElementById(
+            "resultsContainer"
+        );
+
 
     if (!container) return;
 
 
-    const published =
-        resultRecords.filter(
-            result =>
-                result.published === true ||
-                result.status === "published"
-        );
-
-
-    if (!published.length) {
+    if (!records.length) {
 
         container.innerHTML = `
             <div class="empty-panel">
 
-                <div>▣</div>
+                <div>
+                    ▣
+                </div>
 
                 <h3>
                     No Published Results
                 </h3>
 
                 <p>
-                    Your results will appear here once they are published by the administration.
+                    Your results will appear here once they are
+                    published by the administration.
                 </p>
 
             </div>
         `;
 
-        if ($("overviewResults")) {
-            $("overviewResults").textContent =
-                "No result published yet";
-        }
+
+        setText(
+            "overviewResults",
+            "No result published yet"
+        );
 
         return;
-    }
-
-
-    if ($("overviewResults")) {
-
-        $("overviewResults").textContent =
-            `${published.length} result(s) published`;
 
     }
+
+
+    setText(
+        "overviewResults",
+        `${records.length} result record${records.length > 1 ? "s" : ""} available`
+    );
 
 
     container.innerHTML =
-        published
-            .map(
-                result => `
+        records
+            .map(record => {
 
-                    <div
-                        class="dashboard-card"
-                        style="margin-bottom:16px;"
-                    >
+                const percentage =
+                    Number(
+                        record.percentage ||
+                        record.percent ||
+                        0
+                    );
+
+
+                return `
+                    <div class="dashboard-card result-card">
 
                         <div class="card-heading">
 
                             <div>
+
                                 <h3>
-                                    ${escapeHTML(
-                                        result.title ||
-                                        result.examType ||
+                                    ${escapeHtml(
+                                        record.testName ||
+                                        record.examName ||
+                                        record.title ||
                                         "Examination Result"
                                     )}
                                 </h3>
 
                                 <p>
-                                    ${escapeHTML(
-                                        result.date ||
-                                        result.month ||
+                                    ${escapeHtml(
+                                        record.month ||
+                                        record.date ||
                                         ""
                                     )}
                                 </p>
+
                             </div>
 
-                            <span class="status-pill">
-                                Published
-                            </span>
+                            <strong>
+                                ${escapeHtml(
+                                    String(
+                                        record.grade ||
+                                        ""
+                                    )
+                                )}
+                            </strong>
 
                         </div>
 
-                        <div class="profile-details">
+                        <div class="result-details">
 
                             <div>
                                 <span>Marks</span>
                                 <strong>
-                                    ${escapeHTML(
-                                        result.marks ??
-                                        "—"
+                                    ${escapeHtml(
+                                        `${record.marks ?? "—"} / ${record.totalMarks ?? "—"}`
                                     )}
                                 </strong>
                             </div>
@@ -1414,29 +1425,19 @@ function renderResults() {
                             <div>
                                 <span>Percentage</span>
                                 <strong>
-                                    ${escapeHTML(
-                                        result.percentage
-                                            ? `${result.percentage}%`
+                                    ${
+                                        percentage
+                                            ? `${percentage}%`
                                             : "—"
-                                    )}
+                                    }
                                 </strong>
                             </div>
 
                             <div>
                                 <span>Grade</span>
                                 <strong>
-                                    ${escapeHTML(
-                                        result.grade ||
-                                        "—"
-                                    )}
-                                </strong>
-                            </div>
-
-                            <div>
-                                <span>Position</span>
-                                <strong>
-                                    ${escapeHTML(
-                                        result.position ||
+                                    ${escapeHtml(
+                                        record.grade ||
                                         "—"
                                     )}
                                 </strong>
@@ -1445,10 +1446,11 @@ function renderResults() {
                         </div>
 
                     </div>
+                `;
 
-                `
-            )
+            })
             .join("");
+
 }
 
 
@@ -1456,68 +1458,75 @@ function renderResults() {
    ANNOUNCEMENTS
 ========================================================= */
 
-function loadAnnouncements() {
+async function loadAnnouncements() {
 
-    const announcementsRef =
-        collection(
-            db,
-            "announcements"
-        );
+    announcementRecords = [];
 
 
-    onSnapshot(
-        announcementsRef,
+    try {
 
-        snapshot => {
-
-            announcementRecords =
-                snapshot.docs
-                    .map(
-                        doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        })
-                    );
-
-
-            renderAnnouncements();
-
-        },
-
-        error => {
-
-            console.error(
-                "Announcements error:",
-                error
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "announcements"
+                )
             );
 
-            renderAnnouncements();
 
-        }
+        announcementRecords =
+            snapshot.docs.map(
+                item => ({
+                    id: item.id,
+                    ...item.data()
+                })
+            );
+
+
+    } catch (error) {
+
+        console.warn(
+            "Announcements Error:",
+            error
+        );
+
+        announcementRecords = [];
+
+    }
+
+
+    renderAnnouncements(
+        announcementRecords
     );
+
 }
 
 
 /* =========================================================
-   ANNOUNCEMENTS UI
+   RENDER ANNOUNCEMENTS
 ========================================================= */
 
-function renderAnnouncements() {
+function renderAnnouncements(
+    records
+) {
 
     const container =
-        $("announcementsContainer");
+        document.getElementById(
+            "announcementsContainer"
+        );
+
 
     if (!container) return;
 
 
-    if (
-        !announcementRecords.length
-    ) {
+    if (!records.length) {
 
         container.innerHTML = `
             <div class="empty-panel">
 
-                <div>◉</div>
+                <div>
+                    ◉
+                </div>
 
                 <h3>
                     No Announcements
@@ -1531,85 +1540,68 @@ function renderAnnouncements() {
         `;
 
         return;
+
     }
 
 
-    const records =
-        [...announcementRecords]
+    const sorted =
+        [...records]
             .sort(
                 (a, b) =>
-                    Boolean(
-                        b.pinned
-                    ) -
-                    Boolean(
-                        a.pinned
-                    )
+                    getAnnouncementDate(b)
+                        .localeCompare(
+                            getAnnouncementDate(a)
+                        )
             );
 
 
     container.innerHTML =
-        records
-            .map(
-                announcement => `
+        sorted
+            .map(record => {
 
-                    <div
-                        class="dashboard-card"
-                        style="margin-bottom:14px;"
-                    >
+                return `
+                    <article class="announcement-card">
 
-                        <div class="card-heading">
+                        <div class="announcement-icon">
+                            📢
+                        </div>
 
-                            <div>
+                        <div>
 
-                                <h3>
-                                    ${escapeHTML(
-                                        announcement.title ||
-                                        "Announcement"
-                                    )}
-                                </h3>
+                            <h3>
+                                ${escapeHtml(
+                                    record.title ||
+                                    "Announcement"
+                                )}
+                            </h3>
 
-                                <p>
-                                    ${escapeHTML(
-                                        announcement.date ||
-                                        ""
-                                    )}
-                                </p>
+                            <p>
+                                ${escapeHtml(
+                                    record.message ||
+                                    record.description ||
+                                    record.content ||
+                                    ""
+                                )}
+                            </p>
 
-                            </div>
-
-                            ${
-                                announcement.pinned
-                                    ? `
-                                        <span class="status-pill">
-                                            Pinned
-                                        </span>
-                                    `
-                                    : ""
-                            }
+                            <small>
+                                ${escapeHtml(
+                                    formatDate(
+                                        getAnnouncementDate(
+                                            record
+                                        )
+                                    )
+                                )}
+                            </small>
 
                         </div>
 
-                        <p
-                            style="
-                                margin:0;
-                                color:#64748b;
-                                font-size:12px;
-                                line-height:1.7;
-                            "
-                        >
-                            ${escapeHTML(
-                                announcement.message ||
-                                announcement.description ||
-                                announcement.content ||
-                                ""
-                            )}
-                        </p>
+                    </article>
+                `;
 
-                    </div>
-
-                `
-            )
+            })
             .join("");
+
 }
 
 
@@ -1617,182 +1609,382 @@ function renderAnnouncements() {
    NAVIGATION
 ========================================================= */
 
-function setupNavigation() {
+document.addEventListener(
+    "click",
+    event => {
 
-    const navItems =
-        document.querySelectorAll(
-            ".nav-item"
+        const button =
+            event.target.closest(
+                ".nav-item"
+            );
+
+
+        if (!button) return;
+
+
+        const sectionId =
+            button.dataset.section;
+
+
+        if (!sectionId) return;
+
+
+        document
+            .querySelectorAll(
+                ".nav-item"
+            )
+            .forEach(item => {
+
+                item.classList.toggle(
+                    "active",
+                    item === button
+                );
+
+            });
+
+
+        document
+            .querySelectorAll(
+                ".dashboard-section"
+            )
+            .forEach(section => {
+
+                section.classList.toggle(
+                    "active",
+                    section.id ===
+                    sectionId
+                );
+
+            });
+
+
+        const titles = {
+
+            overview:
+                "Dashboard",
+
+            attendance:
+                "Attendance",
+
+            fees:
+                "Fee Management",
+
+            results:
+                "Examination Results",
+
+            announcements:
+                "Announcements",
+
+            profile:
+                "My Profile"
+
+        };
+
+
+        setText(
+            "pageTitle",
+            titles[sectionId] ||
+            "Dashboard"
         );
 
-
-    const sections =
-        document.querySelectorAll(
-            ".dashboard-section"
-        );
+    }
+);
 
 
-    navItems.forEach(
-        item => {
+/* =========================================================
+   LOGOUT
+========================================================= */
 
-            item.addEventListener(
-                "click",
-                () => {
+document.addEventListener(
+    "click",
+    async event => {
 
-                    const target =
-                        item.dataset.section;
-
-
-                    navItems.forEach(
-                        nav =>
-                            nav.classList.remove(
-                                "active"
-                            )
-                    );
+        const button =
+            event.target.closest(
+                "#studentLogout"
+            );
 
 
-                    sections.forEach(
-                        section =>
-                            section.classList.remove(
-                                "active"
-                            )
-                    );
+        if (!button) return;
 
 
-                    item.classList.add(
-                        "active"
-                    );
+        try {
 
+            await signOut(auth);
 
-                    const section =
-                        $(target);
+            localStorage.removeItem(
+                "studentId"
+            );
 
+            window.location.href =
+                "./login.html";
 
-                    if (section) {
-                        section.classList.add(
-                            "active"
-                        );
-                    }
+        } catch (error) {
 
+            console.error(
+                "Logout Error:",
+                error
+            );
 
-                    if ($("pageTitle")) {
-
-                        $("pageTitle")
-                            .textContent =
-                                item.textContent
-                                    .trim();
-
-                    }
-
-                }
+            alert(
+                "Unable to logout. Please try again."
             );
 
         }
-    );
+
+    }
+);
 
 
-    const logout =
-        $("studentLogout");
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(id);
 
 
-    if (logout) {
+    if (element) {
 
-        logout.addEventListener(
-            "click",
-            async () => {
-
-                try {
-
-                    await signOut(
-                        auth
-                    );
-
-                    window.location.href =
-                        "student-login.html";
-
-                }
-
-                catch (error) {
-
-                    console.error(
-                        "Logout error:",
-                        error
-                    );
-
-                    alert(
-                        "Logout failed."
-                    );
-
-                }
-
-            }
-        );
+        element.textContent =
+            value ?? "—";
 
     }
 
 }
 
 
-/* =========================================================
-   SECURITY / ERROR
-========================================================= */
+function getCurrentMonth() {
 
-function showError(message) {
-
-    const main =
-        document.querySelector(
-            ".student-main"
-        );
-
-    if (!main) return;
+    const date =
+        new Date();
 
 
-    const existing =
-        document.querySelector(
-            ".dashboard-error"
-        );
-
-
-    if (existing) {
-        existing.remove();
-    }
-
-
-    const error =
-        document.createElement(
-            "div"
-        );
-
-
-    error.className =
-        "dashboard-error";
-
-
-    error.style.cssText = `
-        padding:18px;
-        margin-bottom:20px;
-        border-radius:12px;
-        background:#fef2f2;
-        border:1px solid #fecaca;
-        color:#991b1b;
-        font-size:13px;
-    `;
-
-
-    error.textContent =
-        message;
-
-
-    main.prepend(
-        error
+    return (
+        date.getFullYear() +
+        "-" +
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0")
     );
+
 }
 
 
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
+function formatMonth(
+    value
+) {
 
-function escapeHTML(value) {
+    if (!value) return "—";
+
+
+    const parts =
+        String(value)
+            .split("-");
+
+
+    if (
+        parts.length !== 2
+    ) {
+
+        return value;
+
+    }
+
+
+    const date =
+        new Date(
+            Number(parts[0]),
+            Number(parts[1]) - 1,
+            1
+        );
+
+
+    return date.toLocaleDateString(
+        "en-US",
+        {
+            month: "long",
+            year: "numeric"
+        }
+    );
+
+}
+
+
+function getRecordDate(
+    record
+) {
+
+    return (
+        record.date ||
+        record.attendanceDate ||
+        record.createdDate ||
+        record.paymentDate ||
+        ""
+    );
+
+}
+
+
+function getAnnouncementDate(
+    record
+) {
+
+    return (
+        record.date ||
+        record.createdAt?.toDate?.()?.toISOString() ||
+        record.createdAt ||
+        ""
+    );
+
+}
+
+
+function formatDate(
+    value
+) {
+
+    if (!value) return "—";
+
+
+    const date =
+        new Date(
+            `${String(value).substring(0, 10)}T00:00:00`
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(value);
+
+    }
+
+
+    return date.toLocaleDateString(
+        "en-GB",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
+
+}
+
+
+function formatShortDate(
+    value
+) {
+
+    if (!value) return "—";
+
+
+    const date =
+        new Date(
+            `${String(value).substring(0, 10)}T00:00:00`
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return value;
+
+    }
+
+
+    return date.toLocaleDateString(
+        "en-US",
+        {
+            day: "2-digit",
+            month: "short"
+        }
+    );
+
+}
+
+
+function money(
+    value
+) {
+
+    return Number(
+        value || 0
+    ).toLocaleString(
+        "en-PK"
+    );
+
+}
+
+
+function statusClass(
+    status
+) {
+
+    const value =
+        String(status)
+            .toLowerCase();
+
+
+    if (
+        value.includes("present") ||
+        value === "p"
+    ) {
+
+        return "present";
+
+    }
+
+
+    if (
+        value.includes("absent") ||
+        value === "a"
+    ) {
+
+        return "absent";
+
+    }
+
+
+    if (
+        value.includes("late") ||
+        value === "l"
+    ) {
+
+        return "late";
+
+    }
+
+
+    if (
+        value.includes("leave")
+    ) {
+
+        return "leave";
+
+    }
+
+
+    return "";
+
+}
+
+
+function escapeHtml(
+    value
+) {
 
     return String(
         value ?? ""
@@ -1817,9 +2009,99 @@ function escapeHTML(value) {
             /'/g,
             "&#039;"
         );
+
 }
 
 
-console.log(
-    "✅ Student Dashboard loaded successfully."
-);
+/* =========================================================
+   ERROR
+========================================================= */
+
+function showDashboardError(
+    message
+) {
+
+    const main =
+        document.querySelector(
+            ".student-main"
+        );
+
+
+    if (!main) return;
+
+
+    const old =
+        document.getElementById(
+            "studentDashboardError"
+        );
+
+
+    if (old) {
+
+        old.remove();
+
+    }
+
+
+    const error =
+        document.createElement(
+            "div"
+        );
+
+
+    error.id =
+        "studentDashboardError";
+
+
+    error.style.cssText = `
+        position:fixed;
+        inset:20px;
+        z-index:9999;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:20px;
+        box-shadow:0 20px 60px rgba(0,0,0,.15);
+        padding:30px;
+        text-align:center;
+        font-family:Inter,Arial,sans-serif;
+    `;
+
+
+    error.innerHTML = `
+        <div>
+
+            <div style="
+                font-size:48px;
+                margin-bottom:15px;
+            ">
+                ⚠️
+            </div>
+
+            <h2 style="
+                margin:0 0 10px;
+                color:#111827;
+            ">
+                Student Profile Not Found
+            </h2>
+
+            <p style="
+                margin:0;
+                color:#64748b;
+                max-width:500px;
+                line-height:1.6;
+            ">
+                ${escapeHtml(message)}
+            </p>
+
+        </div>
+    `;
+
+
+    document.body.appendChild(
+        error
+    );
+
+}
