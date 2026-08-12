@@ -1,4 +1,2162 @@
+import { auth, db } from "../firebase/firebase-config.js";
+
+import {
+    collection,
+    query,
+    where,
+    onSnapshot,
+    getDocs
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
 /* =========================================================
+   GLOBAL VARIABLES
+========================================================= */
+
+let currentStudent = null;
+
+let attendanceRecords = [];
+let feeRecords = [];
+let resultRecords = [];
+let announcementRecords = [];
+
+let attendancePieChart = null;
+let attendanceLineChart = null;
+
+let attendanceUnsubscribers = [];
+
+/* =========================================================
+   AUTH
+========================================================= */
+
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        window.location.href = "./login.html";
+        return;
+    }
+
+    try {
+        await loadStudent(user);
+    } catch (error) {
+        console.error("Student Dashboard Error:", error);
+
+        showDashboardError(
+            "Unable to load student information. Please refresh the page."
+        );
+    }
+});
+
+/* =========================================================
+   LOAD STUDENT
+========================================================= */
+
+async function loadStudent(user) {
+
+    let student = null;
+
+    /* -----------------------------------------------------
+       1. FIND STUDENT USING AUTH UID
+    ----------------------------------------------------- */
+
+    try {
+
+        const uidQuery = query(
+            collection(db, "students"),
+            where("uid", "==", user.uid)
+        );
+
+        const uidSnapshot = await getDocs(uidQuery);
+
+        if (!uidSnapshot.empty) {
+
+            const item = uidSnapshot.docs[0];
+
+            student = {
+                id: item.id,
+                ...item.data()
+            };
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "UID student query failed:",
+            error
+        );
+    }
+
+    /* -----------------------------------------------------
+       2. FIND STUDENT USING EMAIL
+    ----------------------------------------------------- */
+
+    if (!student && user.email) {
+
+        try {
+
+            const emailQuery = query(
+                collection(db, "students"),
+                where("email", "==", user.email)
+            );
+
+            const emailSnapshot =
+                await getDocs(emailQuery);
+
+            if (!emailSnapshot.empty) {
+
+                const item =
+                    emailSnapshot.docs[0];
+
+                student = {
+                    id: item.id,
+                    ...item.data()
+                };
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Email student query failed:",
+                error
+            );
+        }
+    }
+
+    /* -----------------------------------------------------
+       3. FIND STUDENT USING SAVED STUDENT ID
+    ----------------------------------------------------- */
+
+    if (!student) {
+
+        const savedStudentId =
+            localStorage.getItem("studentId");
+
+        if (savedStudentId) {
+
+            try {
+
+                const idQuery = query(
+                    collection(db, "students"),
+                    where(
+                        "studentId",
+                        "==",
+                        savedStudentId
+                    )
+                );
+
+                const idSnapshot =
+                    await getDocs(idQuery);
+
+                if (!idSnapshot.empty) {
+
+                    const item =
+                        idSnapshot.docs[0];
+
+                    student = {
+                        id: item.id,
+                        ...item.data()
+                    };
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "Student ID query failed:",
+                    error
+                );
+            }
+        }
+    }
+
+    /* -----------------------------------------------------
+       STUDENT NOT FOUND
+    ----------------------------------------------------- */
+
+    if (!student) {
+
+        showDashboardError(
+            "Student profile was not found. Please contact administration."
+        );
+
+        return;
+    }
+
+    /* -----------------------------------------------------
+       SAVE CURRENT STUDENT
+    ----------------------------------------------------- */
+
+    currentStudent = student;
+
+    localStorage.setItem(
+        "studentId",
+        student.studentId || ""
+    );
+
+    /* -----------------------------------------------------
+       RENDER PROFILE
+    ----------------------------------------------------- */
+
+    renderStudentProfile(student);
+
+    /* -----------------------------------------------------
+       LOAD ALL DASHBOARD DATA
+    ----------------------------------------------------- */
+
+    await Promise.all([
+        loadAttendance(student),
+        loadFees(student),
+        loadResults(student),
+        loadAnnouncements()
+    ]);
+}
+
+/* =========================================================
+   STUDENT PROFILE
+========================================================= */
+
+function renderStudentProfile(student) {
+
+    const name =
+        student.name ||
+        student.studentName ||
+        "Student";
+
+    const studentId =
+        student.studentId ||
+        "—";
+
+    setText(
+        "welcomeName",
+        name
+    );
+
+    setText(
+        "welcomeStudentId",
+        studentId
+    );
+
+    setText(
+        "topStudentName",
+        name
+    );
+
+    setText(
+        "topStudentId",
+        studentId
+    );
+
+    setText(
+        "profileName",
+        name
+    );
+
+    setText(
+        "profileStudentId",
+        studentId
+    );
+
+    setText(
+        "profileFatherName",
+        student.fatherName ||
+        "—"
+    );
+
+    setText(
+        "profilePhone",
+        student.phone ||
+        "—"
+    );
+
+    setText(
+        "profileCourse",
+        student.course ||
+        "—"
+    );
+
+    setText(
+        "profileBatch",
+        student.batch ||
+        "—"
+    );
+
+    const avatar =
+        document.querySelector("#profileAvatar");
+
+    if (avatar) {
+
+        avatar.textContent =
+            name
+                .trim()
+                .charAt(0)
+                .toUpperCase() ||
+            "S";
+    }
+}
+
+/* =========================================================
+   ATTENDANCE
+   REALTIME + SUPPORTS BOTH ID TYPES
+========================================================= */
+
+function loadAttendance(student) {
+
+    attendanceRecords = [];
+
+    attendanceUnsubscribers.forEach(
+        unsubscribe => unsubscribe()
+    );
+
+    attendanceUnsubscribers = [];
+
+    const recordsBySource = {
+        studentDocId: [],
+        studentId: []
+    };
+
+    let renderTimer = null;
+
+    const mergeAndRender = () => {
+
+        clearTimeout(renderTimer);
+
+        renderTimer = setTimeout(() => {
+
+            const merged = [
+                ...recordsBySource.studentDocId,
+                ...recordsBySource.studentId
+            ];
+
+            const unique =
+                new Map();
+
+            merged.forEach(record => {
+
+                unique.set(
+                    record.id,
+                    record
+                );
+            });
+
+            attendanceRecords =
+                Array.from(unique.values());
+
+            attendanceRecords.sort(
+                (a, b) => {
+
+                    const dateA =
+                        getRecordDate(a);
+
+                    const dateB =
+                        getRecordDate(b);
+
+                    if (dateA !== dateB) {
+
+                        return dateB.localeCompare(
+                            dateA
+                        );
+                    }
+
+                    return String(
+                        b.time || ""
+                    ).localeCompare(
+                        String(
+                            a.time || ""
+                        )
+                    );
+                }
+            );
+
+            renderAttendance(
+                attendanceRecords
+            );
+
+        }, 50);
+    };
+
+    /* -----------------------------------------------------
+       QUERY 1: FIRESTORE DOCUMENT ID
+    ----------------------------------------------------- */
+
+    try {
+
+        const docIdQuery = query(
+            collection(db, "attendance"),
+            where(
+                "studentDocId",
+                "==",
+                student.id
+            )
+        );
+
+        const unsubscribeDocId =
+            onSnapshot(
+                docIdQuery,
+                snapshot => {
+
+                    recordsBySource.studentDocId =
+                        snapshot.docs.map(item => ({
+                            id: item.id,
+                            ...item.data()
+                        }));
+
+                    mergeAndRender();
+                },
+                error => {
+
+                    console.warn(
+                        "studentDocId attendance error:",
+                        error
+                    );
+
+                    recordsBySource.studentDocId = [];
+
+                    mergeAndRender();
+                }
+            );
+
+        attendanceUnsubscribers.push(
+            unsubscribeDocId
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Unable to create studentDocId query:",
+            error
+        );
+    }
+
+    /* -----------------------------------------------------
+       QUERY 2: STUDENT ID
+    ----------------------------------------------------- */
+
+    if (student.studentId) {
+
+        try {
+
+            const studentIdQuery = query(
+                collection(db, "attendance"),
+                where(
+                    "studentId",
+                    "==",
+                    student.studentId
+                )
+            );
+
+            const unsubscribeStudentId =
+                onSnapshot(
+                    studentIdQuery,
+                    snapshot => {
+
+                        recordsBySource.studentId =
+                            snapshot.docs.map(item => ({
+                                id: item.id,
+                                ...item.data()
+                            }));
+
+                        mergeAndRender();
+                    },
+                    error => {
+
+                        console.warn(
+                            "studentId attendance error:",
+                            error
+                        );
+
+                        recordsBySource.studentId = [];
+
+                        mergeAndRender();
+                    }
+                );
+
+            attendanceUnsubscribers.push(
+                unsubscribeStudentId
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Unable to create studentId attendance query:",
+                error
+            );
+        }
+    }
+}
+
+/* =========================================================
+   RENDER ATTENDANCE
+========================================================= */
+
+function renderAttendance(records) {
+
+    let present = 0;
+    let absent = 0;
+    let late = 0;
+    let leave = 0;
+
+    records.forEach(record => {
+
+        const status =
+            String(
+                record.status || ""
+            )
+                .toLowerCase()
+                .trim();
+
+        if (
+            status === "present" ||
+            status === "p"
+        ) {
+
+            present++;
+
+        } else if (
+            status === "absent" ||
+            status === "a"
+        ) {
+
+            absent++;
+
+        } else if (
+            status === "late" ||
+            status === "l"
+        ) {
+
+            late++;
+
+        } else if (
+            status === "leave" ||
+            status === "on leave"
+        ) {
+
+            leave++;
+        }
+    });
+
+    const total =
+        present +
+        absent +
+        late +
+        leave;
+
+    const percentage =
+        total > 0
+            ? Math.round(
+                (present / total) * 100
+            )
+            : 0;
+
+    /* -----------------------------------------------------
+       SUMMARY
+    ----------------------------------------------------- */
+
+    setText(
+        "attendancePercent",
+        `${percentage}%`
+    );
+
+    setText(
+        "attendancePagePercent",
+        `${percentage}%`
+    );
+
+    setText(
+        "presentDays",
+        present
+    );
+
+    setText(
+        "absentDays",
+        absent
+    );
+
+    setText(
+        "attendancePagePresent",
+        present
+    );
+
+    setText(
+        "attendancePageAbsent",
+        absent
+    );
+
+    setText(
+        "attendancePageLate",
+        late
+    );
+
+    setText(
+        "attendancePageLeave",
+        leave
+    );
+
+    setText(
+        "legendPresent",
+        present
+    );
+
+    setText(
+        "legendAbsent",
+        absent
+    );
+
+    setText(
+        "legendLate",
+        late
+    );
+
+    setText(
+        "legendLeave",
+        leave
+    );
+
+    setText(
+        "attendanceStatus",
+        total
+            ? `${present} of ${total} days present`
+            : "No attendance data"
+    );
+
+    setText(
+        "overviewAttendance",
+        `${percentage}% attendance`
+    );
+
+    /* -----------------------------------------------------
+       CHARTS
+    ----------------------------------------------------- */
+
+    createAttendancePie(
+        present,
+        absent,
+        late,
+        leave
+    );
+
+    createAttendanceLine(
+        records
+    );
+
+    /* -----------------------------------------------------
+       TABLE
+    ----------------------------------------------------- */
+
+    renderAttendanceTable(
+        records
+    );
+}
+
+/* =========================================================
+   ATTENDANCE PIE CHART
+========================================================= */
+
+function createAttendancePie(
+    present,
+    absent,
+    late,
+    leave
+) {
+
+    const canvas =
+        document.getElementById(
+            "attendancePieChart"
+        );
+
+    if (!canvas) return;
+
+    if (
+        typeof Chart ===
+        "undefined"
+    ) {
+
+        console.warn(
+            "Chart.js is not loaded."
+        );
+
+        return;
+    }
+
+    if (attendancePieChart) {
+
+        attendancePieChart.destroy();
+    }
+
+    attendancePieChart =
+        new Chart(
+            canvas,
+            {
+                type: "doughnut",
+
+                data: {
+
+                    labels: [
+                        "Present",
+                        "Absent",
+                        "Late",
+                        "Leave"
+                    ],
+
+                    datasets: [
+                        {
+                            data: [
+                                present,
+                                absent,
+                                late,
+                                leave
+                            ],
+
+                            borderWidth: 0
+                        }
+                    ]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    cutout: "68%",
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        );
+}
+
+/* =========================================================
+   ATTENDANCE LINE CHART
+========================================================= */
+
+function createAttendanceLine(
+    records
+) {
+
+    const canvas =
+        document.getElementById(
+            "attendanceLineChart"
+        );
+
+    if (!canvas) return;
+
+    if (
+        typeof Chart ===
+        "undefined"
+    ) return;
+
+    if (attendanceLineChart) {
+
+        attendanceLineChart.destroy();
+    }
+
+    const sorted =
+        [...records]
+            .sort(
+                (a, b) =>
+                    getRecordDate(a)
+                        .localeCompare(
+                            getRecordDate(b)
+                        )
+            )
+            .slice(-12);
+
+    const labels =
+        sorted.map(
+            record =>
+                formatShortDate(
+                    getRecordDate(record)
+                )
+        );
+
+    const values =
+        sorted.map(
+            record => {
+
+                const status =
+                    String(
+                        record.status ||
+                        ""
+                    )
+                        .toLowerCase()
+                        .trim();
+
+                if (
+                    status === "present" ||
+                    status === "p"
+                ) {
+                    return 1;
+                }
+
+                if (
+                    status === "late" ||
+                    status === "l"
+                ) {
+                    return 0.5;
+                }
+
+                return 0;
+            }
+        );
+
+    attendanceLineChart =
+        new Chart(
+            canvas,
+            {
+                type: "line",
+
+                data: {
+
+                    labels,
+
+                    datasets: [
+                        {
+                            label:
+                                "Attendance",
+
+                            data:
+                                values,
+
+                            tension:
+                                0.35,
+
+                            fill:
+                                false,
+
+                            pointRadius:
+                                4,
+
+                            pointHoverRadius:
+                                6
+                        }
+                    ]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        y: {
+
+                            min: 0,
+
+                            max: 1,
+
+                            ticks: {
+
+                                callback:
+                                    value => {
+
+                                        if (
+                                            value === 1
+                                        ) {
+                                            return "Present";
+                                        }
+
+                                        if (
+                                            value === 0.5
+                                        ) {
+                                            return "Late";
+                                        }
+
+                                        return "Absent";
+                                    }
+                            }
+                        }
+                    },
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        );
+}
+
+/* =========================================================
+   ATTENDANCE TABLE
+========================================================= */
+
+function renderAttendanceTable(
+    records
+) {
+
+    const body =
+        document.getElementById(
+            "attendanceTableBody"
+        );
+
+    if (!body) return;
+
+    if (!records.length) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="4">
+                    No attendance records found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    const sorted =
+        [...records]
+            .sort(
+                (a, b) =>
+                    getRecordDate(b)
+                        .localeCompare(
+                            getRecordDate(a)
+                        )
+            );
+
+    body.innerHTML =
+        sorted
+            .map(record => {
+
+                const status =
+                    String(
+                        record.status ||
+                        "Unknown"
+                    );
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                formatDate(
+                                    getRecordDate(record)
+                                )
+                            )}
+                        </td>
+
+                        <td>
+                            <span class="attendance-status ${statusClass(status)}">
+                                ${escapeHtml(status)}
+                            </span>
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                record.course ||
+                                currentStudent?.course ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                record.batch ||
+                                currentStudent?.batch ||
+                                "—"
+                            )}
+                        </td>
+
+                    </tr>
+                `;
+
+            })
+            .join("");
+}
+
+/* =========================================================
+   FEES
+========================================================= */
+
+async function loadFees(student) {
+
+    feeRecords = [];
+
+    const queries = [];
+
+    queries.push(
+        query(
+            collection(db, "fees"),
+            where(
+                "studentDocId",
+                "==",
+                student.id
+            )
+        )
+    );
+
+    if (student.studentId) {
+
+        queries.push(
+            query(
+                collection(db, "fees"),
+                where(
+                    "studentId",
+                    "==",
+                    student.studentId
+                )
+            )
+        );
+    }
+
+    const allRecords = [];
+
+    for (
+        const feeQuery
+        of queries
+    ) {
+
+        try {
+
+            const snapshot =
+                await getDocs(
+                    feeQuery
+                );
+
+            snapshot.docs.forEach(
+                item => {
+
+                    allRecords.push({
+                        id: item.id,
+                        ...item.data()
+                    });
+
+                }
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Fee query failed:",
+                error
+            );
+        }
+    }
+
+    const unique =
+        new Map();
+
+    allRecords.forEach(record => {
+
+        unique.set(
+            record.id,
+            record
+        );
+    });
+
+    feeRecords =
+        Array.from(
+            unique.values()
+        );
+
+    renderFees(
+        feeRecords
+    );
+}
+
+/* =========================================================
+   RENDER FEES
+========================================================= */
+
+function renderFees(records) {
+
+    const currentMonth =
+        getCurrentMonth();
+
+    const currentPayment =
+        records.find(
+            record =>
+                String(record.month || "") ===
+                    currentMonth &&
+                String(record.status || "").toLowerCase() ===
+                    "paid"
+        );
+
+    const monthlyFee =
+        Number(
+            currentPayment?.amount ||
+            currentStudent?.monthlyFee ||
+            currentStudent?.fee ||
+            0
+        );
+
+    const paid =
+        Boolean(
+            currentPayment
+        );
+
+    setText(
+        "feeStatus",
+        paid
+            ? "Paid"
+            : "Pending"
+    );
+
+    setText(
+        "overviewFee",
+        paid
+            ? `₨ ${money(monthlyFee)} paid`
+            : monthlyFee
+                ? `₨ ${money(monthlyFee)} pending`
+                : "Fee pending"
+    );
+
+    setText(
+        "feeMonthLabel",
+        formatMonth(
+            currentMonth
+        )
+    );
+
+    setText(
+        "feePageStatus",
+        paid
+            ? `Your fee of ₨ ${money(monthlyFee)} has been paid.`
+            : monthlyFee
+                ? `Your monthly fee of ₨ ${money(monthlyFee)} is pending.`
+                : "Your fee is pending for this month."
+    );
+
+    const badge =
+        document.getElementById(
+            "feePageBadge"
+        );
+
+    if (badge) {
+
+        badge.textContent =
+            paid
+                ? "✓ Paid"
+                : "Pending";
+
+        badge.classList.toggle(
+            "paid",
+            paid
+        );
+    }
+
+    renderFeeTable(
+        records
+    );
+}
+
+/* =========================================================
+   FEE TABLE
+========================================================= */
+
+function renderFeeTable(
+    records
+) {
+
+    const body =
+        document.getElementById(
+            "feeTableBody"
+        );
+
+    if (!body) return;
+
+    if (!records.length) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="4">
+                    No fee payment records found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    const sorted =
+        [...records]
+            .sort(
+                (a, b) =>
+                    String(
+                        b.month || ""
+                    ).localeCompare(
+                        String(
+                            a.month || ""
+                        )
+                    )
+            );
+
+    body.innerHTML =
+        sorted
+            .map(record => {
+
+                const paid =
+                    String(
+                        record.status ||
+                        ""
+                    ).toLowerCase() ===
+                    "paid";
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                formatMonth(
+                                    record.month
+                                )
+                            )}
+                        </td>
+
+                        <td>
+                            ₨ ${money(
+                                record.amount
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                formatDate(
+                                    record.paymentDate
+                                )
+                            )}
+                        </td>
+
+                        <td>
+
+                            <span
+                                class="fee-badge ${
+                                    paid
+                                        ? "paid"
+                                        : ""
+                                }"
+                            >
+                                ${
+                                    paid
+                                        ? "✓ Paid"
+                                        : "Pending"
+                                }
+                            </span>
+
+                        </td>
+
+                    </tr>
+                `;
+
+            })
+            .join("");
+}
+
+/* =========================================================
+   RESULTS
+========================================================= */
+
+async function loadResults(student) {
+
+    resultRecords = [];
+
+    const queries = [];
+
+    queries.push(
+        query(
+            collection(db, "results"),
+            where(
+                "studentDocId",
+                "==",
+                student.id
+            )
+        )
+    );
+
+    if (student.studentId) {
+
+        queries.push(
+            query(
+                collection(db, "results"),
+                where(
+                    "studentId",
+                    "==",
+                    student.studentId
+                )
+            )
+        );
+    }
+
+    const allRecords = [];
+
+    for (
+        const resultQuery
+        of queries
+    ) {
+
+        try {
+
+            const snapshot =
+                await getDocs(
+                    resultQuery
+                );
+
+            snapshot.docs.forEach(
+                item => {
+
+                    allRecords.push({
+                        id: item.id,
+                        ...item.data()
+                    });
+
+                }
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Results query failed:",
+                error
+            );
+        }
+    }
+
+    const unique =
+        new Map();
+
+    allRecords.forEach(record => {
+
+        unique.set(
+            record.id,
+            record
+        );
+    });
+
+    resultRecords =
+        Array.from(
+            unique.values()
+        );
+
+    renderResults(
+        resultRecords
+    );
+}
+
+/* =========================================================
+   RENDER RESULTS
+========================================================= */
+
+function renderResults(
+    records
+) {
+
+    const container =
+        document.getElementById(
+            "resultsContainer"
+        );
+
+    if (!container) return;
+
+    if (!records.length) {
+
+        container.innerHTML = `
+            <div class="empty-panel">
+
+                <div>
+                    ▣
+                </div>
+
+                <h3>
+                    No Published Results
+                </h3>
+
+                <p>
+                    Your results will appear here once they are
+                    published by the administration.
+                </p>
+
+            </div>
+        `;
+
+        setText(
+            "overviewResults",
+            "No result published yet"
+        );
+
+        return;
+    }
+
+    setText(
+        "overviewResults",
+        `${records.length} result record${
+            records.length > 1
+                ? "s"
+                : ""
+        } available`
+    );
+
+    container.innerHTML =
+        records
+            .map(record => {
+
+                const percentage =
+                    Number(
+                        record.percentage ||
+                        record.percent ||
+                        0
+                    );
+
+                return `
+                    <div class="dashboard-card result-card">
+
+                        <div class="card-heading">
+
+                            <div>
+
+                                <h3>
+                                    ${escapeHtml(
+                                        record.testName ||
+                                        record.examName ||
+                                        record.title ||
+                                        "Examination Result"
+                                    )}
+                                </h3>
+
+                                <p>
+                                    ${escapeHtml(
+                                        record.month ||
+                                        record.date ||
+                                        ""
+                                    )}
+                                </p>
+
+                            </div>
+
+                            <strong>
+                                ${escapeHtml(
+                                    String(
+                                        record.grade ||
+                                        ""
+                                    )
+                                )}
+                            </strong>
+
+                        </div>
+
+                        <div class="result-details">
+
+                            <div>
+                                <span>Marks</span>
+
+                                <strong>
+                                    ${escapeHtml(
+                                        `${record.marks ?? "—"} / ${
+                                            record.totalMarks ??
+                                            "—"
+                                        }`
+                                    )}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>Percentage</span>
+
+                                <strong>
+                                    ${
+                                        percentage
+                                            ? `${percentage}%`
+                                            : "—"
+                                    }
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span>Grade</span>
+
+                                <strong>
+                                    ${escapeHtml(
+                                        record.grade ||
+                                        "—"
+                                    )}
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+                `;
+
+            })
+            .join("");
+}
+
+/* =========================================================
+   ANNOUNCEMENTS
+========================================================= */
+
+async function loadAnnouncements() {
+
+    announcementRecords = [];
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "announcements"
+                )
+            );
+
+        announcementRecords =
+            snapshot.docs.map(
+                item => ({
+                    id: item.id,
+                    ...item.data()
+                })
+            );
+
+    } catch (error) {
+
+        console.warn(
+            "Announcements Error:",
+            error
+        );
+
+        announcementRecords = [];
+    }
+
+    renderAnnouncements(
+        announcementRecords
+    );
+}
+
+/* =========================================================
+   RENDER ANNOUNCEMENTS
+========================================================= */
+
+function renderAnnouncements(
+    records
+) {
+
+    const container =
+        document.getElementById(
+            "announcementsContainer"
+        );
+
+    if (!container) return;
+
+    if (!records.length) {
+
+        container.innerHTML = `
+            <div class="empty-panel">
+
+                <div>
+                    ◉
+                </div>
+
+                <h3>
+                    No Announcements
+                </h3>
+
+                <p>
+                    New announcements will appear here.
+                </p>
+
+            </div>
+        `;
+
+        return;
+    }
+
+    const sorted =
+        [...records]
+            .sort(
+                (a, b) =>
+                    getAnnouncementDate(b)
+                        .localeCompare(
+                            getAnnouncementDate(a)
+                        )
+            );
+
+    container.innerHTML =
+        sorted
+            .map(record => {
+
+                return `
+                    <article class="announcement-card">
+
+                        <div class="announcement-icon">
+                            📢
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                ${escapeHtml(
+                                    record.title ||
+                                    "Announcement"
+                                )}
+                            </h3>
+
+                            <p>
+                                ${escapeHtml(
+                                    record.message ||
+                                    record.description ||
+                                    record.content ||
+                                    ""
+                                )}
+                            </p>
+
+                            <small>
+                                ${escapeHtml(
+                                    formatDate(
+                                        getAnnouncementDate(
+                                            record
+                                        )
+                                    )
+                                )}
+                            </small>
+
+                        </div>
+
+                    </article>
+                `;
+
+            })
+            .join("");
+}
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const button =
+            event.target.closest(
+                ".nav-item"
+            );
+
+        if (!button) return;
+
+        const sectionId =
+            button.dataset.section;
+
+        if (!sectionId) return;
+
+        document
+            .querySelectorAll(
+                ".nav-item"
+            )
+            .forEach(item => {
+
+                item.classList.toggle(
+                    "active",
+                    item === button
+                );
+
+            });
+
+        document
+            .querySelectorAll(
+                ".dashboard-section"
+            )
+            .forEach(section => {
+
+                section.classList.toggle(
+                    "active",
+                    section.id === sectionId
+                );
+
+            });
+
+        const titles = {
+
+            overview:
+                "Dashboard",
+
+            attendance:
+                "Attendance",
+
+            fees:
+                "Fee Management",
+
+            results:
+                "Examination Results",
+
+            announcements:
+                "Announcements",
+
+            profile:
+                "My Profile"
+        };
+
+        setText(
+            "pageTitle",
+            titles[sectionId] ||
+            "Dashboard"
+        );
+    }
+);
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+document.addEventListener(
+    "click",
+    async event => {
+
+        const button =
+            event.target.closest(
+                "#studentLogout"
+            );
+
+        if (!button) return;
+
+        try {
+
+            await signOut(auth);
+
+            localStorage.removeItem(
+                "studentId"
+            );
+
+            window.location.href =
+                "./login.html";
+
+        } catch (error) {
+
+            console.error(
+                "Logout Error:",
+                error
+            );
+
+            alert(
+                "Unable to logout. Please try again."
+            );
+        }
+    }
+);
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(id);
+
+    if (element) {
+
+        element.textContent =
+            value ?? "—";
+    }
+}
+
+/* =========================================================
+   CURRENT MONTH
+========================================================= */
+
+function getCurrentMonth() {
+
+    const date =
+        new Date();
+
+    return (
+        date.getFullYear() +
+        "-" +
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0")
+    );
+}
+
+/* =========================================================
+   FORMAT MONTH
+========================================================= */
+
+function formatMonth(
+    value
+) {
+
+    if (!value) return "—";
+
+    const parts =
+        String(value)
+            .split("-");
+
+    if (
+        parts.length !== 2
+    ) {
+
+        return String(value);
+    }
+
+    const date =
+        new Date(
+            Number(parts[0]),
+            Number(parts[1]) - 1,
+            1
+        );
+
+    return date.toLocaleDateString(
+        "en-US",
+        {
+            month: "long",
+            year: "numeric"
+        }
+    );
+}
+
+/* =========================================================
+   GET ATTENDANCE DATE
+========================================================= */
+
+function getRecordDate(
+    record
+) {
+
+    const value =
+        record.date ||
+        record.attendanceDate ||
+        record.createdDate ||
+        record.paymentDate ||
+        "";
+
+    return normalizeDateValue(
+        value
+    );
+}
+
+/* =========================================================
+   GET ANNOUNCEMENT DATE
+========================================================= */
+
+function getAnnouncementDate(
+    record
+) {
+
+    const value =
+        record.date ||
+        record.createdAt ||
+        "";
+
+    return normalizeDateValue(
+        value
+    );
+}
+
+/* =========================================================
+   NORMALIZE FIRESTORE DATE
+========================================================= */
+
+function normalizeDateValue(
+    value
+) {
+
+    if (!value) {
+        return "";
+    }
+
+    if (
+        typeof value.toDate ===
+        "function"
+    ) {
+
+        try {
+
+            return value
+                .toDate()
+                .toISOString();
+
+        } catch (error) {
+
+            return "";
+        }
+    }
+
+    if (
+        value instanceof Date
+    ) {
+
+        return value.toISOString();
+    }
+
+    return String(value);
+}
+
+/* =========================================================
+   FORMAT DATE
+========================================================= */
+
+function formatDate(
+    value
+) {
+
+    if (!value) return "—";
+
+    let date;
+
+    if (
+        value instanceof Date
+    ) {
+
+        date = value;
+
+    } else {
+
+        date =
+            new Date(
+                String(value)
+            );
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            date =
+                new Date(
+                    `${String(value).substring(
+                        0,
+                        10
+                    )}T00:00:00`
+                );
+            }
+        }
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(value);
+    }
+
+    return date.toLocaleDateString(
+        "en-GB",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
+}
+
+/* =========================================================
+   FORMAT SHORT DATE
+========================================================= */
+
+function formatShortDate(
+    value
+) {
+
+    if (!value) return "—";
+
+    const date =
+        new Date(
+            String(value)
+        );
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(value);
+    }
+
+    return date.toLocaleDateString(
+        "en-US",
+        {
+            day: "2-digit",
+            month: "short"
+        }
+    );
+}
+
+/* =========================================================
+   MONEY
+========================================================= */
+
+function money(
+    value
+) {
+
+    return Number(
+        value || 0
+    ).toLocaleString(
+        "en-PK"
+    );
+}
+
+/* =========================================================
+   STATUS CLASS
+========================================================= */
+
+function statusClass(
+    status
+) {
+
+    const value =
+        String(status)
+            .toLowerCase()
+            .trim();
+
+    if (
+        value.includes("present") ||
+        value === "p"
+    ) {
+
+        return "present";
+    }
+
+    if (
+        value.includes("absent") ||
+        value === "a"
+    ) {
+
+        return "absent";
+    }
+
+    if (
+        value.includes("late") ||
+        value === "l"
+    ) {
+
+        return "late";
+    }
+
+    if (
+        value.includes("leave")
+    ) {
+
+        return "leave";
+    }
+
+    return "";
+}
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+/* =========================================================
+   DASHBOARD ERROR
+========================================================= */
+
+function showDashboardError(
+    message
+) {
+
+    const old =
+        document.getElementById(
+            "studentDashboardError"
+        );
+
+    if (old) {
+        old.remove();
+    }
+
+    const error =
+        document.createElement(
+            "div"
+        );
+
+    error.id =
+        "studentDashboardError";
+
+    error.style.cssText = `
+        position:fixed;
+        inset:20px;
+        z-index:9999;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:20px;
+        box-shadow:0 20px 60px rgba(0,0,0,.15);
+        padding:30px;
+        text-align:center;
+        font-family:Inter,Arial,sans-serif;
+    `;
+
+    error.innerHTML = `
+        <div>
+
+            <div style="
+                font-size:48px;
+                margin-bottom:15px;
+            ">
+                ⚠️
+            </div>
+
+            <h2 style="
+                margin:0 0 10px;
+                color:#111827;
+            ">
+                Student Profile Not Found
+            </h2>
+
+            <p style="
+                margin:0;
+                color:#64748b;
+                max-width:500px;
+                line-height:1.6;
+            ">
+                ${escapeHtml(message)}
+            </p>
+
+        </div>
+    `;
+
+    document.body.appendChild(
+        error
+    );
+}/* =========================================================
    ATTENDANCE - FIXED & REALTIME
 ========================================================= */
 
