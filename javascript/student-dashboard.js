@@ -1,4 +1,211 @@
-import { auth, db } from "../firebase/firebase-config.js";
+/* =========================================================
+   ATTENDANCE - FIXED & REALTIME
+========================================================= */
+
+function loadAttendance() {
+
+    if (!currentStudent) return;
+
+    const attendanceRef =
+        collection(
+            db,
+            "attendance"
+        );
+
+    /*
+       We support BOTH:
+       1. studentDocId
+       2. studentId
+
+       This makes the student dashboard compatible
+       with all attendance records created by Admin.
+    */
+
+    const docIdQuery =
+        query(
+            attendanceRef,
+            where(
+                "studentDocId",
+                "==",
+                currentStudent.id
+            )
+        );
+
+    const studentIdQuery =
+        currentStudent.studentId
+            ? query(
+                attendanceRef,
+                where(
+                    "studentId",
+                    "==",
+                    currentStudent.studentId
+                )
+            )
+            : null;
+
+
+    let docIdRecords = [];
+    let studentIdRecords = [];
+
+
+    const mergeAttendanceRecords = () => {
+
+        const merged = [
+            ...docIdRecords,
+            ...studentIdRecords
+        ];
+
+
+        /*
+           Remove duplicate attendance records
+           when the same record matches both queries.
+        */
+
+        const unique =
+            new Map();
+
+
+        merged.forEach(record => {
+
+            unique.set(
+                record.id,
+                record
+            );
+
+        });
+
+
+        attendanceRecords =
+            Array.from(
+                unique.values()
+            );
+
+
+        /*
+           Sort newest attendance first.
+        */
+
+        attendanceRecords.sort(
+            (a, b) => {
+
+                const dateA =
+                    String(
+                        a.date || ""
+                    );
+
+                const dateB =
+                    String(
+                        b.date || ""
+                    );
+
+                if (
+                    dateA !== dateB
+                ) {
+                    return dateB.localeCompare(
+                        dateA
+                    );
+                }
+
+
+                return String(
+                    b.time || ""
+                ).localeCompare(
+                    String(
+                        a.time || ""
+                    )
+                );
+
+            }
+        );
+
+
+        renderAttendance();
+
+    };
+
+
+    /*
+       QUERY BY FIRESTORE DOCUMENT ID
+    */
+
+    onSnapshot(
+        docIdQuery,
+
+        snapshot => {
+
+            docIdRecords =
+                snapshot.docs.map(
+                    item => ({
+                        id:
+                            item.id,
+
+                        ...item.data()
+                    })
+                );
+
+
+            mergeAttendanceRecords();
+
+        },
+
+        error => {
+
+            console.error(
+                "Attendance studentDocId error:",
+                error
+            );
+
+            docIdRecords = [];
+
+            mergeAttendanceRecords();
+
+        }
+    );
+
+
+    /*
+       QUERY BY STUDENT ID
+    */
+
+    if (studentIdQuery) {
+
+        onSnapshot(
+            studentIdQuery,
+
+            snapshot => {
+
+                studentIdRecords =
+                    snapshot.docs.map(
+                        item => ({
+                            id:
+                                item.id,
+
+                            ...item.data()
+                        })
+                    );
+
+
+                mergeAttendanceRecords();
+
+            },
+
+            error => {
+
+                console.error(
+                    "Attendance studentId error:",
+                    error
+                );
+
+                studentIdRecords = [];
+
+                mergeAttendanceRecords();
+
+            }
+        );
+
+    }
+
+}import { auth, db } from "../firebase/firebase-config.js";
 
 import {
     collection,
