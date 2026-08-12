@@ -2541,7 +2541,7 @@ function toast(message) {
         2500
     );
 
-}import { db } from "../firebase/firebase-config.js";
+
 
 import {
     collection,
