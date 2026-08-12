@@ -11,19 +11,23 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
-/* =========================================================
-   FEE MANAGEMENT SYSTEM
+/*
+=========================================================
+ SIR SYED HASSAN ALI COACHING
+ FEE MANAGEMENT SYSTEM
 
-   FEATURES:
-   - Monthly fee
-   - Mark Paid
-   - Pending / Paid
-   - One payment per student per month
-   - Fee receipt
-   - Print / Save as PDF
-   - WhatsApp sharing
-   - Undo payment
-========================================================= */
+ FEATURES:
+ - Monthly fee
+ - Mark Paid
+ - Pending / Paid
+ - One payment per student per month
+ - Professional fee receipt
+ - Print / Save as PDF
+ - WhatsApp sharing
+ - Undo payment
+ - Firebase Firestore
+=========================================================
+*/
 
 
 (() => {
@@ -44,22 +48,19 @@ import {
 
         if (started) return;
 
-        started = true;
-
-        console.log("✅ Fee Management Started");
-
-
         const tableBody =
             document.getElementById("feesTableBody");
 
         if (!tableBody) {
 
-            console.error(
-                "❌ feesTableBody not found."
+            console.warn(
+                "Fee Management: feesTableBody not found."
             );
 
             return;
         }
+
+        started = true;
 
 
         const monthInput =
@@ -72,10 +73,12 @@ import {
             document.getElementById("feeStatusFilter");
 
 
+        /* =================================================
+           DEFAULT MONTH
+        ================================================= */
+
         if (monthInput) {
-
             monthInput.value = month;
-
         }
 
 
@@ -94,13 +97,6 @@ import {
                         ...item.data()
                     }));
 
-
-                console.log(
-                    "✅ Students loaded:",
-                    students.length
-                );
-
-
                 render();
 
             },
@@ -108,22 +104,17 @@ import {
             error => {
 
                 console.error(
-                    "❌ Students Error:",
+                    "Students Error:",
                     error
                 );
 
-
                 tableBody.innerHTML = `
                     <tr>
-                        <td
-                            colspan="9"
-                            class="empty"
-                        >
+                        <td colspan="9" class="empty">
                             Unable to load students.
                         </td>
                     </tr>
                 `;
-
             }
         );
 
@@ -143,13 +134,6 @@ import {
                         ...item.data()
                     }));
 
-
-                console.log(
-                    "✅ Fee records loaded:",
-                    records.length
-                );
-
-
                 render();
 
             },
@@ -157,22 +141,17 @@ import {
             error => {
 
                 console.error(
-                    "❌ Fees Error:",
+                    "Fees Error:",
                     error
                 );
 
-
                 tableBody.innerHTML = `
                     <tr>
-                        <td
-                            colspan="9"
-                            class="empty"
-                        >
+                        <td colspan="9" class="empty">
                             Unable to load fee records.
                         </td>
                     </tr>
                 `;
-
             }
         );
 
@@ -189,9 +168,7 @@ import {
                     monthInput.value ||
                     currentMonth();
 
-
                 render();
-
             }
         );
 
@@ -215,6 +192,70 @@ import {
             render
         );
 
+
+        /* =================================================
+           EVENT DELEGATION
+        ================================================= */
+
+        tableBody.addEventListener(
+            "click",
+            event => {
+
+                const button =
+                    event.target.closest(
+                        "[data-fee-action]"
+                    );
+
+                if (!button) return;
+
+
+                const studentId =
+                    button.dataset.studentId;
+
+
+                const student =
+                    students.find(
+                        item =>
+                            item.id === studentId
+                    );
+
+
+                if (!student) {
+
+                    alert(
+                        "Student record not found."
+                    );
+
+                    return;
+                }
+
+
+                const action =
+                    button.dataset.feeAction;
+
+
+                if (action === "paid") {
+                    openPayment(student);
+                }
+
+
+                if (action === "undo") {
+                    undoPayment(student);
+                }
+
+
+                if (action === "fee") {
+                    setFee(student);
+                }
+
+
+                if (action === "slip") {
+                    showSlip(student);
+                }
+
+            }
+        );
+
     }
 
 
@@ -225,24 +266,16 @@ import {
     function render() {
 
         const tableBody =
-            document.getElementById(
-                "feesTableBody"
-            );
-
+            document.getElementById("feesTableBody");
 
         if (!tableBody) return;
 
 
         const searchInput =
-            document.getElementById(
-                "feeStudentSearch"
-            );
-
+            document.getElementById("feeStudentSearch");
 
         const statusFilter =
-            document.getElementById(
-                "feeStatusFilter"
-            );
+            document.getElementById("feeStatusFilter");
 
 
         const search =
@@ -258,10 +291,6 @@ import {
                 ? statusFilter.value
                 : "all";
 
-
-        /* =================================================
-           BUILD ROWS
-        ================================================= */
 
         const rows =
             students
@@ -318,11 +347,8 @@ import {
                         student.fatherName
 
                     ]
-
                         .filter(Boolean)
-
                         .join(" ")
-
                         .toLowerCase();
 
 
@@ -384,58 +410,52 @@ import {
             );
 
 
-        const totalElement =
+        const totalEl =
             document.getElementById(
                 "feeTotalStudents"
             );
 
 
-        const paidElement =
+        const paidEl =
             document.getElementById(
                 "feePaidStudents"
             );
 
 
-        const pendingElement =
+        const pendingEl =
             document.getElementById(
                 "feePendingStudents"
             );
 
 
-        const collectedElement =
+        const collectedEl =
             document.getElementById(
                 "feeCollectedAmount"
             );
 
 
-        if (totalElement) {
-
-            totalElement.textContent =
+        if (totalEl) {
+            totalEl.textContent =
                 total;
-
         }
 
 
-        if (paidElement) {
-
-            paidElement.textContent =
+        if (paidEl) {
+            paidEl.textContent =
                 paid;
-
         }
 
 
-        if (pendingElement) {
-
-            pendingElement.textContent =
+        if (pendingEl) {
+            pendingEl.textContent =
                 pending;
-
         }
 
 
-        if (collectedElement) {
+        if (collectedEl) {
 
-            collectedElement.textContent =
-                `₨ ${money(collected)}`;
+            collectedEl.textContent =
+                `Rs ${money(collected)}`;
 
         }
 
@@ -444,111 +464,33 @@ import {
            TABLE
         ================================================= */
 
+        if (!rows.length) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td
+                        colspan="9"
+                        class="empty"
+                    >
+                        No students found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
         tableBody.innerHTML =
-            rows.length
-
-                ? rows
-                    .map(buildRow)
-                    .join("")
-
-                : `
-                    <tr>
-                        <td
-                            colspan="9"
-                            class="empty"
-                        >
-                            ${
-                                students.length
-                                    ? "No students found."
-                                    : "No students available."
-                            }
-                        </td>
-                    </tr>
-                `;
-
-
-        /* =================================================
-           BUTTON EVENTS
-        ================================================= */
-
-        tableBody
-            .querySelectorAll(
-                "[data-fee-action]"
-            )
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const student =
-                            students.find(
-                                item =>
-                                    item.id ===
-                                    button.dataset.studentId
-                            );
-
-
-                        if (!student) return;
-
-
-                        const action =
-                            button.dataset.feeAction;
-
-
-                        if (
-                            action === "paid"
-                        ) {
-
-                            openPayment(
-                                student
-                            );
-
-                        }
-
-
-                        if (
-                            action === "undo"
-                        ) {
-
-                            undoPayment(
-                                student
-                            );
-
-                        }
-
-
-                        if (
-                            action === "fee"
-                        ) {
-
-                            setFee(
-                                student
-                            );
-
-                        }
-
-
-                        if (
-                            action === "slip"
-                        ) {
-
-                            showSlip(
-                                student
-                            );
-
-                        }
-
-                    }
-                );
-
-            });
+            rows
+                .map(buildRow)
+                .join("");
 
     }
 
 
     /* =====================================================
-       CURRENT MONTH PAYMENT
+       CURRENT PAYMENT
     ===================================================== */
 
     function getCurrentPayment(
@@ -596,17 +538,20 @@ import {
 
             .sort(
                 (a, b) =>
+
                     String(b.month)
                         .localeCompare(
                             String(a.month)
                         )
-            )[0] || null;
+            )
+
+            [0] || null;
 
     }
 
 
     /* =====================================================
-       TABLE ROW
+       BUILD TABLE ROW
     ===================================================== */
 
     function buildRow({
@@ -674,7 +619,7 @@ import {
                 <td>
 
                     <div class="fee-amount">
-                        ₨ ${money(amount)}
+                        Rs ${money(amount)}
                     </div>
 
 
@@ -697,21 +642,17 @@ import {
                     ${
                         payment
 
-                            ? `
-                                <span
-                                    class="fee-badge paid"
-                                >
-                                    ✓ Paid
-                                </span>
-                            `
+                        ? `
+                            <span class="fee-badge paid">
+                                ✓ Paid
+                            </span>
+                        `
 
-                            : `
-                                <span
-                                    class="fee-badge unpaid"
-                                >
-                                    ● Pending
-                                </span>
-                            `
+                        : `
+                            <span class="fee-badge unpaid">
+                                • Pending
+                            </span>
+                        `
                     }
 
                 </td>
@@ -722,11 +663,11 @@ import {
                     ${
                         lastPaid
 
-                            ? formatMonth(
-                                lastPaid.month
-                            )
+                        ? formatMonth(
+                            lastPaid.month
+                        )
 
-                            : "—"
+                        : "—"
                     }
 
                 </td>
@@ -737,11 +678,11 @@ import {
                     ${
                         payment?.paymentDate
 
-                            ? formatDate(
-                                payment.paymentDate
-                            )
+                        ? formatDate(
+                            payment.paymentDate
+                        )
 
-                            : "—"
+                        : "—"
                     }
 
                 </td>
@@ -754,47 +695,47 @@ import {
                         ${
                             payment
 
-                                ? `
+                            ? `
 
-                                    <button
-                                        type="button"
-                                        class="fee-action secondary"
-                                        data-fee-action="slip"
-                                        data-student-id="${escAttr(
-                                            student.id
-                                        )}"
-                                    >
-                                        Receipt
-                                    </button>
+                                <button
+                                    type="button"
+                                    class="fee-action secondary"
+                                    data-fee-action="slip"
+                                    data-student-id="${escAttr(
+                                        student.id
+                                    )}"
+                                >
+                                    🧾 Receipt
+                                </button>
 
 
-                                    <button
-                                        type="button"
-                                        class="fee-action danger"
-                                        data-fee-action="undo"
-                                        data-student-id="${escAttr(
-                                            student.id
-                                        )}"
-                                    >
-                                        Undo
-                                    </button>
+                                <button
+                                    type="button"
+                                    class="fee-action danger"
+                                    data-fee-action="undo"
+                                    data-student-id="${escAttr(
+                                        student.id
+                                    )}"
+                                >
+                                    Undo
+                                </button>
 
-                                `
+                            `
 
-                                : `
+                            : `
 
-                                    <button
-                                        type="button"
-                                        class="fee-action success"
-                                        data-fee-action="paid"
-                                        data-student-id="${escAttr(
-                                            student.id
-                                        )}"
-                                    >
-                                        ✓ Mark Paid
-                                    </button>
+                                <button
+                                    type="button"
+                                    class="fee-action success"
+                                    data-fee-action="paid"
+                                    data-student-id="${escAttr(
+                                        student.id
+                                    )}"
+                                >
+                                    ✓ Mark Paid
+                                </button>
 
-                                `
+                            `
                         }
 
                     </div>
@@ -888,7 +829,7 @@ import {
 
 
     /* =====================================================
-       MARK PAID
+       PAYMENT MODAL
     ===================================================== */
 
     function openPayment(
@@ -924,18 +865,12 @@ import {
                         </div>
 
                         <div class="fee-modal-subtitle">
-
                             ${esc(
                                 student.name ||
                                 "Student"
                             )}
-
                             •
-
-                            ${formatMonth(
-                                month
-                            )}
-
+                            ${formatMonth(month)}
                         </div>
 
                     </div>
@@ -1143,7 +1078,6 @@ import {
                     );
 
                     return;
-
                 }
 
 
@@ -1163,10 +1097,9 @@ import {
 
                 try {
 
-                    /*
-                    ONE PAYMENT:
-                    Student + Month
-                    */
+                    /* =====================================
+                       CHECK EXISTING PAYMENT
+                    ===================================== */
 
                     const old =
                         records.find(
@@ -1226,6 +1159,10 @@ import {
                     };
 
 
+                    /* =====================================
+                       UPDATE OR CREATE
+                    ===================================== */
+
                     if (old) {
 
                         await updateDoc(
@@ -1255,9 +1192,9 @@ import {
                     }
 
 
-                    /*
-                    Keep monthly fee synchronized.
-                    */
+                    /* =====================================
+                       UPDATE STUDENT MONTHLY FEE
+                    ===================================== */
 
                     if (
                         Number(
@@ -1381,7 +1318,7 @@ import {
 
 
     /* =====================================================
-       FEE SLIP
+       PROFESSIONAL RECEIPT
     ===================================================== */
 
     function showSlip(
@@ -1401,7 +1338,6 @@ import {
             );
 
             return;
-
         }
 
 
@@ -1419,7 +1355,10 @@ import {
 
             <div
                 class="fee-modal"
-                style="max-width:650px;"
+                style="
+                    max-width:720px;
+                    width:95%;
+                "
             >
 
                 <div class="fee-modal-head">
@@ -1427,22 +1366,11 @@ import {
                     <div>
 
                         <div class="fee-modal-title">
-                            Fee Receipt
+                            🧾 Fee Receipt
                         </div>
 
                         <div class="fee-modal-subtitle">
-
-                            ${esc(
-                                student.name ||
-                                "Student"
-                            )}
-
-                            •
-
-                            ${formatMonth(
-                                record.month
-                            )}
-
+                            Payment successfully recorded
                         </div>
 
                     </div>
@@ -1458,41 +1386,112 @@ import {
                 </div>
 
 
+                <!-- =====================================
+                     PROFESSIONAL RECEIPT
+                ====================================== -->
+
                 <div
                     id="feeSlipPrintArea"
                     style="
-                        padding:28px;
-                        background:#ffffff;
+                        padding:24px;
+                        background:#f8fafc;
                     "
                 >
 
                     <div
                         style="
-                            max-width:560px;
-                            margin:auto;
-                            border:1px solid #e5e7eb;
-                            border-radius:16px;
-                            overflow:hidden;
+                            max-width:620px;
+                            margin:0 auto;
                             background:#ffffff;
+                            border:1px solid #e2e8f0;
+                            border-radius:18px;
+                            overflow:hidden;
+                            box-shadow:0 10px 30px rgba(15,23,42,.08);
                         "
                     >
 
+                        <!-- HEADER -->
+
                         <div
                             style="
-                                padding:24px;
-                                background:#f8fafc;
-                                border-bottom:1px solid #e5e7eb;
+                                padding:28px 30px;
+                                background:linear-gradient(
+                                    135deg,
+                                    #172554,
+                                    #1d4ed8
+                                );
+                                color:#ffffff;
                             "
                         >
 
                             <div
                                 style="
-                                    font-size:21px;
-                                    font-weight:800;
-                                    color:#172554;
+                                    display:flex;
+                                    justify-content:space-between;
+                                    align-items:flex-start;
+                                    gap:20px;
                                 "
                             >
-                                Sir Syed Hassan Ali Coaching
+
+                                <div>
+
+                                    <div
+                                        style="
+                                            font-size:24px;
+                                            font-weight:800;
+                                        "
+                                    >
+                                        Sir Syed Hassan Ali
+                                    </div>
+
+
+                                    <div
+                                        style="
+                                            margin-top:5px;
+                                            font-size:13px;
+                                            opacity:.85;
+                                        "
+                                    >
+                                        Coaching Management System
+                                    </div>
+
+                                </div>
+
+
+                                <div
+                                    style="
+                                        background:#ffffff;
+                                        color:#172554;
+                                        padding:8px 13px;
+                                        border-radius:10px;
+                                        font-size:12px;
+                                        font-weight:800;
+                                    "
+                                >
+                                    PAID
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- RECEIPT TITLE -->
+
+                        <div
+                            style="
+                                padding:24px 30px 12px;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    font-size:18px;
+                                    font-weight:800;
+                                    color:#0f172a;
+                                "
+                            >
+                                Monthly Fee Receipt
                             </div>
 
 
@@ -1503,15 +1502,17 @@ import {
                                     color:#64748b;
                                 "
                             >
-                                Monthly Fee Receipt
+                                Official payment confirmation
                             </div>
 
                         </div>
 
 
+                        <!-- STUDENT INFORMATION -->
+
                         <div
                             style="
-                                padding:24px;
+                                padding:12px 30px 25px;
                             "
                         >
 
@@ -1523,297 +1524,201 @@ import {
                                 "
                             >
 
-                                <div>
+                                ${receiptField(
+                                    "Student Name",
+                                    student.name
+                                )}
 
-                                    <div
-                                        style="
-                                            font-size:11px;
-                                            color:#64748b;
-                                        "
-                                    >
-                                        Student Name
-                                    </div>
+                                ${receiptField(
+                                    "Student ID",
+                                    student.studentId
+                                )}
 
-                                    <div
-                                        style="
-                                            margin-top:4px;
-                                            font-size:14px;
-                                            font-weight:700;
-                                            color:#111827;
-                                        "
-                                    >
-                                        ${esc(
-                                            student.name ||
-                                            "—"
-                                        )}
-                                    </div>
+                                ${receiptField(
+                                    "Father Name",
+                                    student.fatherName
+                                )}
 
-                                </div>
+                                ${receiptField(
+                                    "Phone",
+                                    student.phone
+                                )}
 
+                                ${receiptField(
+                                    "Course",
+                                    student.course
+                                )}
 
-                                <div>
-
-                                    <div
-                                        style="
-                                            font-size:11px;
-                                            color:#64748b;
-                                        "
-                                    >
-                                        Student ID
-                                    </div>
-
-                                    <div
-                                        style="
-                                            margin-top:4px;
-                                            font-size:14px;
-                                            font-weight:700;
-                                            color:#111827;
-                                        "
-                                    >
-                                        ${esc(
-                                            student.studentId ||
-                                            "—"
-                                        )}
-                                    </div>
-
-                                </div>
-
-
-                                <div>
-
-                                    <div
-                                        style="
-                                            font-size:11px;
-                                            color:#64748b;
-                                        "
-                                    >
-                                        Father Name
-                                    </div>
-
-                                    <div
-                                        style="
-                                            margin-top:4px;
-                                            font-size:14px;
-                                            font-weight:700;
-                                            color:#111827;
-                                        "
-                                    >
-                                        ${esc(
-                                            student.fatherName ||
-                                            "—"
-                                        )}
-                                    </div>
-
-                                </div>
-
-
-                                <div>
-
-                                    <div
-                                        style="
-                                            font-size:11px;
-                                            color:#64748b;
-                                        "
-                                    >
-                                        Course
-                                    </div>
-
-                                    <div
-                                        style="
-                                            margin-top:4px;
-                                            font-size:14px;
-                                            font-weight:700;
-                                            color:#111827;
-                                        "
-                                    >
-                                        ${esc(
-                                            student.course ||
-                                            "—"
-                                        )}
-                                    </div>
-
-                                </div>
-
-
-                                <div>
-
-                                    <div
-                                        style="
-                                            font-size:11px;
-                                            color:#64748b;
-                                        "
-                                    >
-                                        Batch
-                                    </div>
-
-                                    <div
-                                        style="
-                                            margin-top:4px;
-                                            font-size:14px;
-                                            font-weight:700;
-                                            color:#111827;
-                                        "
-                                    >
-                                        ${esc(
-                                            student.batch ||
-                                            "—"
-                                        )}
-                                    </div>
-
-                                </div>
+                                ${receiptField(
+                                    "Batch",
+                                    student.batch
+                                )}
 
                             </div>
 
 
-                            <hr
+                            <div
                                 style="
-                                    border:0;
-                                    border-top:1px solid #e5e7eb;
-                                    margin:24px 0;
+                                    height:1px;
+                                    background:#e2e8f0;
+                                    margin:25px 0;
                                 "
-                            >
+                            ></div>
 
+
+                            <!-- PAYMENT INFO -->
 
                             <div
                                 style="
-                                    display:flex;
-                                    justify-content:space-between;
-                                    align-items:center;
-                                    margin-bottom:14px;
+                                    display:grid;
+                                    grid-template-columns:1fr 1fr;
+                                    gap:18px;
                                 "
                             >
 
-                                <span
-                                    style="
-                                        color:#64748b;
-                                        font-size:13px;
-                                    "
-                                >
-                                    Fee Month
-                                </span>
-
-                                <strong>
-                                    ${formatMonth(
+                                ${receiptField(
+                                    "Fee Month",
+                                    formatMonth(
                                         record.month
-                                    )}
-                                </strong>
+                                    )
+                                )}
 
-                            </div>
-
-
-                            <div
-                                style="
-                                    display:flex;
-                                    justify-content:space-between;
-                                    align-items:center;
-                                    margin-bottom:14px;
-                                "
-                            >
-
-                                <span
-                                    style="
-                                        color:#64748b;
-                                        font-size:13px;
-                                    "
-                                >
-                                    Payment Date
-                                </span>
-
-                                <strong>
-                                    ${formatDate(
+                                ${receiptField(
+                                    "Payment Date",
+                                    formatDate(
                                         record.paymentDate
-                                    )}
-                                </strong>
+                                    )
+                                )}
 
                             </div>
 
 
+                            <!-- AMOUNT -->
+
                             <div
                                 style="
+                                    margin-top:25px;
+                                    padding:20px;
+                                    border-radius:14px;
+                                    background:#f1f5f9;
                                     display:flex;
                                     justify-content:space-between;
                                     align-items:center;
-                                    padding:16px;
-                                    background:#f8fafc;
-                                    border-radius:12px;
                                 "
                             >
 
-                                <span
+                                <div>
+
+                                    <div
+                                        style="
+                                            font-size:12px;
+                                            color:#64748b;
+                                        "
+                                    >
+                                        Amount Paid
+                                    </div>
+
+
+                                    <div
+                                        style="
+                                            margin-top:4px;
+                                            font-size:25px;
+                                            font-weight:900;
+                                            color:#172554;
+                                        "
+                                    >
+                                        Rs ${money(
+                                            record.amount
+                                        )}
+                                    </div>
+
+                                </div>
+
+
+                                <div
                                     style="
-                                        font-size:13px;
-                                        font-weight:700;
+                                        width:52px;
+                                        height:52px;
+                                        border-radius:50%;
+                                        background:#dcfce7;
+                                        color:#15803d;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        font-size:25px;
+                                        font-weight:900;
                                     "
                                 >
-                                    Amount Paid
-                                </span>
+                                    ✓
+                                </div>
 
-                                <strong
-                                    style="
-                                        font-size:22px;
-                                        color:#172554;
-                                    "
-                                >
-                                    ₨ ${money(
-                                        record.amount
-                                    )}
-                                </strong>
-
-                            </div>
-
-
-                            <div
-                                style="
-                                    margin-top:18px;
-                                    text-align:center;
-                                    font-weight:800;
-                                    color:#047857;
-                                    font-size:14px;
-                                "
-                            >
-                                ✓ PAYMENT PAID
                             </div>
 
 
                             ${
                                 record.note
 
-                                    ? `
-                                        <div
-                                            style="
-                                                margin-top:18px;
-                                                padding:12px;
-                                                background:#f8fafc;
-                                                border-radius:9px;
-                                                font-size:12px;
-                                                color:#475569;
-                                            "
-                                        >
+                                ? `
 
-                                            <strong>
-                                                Note:
-                                            </strong>
+                                    <div
+                                        style="
+                                            margin-top:18px;
+                                            padding:14px;
+                                            border-radius:10px;
+                                            background:#f8fafc;
+                                            color:#475569;
+                                            font-size:12px;
+                                        "
+                                    >
 
-                                            ${esc(
-                                                record.note
-                                            )}
+                                        <strong>
+                                            Note:
+                                        </strong>
 
-                                        </div>
-                                    `
+                                        ${esc(
+                                            record.note
+                                        )}
 
-                                    : ""
+                                    </div>
+
+                                `
+
+                                : ""
                             }
 
 
+                            <!-- FOOTER -->
+
                             <div
                                 style="
-                                    margin-top:24px;
+                                    margin-top:25px;
+                                    padding-top:18px;
+                                    border-top:1px solid #e2e8f0;
                                     text-align:center;
-                                    font-size:11px;
-                                    color:#94a3b8;
                                 "
                             >
-                                Thank you for your payment.
+
+                                <div
+                                    style="
+                                        font-size:13px;
+                                        font-weight:800;
+                                        color:#15803d;
+                                    "
+                                >
+                                    ✓ Payment Received Successfully
+                                </div>
+
+
+                                <div
+                                    style="
+                                        margin-top:5px;
+                                        font-size:11px;
+                                        color:#94a3b8;
+                                    "
+                                >
+                                    Thank you for your payment.
+                                </div>
+
                             </div>
 
                         </div>
@@ -1822,6 +1727,8 @@ import {
 
                 </div>
 
+
+                <!-- BUTTONS -->
 
                 <div
                     class="fee-modal-actions"
@@ -1835,7 +1742,7 @@ import {
                         class="secondary-btn"
                         data-slip-print
                     >
-                        Download / Print PDF
+                        🖨 Print / Save PDF
                     </button>
 
 
@@ -1937,7 +1844,6 @@ import {
                         );
 
                         return;
-
                     }
 
 
@@ -1966,7 +1872,51 @@ import {
 
 
     /* =====================================================
-       PRINT RECEIPT
+       RECEIPT FIELD
+    ===================================================== */
+
+    function receiptField(
+        label,
+        value
+    ) {
+
+        return `
+
+            <div>
+
+                <div
+                    style="
+                        font-size:10px;
+                        font-weight:700;
+                        color:#94a3b8;
+                        text-transform:uppercase;
+                        letter-spacing:.5px;
+                    "
+                >
+                    ${esc(label)}
+                </div>
+
+
+                <div
+                    style="
+                        margin-top:5px;
+                        font-size:14px;
+                        font-weight:700;
+                        color:#0f172a;
+                    "
+                >
+                    ${esc(value || "—")}
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /* =====================================================
+       PRINT / SAVE PDF
     ===================================================== */
 
     function printSlip(
@@ -1978,18 +1928,17 @@ import {
             window.open(
                 "",
                 "_blank",
-                "width=800,height=900"
+                "width=900,height=1000"
             );
 
 
         if (!printWindow) {
 
             alert(
-                "Please allow pop-ups to print the fee slip."
+                "Please allow pop-ups to print or save the receipt."
             );
 
             return;
-
         }
 
 
@@ -2001,9 +1950,12 @@ import {
 
             <head>
 
+                <meta charset="UTF-8">
+
                 <title>
-                    Fee Receipt -
-                    ${esc(student.name)}
+                    Fee Receipt - ${esc(
+                        student.name
+                    )}
                 </title>
 
 
@@ -2021,43 +1973,77 @@ import {
                             Arial,
                             Helvetica,
                             sans-serif;
-                        color:#111827;
                         background:#ffffff;
+                        color:#0f172a;
                     }
 
 
                     .receipt {
-                        max-width:600px;
-                        margin:auto;
-                        border:1px solid #e5e7eb;
-                        border-radius:16px;
+                        max-width:680px;
+                        margin:0 auto;
+                        border:1px solid #e2e8f0;
+                        border-radius:18px;
                         overflow:hidden;
                     }
 
 
                     .header {
-                        padding:28px;
-                        background:#f8fafc;
-                        border-bottom:1px solid #e5e7eb;
+                        padding:30px;
+                        background:
+                            linear-gradient(
+                                135deg,
+                                #172554,
+                                #1d4ed8
+                            );
+                        color:#ffffff;
+                    }
+
+
+                    .header-row {
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:flex-start;
                     }
 
 
                     .title {
-                        font-size:24px;
+                        font-size:25px;
                         font-weight:800;
-                        color:#172554;
                     }
 
 
                     .subtitle {
-                        margin-top:6px;
+                        margin-top:5px;
                         font-size:13px;
-                        color:#64748b;
+                        opacity:.85;
+                    }
+
+
+                    .paid-badge {
+                        background:#ffffff;
+                        color:#172554;
+                        padding:8px 13px;
+                        border-radius:9px;
+                        font-size:12px;
+                        font-weight:800;
                     }
 
 
                     .content {
-                        padding:28px;
+                        padding:30px;
+                    }
+
+
+                    .receipt-title {
+                        font-size:19px;
+                        font-weight:800;
+                    }
+
+
+                    .receipt-subtitle {
+                        margin-top:5px;
+                        color:#64748b;
+                        font-size:12px;
                     }
 
 
@@ -2065,12 +2051,15 @@ import {
                         display:grid;
                         grid-template-columns:1fr 1fr;
                         gap:20px;
+                        margin-top:25px;
                     }
 
 
                     .label {
-                        font-size:11px;
-                        color:#64748b;
+                        font-size:10px;
+                        font-weight:700;
+                        color:#94a3b8;
+                        text-transform:uppercase;
                     }
 
 
@@ -2081,49 +2070,52 @@ import {
                     }
 
 
-                    hr {
-                        border:0;
-                        border-top:1px solid #e5e7eb;
+                    .divider {
+                        height:1px;
+                        background:#e2e8f0;
                         margin:25px 0;
                     }
 
 
-                    .row {
-                        display:flex;
-                        justify-content:space-between;
-                        margin-bottom:16px;
-                    }
-
-
                     .amount {
-                        padding:18px;
-                        background:#f8fafc;
-                        border-radius:12px;
+                        margin-top:25px;
+                        padding:20px;
+                        border-radius:14px;
+                        background:#f1f5f9;
                         display:flex;
                         justify-content:space-between;
                         align-items:center;
                     }
 
 
-                    .amount strong {
-                        font-size:22px;
+                    .amount-label {
+                        font-size:12px;
+                        color:#64748b;
+                    }
+
+
+                    .amount-value {
+                        margin-top:4px;
+                        font-size:27px;
+                        font-weight:900;
                         color:#172554;
                     }
 
 
-                    .paid {
+                    .status {
+                        margin-top:25px;
                         text-align:center;
-                        margin-top:20px;
+                        font-size:14px;
                         font-weight:800;
-                        color:#047857;
+                        color:#15803d;
                     }
 
 
                     .footer {
-                        margin-top:28px;
+                        margin-top:10px;
                         text-align:center;
-                        color:#94a3b8;
                         font-size:11px;
+                        color:#94a3b8;
                     }
 
 
@@ -2133,8 +2125,10 @@ import {
                             padding:0;
                         }
 
+
                         .receipt {
                             border:1px solid #ddd;
+                            box-shadow:none;
                         }
 
                     }
@@ -2148,15 +2142,27 @@ import {
 
                 <div class="receipt">
 
-
                     <div class="header">
 
-                        <div class="title">
-                            Sir Syed Hassan Ali Coaching
-                        </div>
+                        <div class="header-row">
 
-                        <div class="subtitle">
-                            Monthly Fee Receipt
+                            <div>
+
+                                <div class="title">
+                                    Sir Syed Hassan Ali
+                                </div>
+
+                                <div class="subtitle">
+                                    Coaching Management System
+                                </div>
+
+                            </div>
+
+
+                            <div class="paid-badge">
+                                PAID
+                            </div>
+
                         </div>
 
                     </div>
@@ -2164,12 +2170,19 @@ import {
 
                     <div class="content">
 
+                        <div class="receipt-title">
+                            Monthly Fee Receipt
+                        </div>
+
+
+                        <div class="receipt-subtitle">
+                            Official payment confirmation
+                        </div>
+
 
                         <div class="grid">
 
-
                             <div>
-
                                 <div class="label">
                                     Student Name
                                 </div>
@@ -2180,12 +2193,10 @@ import {
                                         "—"
                                     )}
                                 </div>
-
                             </div>
 
 
                             <div>
-
                                 <div class="label">
                                     Student ID
                                 </div>
@@ -2196,12 +2207,10 @@ import {
                                         "—"
                                     )}
                                 </div>
-
                             </div>
 
 
                             <div>
-
                                 <div class="label">
                                     Father Name
                                 </div>
@@ -2212,12 +2221,24 @@ import {
                                         "—"
                                     )}
                                 </div>
-
                             </div>
 
 
                             <div>
+                                <div class="label">
+                                    Phone
+                                </div>
 
+                                <div class="value">
+                                    ${esc(
+                                        student.phone ||
+                                        "—"
+                                    )}
+                                </div>
+                            </div>
+
+
+                            <div>
                                 <div class="label">
                                     Course
                                 </div>
@@ -2228,12 +2249,10 @@ import {
                                         "—"
                                     )}
                                 </div>
-
                             </div>
 
 
                             <div>
-
                                 <div class="label">
                                     Batch
                                 </div>
@@ -2244,70 +2263,81 @@ import {
                                         "—"
                                     )}
                                 </div>
+                            </div>
 
+                        </div>
+
+
+                        <div class="divider"></div>
+
+
+                        <div class="grid">
+
+                            <div>
+                                <div class="label">
+                                    Fee Month
+                                </div>
+
+                                <div class="value">
+                                    ${formatMonth(
+                                        record.month
+                                    )}
+                                </div>
                             </div>
 
 
-                        </div>
+                            <div>
+                                <div class="label">
+                                    Payment Date
+                                </div>
 
-
-                        <hr>
-
-
-                        <div class="row">
-
-                            <span>
-                                Fee Month
-                            </span>
-
-                            <strong>
-                                ${formatMonth(
-                                    record.month
-                                )}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="row">
-
-                            <span>
-                                Payment Date
-                            </span>
-
-                            <strong>
-                                ${formatDate(
-                                    record.paymentDate
-                                )}
-                            </strong>
+                                <div class="value">
+                                    ${formatDate(
+                                        record.paymentDate
+                                    )}
+                                </div>
+                            </div>
 
                         </div>
 
 
                         <div class="amount">
 
-                            <strong>
-                                Amount Paid
-                            </strong>
+                            <div>
 
-                            <strong>
-                                ₨ ${money(
-                                    record.amount
-                                )}
-                            </strong>
+                                <div class="amount-label">
+                                    Amount Paid
+                                </div>
+
+                                <div class="amount-value">
+                                    Rs ${money(
+                                        record.amount
+                                    )}
+                                </div>
+
+                            </div>
+
+
+                            <div
+                                style="
+                                    font-size:30px;
+                                    color:#15803d;
+                                "
+                            >
+                                ✓
+                            </div>
 
                         </div>
 
 
-                        <div class="paid">
-                            ✓ PAYMENT PAID
+                        <div class="status">
+                            ✓ Payment Received Successfully
                         </div>
 
 
                         <div class="footer">
                             Thank you for your payment.
                         </div>
-
 
                     </div>
 
@@ -2316,13 +2346,13 @@ import {
 
                 <script>
 
-                    window.onload = function() {
+                    window.onload = function () {
 
                         window.print();
 
                     };
 
-                </script>
+                <\/script>
 
             </body>
 
@@ -2346,6 +2376,7 @@ import {
     ) {
 
         return `
+
 FEE PAYMENT RECEIPT
 Sir Syed Hassan Ali Coaching
 
@@ -2362,13 +2393,14 @@ Payment Date: ${formatDate(record.paymentDate)}
 Status: PAID
 
 Thank you for your payment.
+
         `.trim();
 
     }
 
 
     /* =====================================================
-       MAKE START AVAILABLE
+       EXPOSE START FUNCTION
     ===================================================== */
 
     window.startFeesManagement =
@@ -2376,7 +2408,7 @@ Thank you for your payment.
 
 
     /* =====================================================
-       START AUTOMATICALLY
+       AUTO START
     ===================================================== */
 
     if (
@@ -2397,7 +2429,6 @@ Thank you for your payment.
         start();
 
     }
-
 
 })();
 
@@ -2435,8 +2466,7 @@ function today() {
         "-" +
         String(
             date.getMonth() + 1
-        ).padStart(2, "0"
-        ) +
+        ).padStart(2, "0") +
         "-" +
         String(
             date.getDate()
@@ -2492,9 +2522,7 @@ function formatDate(
 ) {
 
     if (!value) {
-
         return "—";
-
     }
 
 
@@ -2552,27 +2580,22 @@ function esc(
     return String(
         value ?? ""
     )
-
         .replace(
             /&/g,
             "&amp;"
         )
-
         .replace(
             /</g,
             "&lt;"
         )
-
         .replace(
             />/g,
             "&gt;"
         )
-
         .replace(
             /"/g,
             "&quot;"
         )
-
         .replace(
             /'/g,
             "&#039;"
@@ -2588,7 +2611,6 @@ function escAttr(
     return esc(
         value
     )
-
         .replace(
             /`/g,
             "&#096;"
@@ -2648,9 +2670,7 @@ function toast(
 
 
     if (old) {
-
         old.remove();
-
     }
 
 
