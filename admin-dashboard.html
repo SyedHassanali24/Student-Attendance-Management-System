@@ -4,19 +4,37 @@
 <head>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Admin Dashboard | Sir Syed Hassan Ali Coaching</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Admin Dashboard | Sir Syed Hassan Ali Coaching
+    </title>
+
 
     <!-- Main CSS -->
-    <link rel="stylesheet" href="./css/style.css?v=6">
+    <link
+        rel="stylesheet"
+        href="./css/style.css?v=6"
+    >
+
 
     <!-- Admin Dashboard CSS -->
-    <link rel="stylesheet" href="./css/admin.css?v=6">
+    <link
+        rel="stylesheet"
+        href="./css/admin.css?v=6"
+    >
 
-    <!-- fees CSS -->
-<link rel="stylesheet" href="./css/fees.css?v=2">
-    
+
+    <!-- Fees CSS -->
+    <link
+        rel="stylesheet"
+        href="./css/fees.css?v=2"
+    >
+
 
     <!-- QR Scanner Library -->
     <script
@@ -24,24 +42,12 @@
         type="text/javascript">
     </script>
 
-    <script src="./js/admin.js"></script>
 
-    <!-- Fee Management Module -->
-    <script
-        type="module"
-        src="./js/fees.js"
-    ></script>
-
-</body>
-</html>
-
-
-
-    
 </head>
 
 
 <body>
+
 
 <div class="dashboard">
 
@@ -397,7 +403,8 @@
                     <input
                         type="text"
                         id="studentSearch"
-                        placeholder="Search student by name, ID, phone, course or batch...">
+                        placeholder="Search student by name, ID, phone, course or batch..."
+                    >
 
                 </div>
 
@@ -654,7 +661,8 @@
                             type="text"
                             id="attendanceSearch"
                             class="attendance-search"
-                            placeholder="Search student...">
+                            placeholder="Search student..."
+                        >
 
                     </div>
 
@@ -728,125 +736,254 @@
 
 
 
-      <!-- =================================================
-     FEES MANAGEMENT
-================================================= -->
-<section id="fees" class="page">
+        <!-- =================================================
+             FEES MANAGEMENT
+        ================================================== -->
 
-    <div class="panel">
-
-        <div class="panel-header">
-
-            <div>
-                <h2>💰 Fee Management</h2>
-                <p>Manage monthly student fees and payment records</p>
-            </div>
-
-            <div class="fee-month-box">
-                <label for="feeMonth">Month</label>
-                <input type="month" id="feeMonth">
-            </div>
-
-        </div>
+        <section
+            id="fees"
+            class="page">
 
 
-        <!-- FEE SUMMARY -->
+            <div class="panel">
 
-        <div class="fee-summary-grid">
 
-            <div class="fee-summary-card">
-                <div class="fee-summary-icon">👨‍🎓</div>
-                <div>
-                    <span>Total Students</span>
-                    <strong id="feeTotalStudents">0</strong>
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            💰 Fee Management
+                        </h2>
+
+                        <p>
+                            Manage monthly student fees and payment records
+                        </p>
+
+                    </div>
+
+
+                    <div class="fee-month-box">
+
+                        <label for="feeMonth">
+                            Month
+                        </label>
+
+                        <input
+                            type="month"
+                            id="feeMonth"
+                        >
+
+                    </div>
+
                 </div>
-            </div>
 
-            <div class="fee-summary-card">
-                <div class="fee-summary-icon paid">✓</div>
-                <div>
-                    <span>Paid This Month</span>
-                    <strong id="feePaidStudents">0</strong>
+
+
+                <!-- FEE SUMMARY -->
+
+                <div class="fee-summary-grid">
+
+
+                    <div class="fee-summary-card">
+
+                        <div class="fee-summary-icon">
+                            👨‍🎓
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Total Students
+                            </span>
+
+                            <strong id="feeTotalStudents">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="fee-summary-card">
+
+                        <div class="fee-summary-icon paid">
+                            ✓
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Paid This Month
+                            </span>
+
+                            <strong id="feePaidStudents">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="fee-summary-card">
+
+                        <div class="fee-summary-icon pending">
+                            !
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Pending
+                            </span>
+
+                            <strong id="feePendingStudents">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="fee-summary-card">
+
+                        <div class="fee-summary-icon amount">
+                            ₨
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Collected
+                            </span>
+
+                            <strong id="feeCollectedAmount">
+                                ₨ 0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
                 </div>
-            </div>
 
-            <div class="fee-summary-card">
-                <div class="fee-summary-icon pending">!</div>
-                <div>
-                    <span>Pending</span>
-                    <strong id="feePendingStudents">0</strong>
+
+
+                <!-- SEARCH -->
+
+                <div class="fee-tools">
+
+
+                    <input
+                        type="text"
+                        id="feeStudentSearch"
+                        placeholder="Search student by name, ID, phone, course or batch..."
+                    >
+
+
+                    <select id="feeStatusFilter">
+
+                        <option value="all">
+                            All Students
+                        </option>
+
+                        <option value="paid">
+                            Paid
+                        </option>
+
+                        <option value="unpaid">
+                            Unpaid
+                        </option>
+
+                    </select>
+
+
                 </div>
-            </div>
 
-            <div class="fee-summary-card">
-                <div class="fee-summary-icon amount">₨</div>
-                <div>
-                    <span>Collected</span>
-                    <strong id="feeCollectedAmount">₨ 0</strong>
+
+
+                <!-- FEE TABLE -->
+
+                <div class="table-wrapper">
+
+                    <table class="fees-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Student ID
+                                </th>
+
+                                <th>
+                                    Student
+                                </th>
+
+                                <th>
+                                    Course
+                                </th>
+
+                                <th>
+                                    Batch
+                                </th>
+
+                                <th>
+                                    Monthly Fee
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Last Paid Month
+                                </th>
+
+                                <th>
+                                    Payment Date
+                                </th>
+
+                                <th>
+                                    Action
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="feesTableBody">
+
+                            <tr>
+
+                                <td
+                                    colspan="9"
+                                    class="empty">
+
+                                    Loading fee records...
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
                 </div>
+
+
             </div>
 
-        </div>
-
-
-        <!-- SEARCH -->
-
-        <div class="fee-tools">
-
-            <input
-                type="text"
-                id="feeStudentSearch"
-                placeholder="Search student by name, ID, phone, course or batch..."
-            >
-
-            <select id="feeStatusFilter">
-                <option value="all">All Students</option>
-                <option value="paid">Paid</option>
-                <option value="unpaid">Unpaid</option>
-            </select>
-
-        </div>
-
-
-        <!-- FEE TABLE -->
-
-        <div class="table-wrapper">
-
-            <table class="fees-table">
-
-                <thead>
-
-                    <tr>
-                        <th>Student ID</th>
-                        <th>Student</th>
-                        <th>Course</th>
-                        <th>Batch</th>
-                        <th>Monthly Fee</th>
-                        <th>Status</th>
-                        <th>Last Paid Month</th>
-                        <th>Payment Date</th>
-                        <th>Action</th>
-                    </tr>
-
-                </thead>
-
-                <tbody id="feesTableBody">
-
-                    <tr>
-                        <td colspan="9" class="empty">
-                            Loading fee records...
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
-</section>
+        </section>
 
 
 
@@ -857,6 +994,7 @@
         <section
             id="tests"
             class="page">
+
 
             <div class="panel">
 
@@ -907,6 +1045,7 @@
             id="results"
             class="page">
 
+
             <div class="panel">
 
                 <div class="panel-header">
@@ -955,6 +1094,7 @@
         <section
             id="announcements"
             class="page">
+
 
             <div class="panel">
 
@@ -1048,7 +1188,8 @@
 
             <input
                 type="hidden"
-                id="editStudentId">
+                id="editStudentId"
+            >
 
 
 
@@ -1065,7 +1206,8 @@
                         type="text"
                         id="studentName"
                         placeholder="Enter student name"
-                        required>
+                        required
+                    >
 
                 </div>
 
@@ -1081,7 +1223,8 @@
                         type="text"
                         id="fatherName"
                         placeholder="Enter father name"
-                        required>
+                        required
+                    >
 
                 </div>
 
@@ -1097,7 +1240,8 @@
                         type="tel"
                         id="phone"
                         placeholder="03XXXXXXXXX"
-                        required>
+                        required
+                    >
 
                 </div>
 
@@ -1113,7 +1257,8 @@
                         type="text"
                         id="course"
                         placeholder="e.g. Computer Networking"
-                        required>
+                        required
+                    >
 
                 </div>
 
@@ -1129,7 +1274,8 @@
                         type="text"
                         id="batch"
                         placeholder="e.g. Morning"
-                        required>
+                        required
+                    >
 
                 </div>
 
@@ -1144,7 +1290,8 @@
                     <input
                         type="date"
                         id="admissionDate"
-                        required>
+                        required
+                    >
 
                 </div>
 
@@ -1193,13 +1340,28 @@
 
 
 <!-- =========================================================
+     FEE MANAGEMENT JAVASCRIPT
+     
+     IMPORTANT:
+     fees.js ko sirf yahan ek baar load kiya gaya hai.
+========================================================= -->
+
+<script
+    type="module"
+    src="./js/fees.js">
+</script>
+
+
+
+<!-- =========================================================
      ADMIN JAVASCRIPT
 ========================================================= -->
+
 <script
     type="module"
     src="./javascript/admin.js?v=6">
 </script>
 
-</body>
 
+</body>
 </html>
