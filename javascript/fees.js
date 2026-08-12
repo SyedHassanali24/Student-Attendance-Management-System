@@ -10,23 +10,21 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-/*
-=========================================================
- SIR SYED HASSAN ALI COACHING
- FEE MANAGEMENT SYSTEM
-=========================================================
 
- FEATURES:
- - Monthly fee
- - Mark Paid
- - Pending / Paid
- - One payment per student per month
- - Fee receipt
- - Print / Save as PDF
- - WhatsApp sharing
- - Undo payment
-=========================================================
-*/
+/* =========================================================
+   FEE MANAGEMENT SYSTEM
+
+   FEATURES:
+   - Monthly fee
+   - Mark Paid
+   - Pending / Paid
+   - One payment per student per month
+   - Fee receipt
+   - Print / Save as PDF
+   - WhatsApp sharing
+   - Undo payment
+========================================================= */
+
 
 (() => {
 
@@ -37,18 +35,32 @@ import {
 
     let month = currentMonth();
 
-    const start = () => {
+
+    /* =====================================================
+       START
+    ===================================================== */
+
+    function start() {
 
         if (started) return;
+
         started = true;
+
+        console.log("✅ Fee Management Started");
+
 
         const tableBody =
             document.getElementById("feesTableBody");
 
         if (!tableBody) {
-            console.error("feesTableBody not found.");
+
+            console.error(
+                "❌ feesTableBody not found."
+            );
+
             return;
         }
+
 
         const monthInput =
             document.getElementById("feeMonth");
@@ -59,25 +71,11 @@ import {
         const statusFilter =
             document.getElementById("feeStatusFilter");
 
-        const totalEl =
-            document.getElementById("feeTotalStudents");
-
-        const paidEl =
-            document.getElementById("feePaidStudents");
-
-        const pendingEl =
-            document.getElementById("feePendingStudents");
-
-        const collectedEl =
-            document.getElementById("feeCollectedAmount");
-
-
-        /* =================================================
-           DEFAULT MONTH
-        ================================================= */
 
         if (monthInput) {
+
             monthInput.value = month;
+
         }
 
 
@@ -90,33 +88,42 @@ import {
 
             snapshot => {
 
-                students = snapshot.docs.map(item => ({
-                    id: item.id,
-                    ...item.data()
-                }));
+                students =
+                    snapshot.docs.map(item => ({
+                        id: item.id,
+                        ...item.data()
+                    }));
+
 
                 console.log(
-                    "Fee Management - Students loaded:",
+                    "✅ Students loaded:",
                     students.length
                 );
 
+
                 render();
+
             },
 
             error => {
 
                 console.error(
-                    "Students Error:",
+                    "❌ Students Error:",
                     error
                 );
 
+
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="9" class="empty">
+                        <td
+                            colspan="9"
+                            class="empty"
+                        >
                             Unable to load students.
                         </td>
                     </tr>
                 `;
+
             }
         );
 
@@ -130,39 +137,48 @@ import {
 
             snapshot => {
 
-                records = snapshot.docs.map(item => ({
-                    id: item.id,
-                    ...item.data()
-                }));
+                records =
+                    snapshot.docs.map(item => ({
+                        id: item.id,
+                        ...item.data()
+                    }));
+
 
                 console.log(
-                    "Fee Management - Fee records loaded:",
+                    "✅ Fee records loaded:",
                     records.length
                 );
 
+
                 render();
+
             },
 
             error => {
 
                 console.error(
-                    "Fees Error:",
+                    "❌ Fees Error:",
                     error
                 );
 
+
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="9" class="empty">
+                        <td
+                            colspan="9"
+                            class="empty"
+                        >
                             Unable to load fee records.
                         </td>
                     </tr>
                 `;
+
             }
         );
 
 
         /* =================================================
-           MONTH
+           MONTH CHANGE
         ================================================= */
 
         monthInput?.addEventListener(
@@ -173,7 +189,9 @@ import {
                     monthInput.value ||
                     currentMonth();
 
+
                 render();
+
             }
         );
 
@@ -197,7 +215,7 @@ import {
             render
         );
 
-    };
+    }
 
 
     /* =====================================================
@@ -207,16 +225,24 @@ import {
     function render() {
 
         const tableBody =
-            document.getElementById("feesTableBody");
+            document.getElementById(
+                "feesTableBody"
+            );
+
 
         if (!tableBody) return;
 
 
         const searchInput =
-            document.getElementById("feeStudentSearch");
+            document.getElementById(
+                "feeStudentSearch"
+            );
+
 
         const statusFilter =
-            document.getElementById("feeStatusFilter");
+            document.getElementById(
+                "feeStatusFilter"
+            );
 
 
         const search =
@@ -234,7 +260,7 @@ import {
 
 
         /* =================================================
-           BUILD STUDENT ROWS
+           BUILD ROWS
         ================================================= */
 
         const rows =
@@ -242,22 +268,32 @@ import {
                 .map(student => {
 
                     const payment =
-                        getCurrentPayment(student.id);
+                        getCurrentPayment(
+                            student.id
+                        );
 
 
                     const lastPaid =
-                        getLastPayment(student.id);
+                        getLastPayment(
+                            student.id
+                        );
 
 
                     return {
+
                         student,
+
                         payment,
+
                         lastPaid,
+
                         status:
                             payment
                                 ? "paid"
                                 : "unpaid"
+
                     };
+
                 })
 
 
@@ -268,15 +304,25 @@ import {
 
 
                     const text = [
+
                         student.name,
+
                         student.studentId,
+
                         student.phone,
+
                         student.course,
+
                         student.batch,
+
                         student.fatherName
+
                     ]
+
                         .filter(Boolean)
+
                         .join(" ")
+
                         .toLowerCase();
 
 
@@ -294,6 +340,7 @@ import {
                         searchMatch &&
                         statusMatch
                     );
+
                 });
 
 
@@ -304,7 +351,9 @@ import {
         const paidRecords =
             students
                 .map(student =>
-                    getCurrentPayment(student.id)
+                    getCurrentPayment(
+                        student.id
+                    )
                 )
                 .filter(Boolean);
 
@@ -335,24 +384,59 @@ import {
             );
 
 
-        if (totalEl()) {
-            totalEl().textContent = total;
+        const totalElement =
+            document.getElementById(
+                "feeTotalStudents"
+            );
+
+
+        const paidElement =
+            document.getElementById(
+                "feePaidStudents"
+            );
+
+
+        const pendingElement =
+            document.getElementById(
+                "feePendingStudents"
+            );
+
+
+        const collectedElement =
+            document.getElementById(
+                "feeCollectedAmount"
+            );
+
+
+        if (totalElement) {
+
+            totalElement.textContent =
+                total;
+
         }
 
 
-        if (paidEl()) {
-            paidEl().textContent = paid;
+        if (paidElement) {
+
+            paidElement.textContent =
+                paid;
+
         }
 
 
-        if (pendingEl()) {
-            pendingEl().textContent = pending;
+        if (pendingElement) {
+
+            pendingElement.textContent =
+                pending;
+
         }
 
 
-        if (collectedEl()) {
-            collectedEl().textContent =
+        if (collectedElement) {
+
+            collectedElement.textContent =
                 `₨ ${money(collected)}`;
+
         }
 
 
@@ -362,13 +446,22 @@ import {
 
         tableBody.innerHTML =
             rows.length
+
                 ? rows
                     .map(buildRow)
                     .join("")
+
                 : `
                     <tr>
-                        <td colspan="9" class="empty">
-                            No students found.
+                        <td
+                            colspan="9"
+                            class="empty"
+                        >
+                            ${
+                                students.length
+                                    ? "No students found."
+                                    : "No students available."
+                            }
                         </td>
                     </tr>
                 `;
@@ -379,7 +472,9 @@ import {
         ================================================= */
 
         tableBody
-            .querySelectorAll("[data-fee-action]")
+            .querySelectorAll(
+                "[data-fee-action]"
+            )
             .forEach(button => {
 
                 button.addEventListener(
@@ -404,28 +499,44 @@ import {
                         if (
                             action === "paid"
                         ) {
-                            openPayment(student);
+
+                            openPayment(
+                                student
+                            );
+
                         }
 
 
                         if (
                             action === "undo"
                         ) {
-                            undoPayment(student);
+
+                            undoPayment(
+                                student
+                            );
+
                         }
 
 
                         if (
                             action === "fee"
                         ) {
-                            setFee(student);
+
+                            setFee(
+                                student
+                            );
+
                         }
 
 
                         if (
                             action === "slip"
                         ) {
-                            showSlip(student);
+
+                            showSlip(
+                                student
+                            );
+
                         }
 
                     }
@@ -437,7 +548,7 @@ import {
 
 
     /* =====================================================
-       GET CURRENT MONTH PAYMENT
+       CURRENT MONTH PAYMENT
     ===================================================== */
 
     function getCurrentPayment(
@@ -446,6 +557,7 @@ import {
 
         return records.find(
             record =>
+
                 record.studentDocId ===
                     studentId &&
 
@@ -454,13 +566,14 @@ import {
 
                 record.status ===
                     "paid"
+
         ) || null;
 
     }
 
 
     /* =====================================================
-       GET LAST PAYMENT
+       LAST PAYMENT
     ===================================================== */
 
     function getLastPayment(
@@ -468,8 +581,10 @@ import {
     ) {
 
         return records
+
             .filter(
                 record =>
+
                     record.studentDocId ===
                         studentId &&
 
@@ -478,6 +593,7 @@ import {
 
                     record.month
             )
+
             .sort(
                 (a, b) =>
                     String(b.month)
@@ -561,6 +677,7 @@ import {
                         ₨ ${money(amount)}
                     </div>
 
+
                     <button
                         type="button"
                         class="fee-link-btn"
@@ -579,13 +696,19 @@ import {
 
                     ${
                         payment
+
                             ? `
-                                <span class="fee-badge paid">
+                                <span
+                                    class="fee-badge paid"
+                                >
                                     ✓ Paid
                                 </span>
                             `
+
                             : `
-                                <span class="fee-badge unpaid">
+                                <span
+                                    class="fee-badge unpaid"
+                                >
                                     ● Pending
                                 </span>
                             `
@@ -598,9 +721,11 @@ import {
 
                     ${
                         lastPaid
+
                             ? formatMonth(
                                 lastPaid.month
                             )
+
                             : "—"
                     }
 
@@ -611,9 +736,11 @@ import {
 
                     ${
                         payment?.paymentDate
+
                             ? formatDate(
                                 payment.paymentDate
                             )
+
                             : "—"
                     }
 
@@ -626,7 +753,9 @@ import {
 
                         ${
                             payment
+
                                 ? `
+
                                     <button
                                         type="button"
                                         class="fee-action secondary"
@@ -638,6 +767,7 @@ import {
                                         Receipt
                                     </button>
 
+
                                     <button
                                         type="button"
                                         class="fee-action danger"
@@ -648,8 +778,11 @@ import {
                                     >
                                         Undo
                                     </button>
+
                                 `
+
                                 : `
+
                                     <button
                                         type="button"
                                         class="fee-action success"
@@ -660,6 +793,7 @@ import {
                                     >
                                         ✓ Mark Paid
                                     </button>
+
                                 `
                         }
 
@@ -734,6 +868,7 @@ import {
                 "Monthly fee updated."
             );
 
+
         } catch (error) {
 
             console.error(
@@ -789,12 +924,18 @@ import {
                         </div>
 
                         <div class="fee-modal-subtitle">
+
                             ${esc(
                                 student.name ||
                                 "Student"
                             )}
+
                             •
-                            ${formatMonth(month)}
+
+                            ${formatMonth(
+                                month
+                            )}
+
                         </div>
 
                     </div>
@@ -954,7 +1095,9 @@ import {
                     event.target ===
                     overlay
                 ) {
+
                     close();
+
                 }
 
             }
@@ -1000,6 +1143,7 @@ import {
                     );
 
                     return;
+
                 }
 
 
@@ -1012,6 +1156,7 @@ import {
                 submit.disabled =
                     true;
 
+
                 submit.textContent =
                     "Saving...";
 
@@ -1019,14 +1164,14 @@ import {
                 try {
 
                     /*
-                    IMPORTANT:
-                    Only ONE payment record
-                    for one student + one month.
+                    ONE PAYMENT:
+                    Student + Month
                     */
 
                     const old =
                         records.find(
                             record =>
+
                                 record.studentDocId ===
                                     student.id &&
 
@@ -1111,8 +1256,7 @@ import {
 
 
                     /*
-                    Keep monthly fee
-                    synchronized.
+                    Keep monthly fee synchronized.
                     */
 
                     if (
@@ -1161,6 +1305,7 @@ import {
 
                     submit.disabled =
                         false;
+
 
                     submit.textContent =
                         "Save Payment";
@@ -1256,6 +1401,7 @@ import {
             );
 
             return;
+
         }
 
 
@@ -1285,14 +1431,18 @@ import {
                         </div>
 
                         <div class="fee-modal-subtitle">
+
                             ${esc(
                                 student.name ||
                                 "Student"
                             )}
+
                             •
+
                             ${formatMonth(
                                 record.month
                             )}
+
                         </div>
 
                     </div>
@@ -1422,6 +1572,34 @@ import {
                                     >
                                         ${esc(
                                             student.studentId ||
+                                            "—"
+                                        )}
+                                    </div>
+
+                                </div>
+
+
+                                <div>
+
+                                    <div
+                                        style="
+                                            font-size:11px;
+                                            color:#64748b;
+                                        "
+                                    >
+                                        Father Name
+                                    </div>
+
+                                    <div
+                                        style="
+                                            margin-top:4px;
+                                            font-size:14px;
+                                            font-weight:700;
+                                            color:#111827;
+                                        "
+                                    >
+                                        ${esc(
+                                            student.fatherName ||
                                             "—"
                                         )}
                                     </div>
@@ -1599,6 +1777,7 @@ import {
 
                             ${
                                 record.note
+
                                     ? `
                                         <div
                                             style="
@@ -1610,10 +1789,18 @@ import {
                                                 color:#475569;
                                             "
                                         >
-                                            <strong>Note:</strong>
-                                            ${esc(record.note)}
+
+                                            <strong>
+                                                Note:
+                                            </strong>
+
+                                            ${esc(
+                                                record.note
+                                            )}
+
                                         </div>
                                     `
+
                                     : ""
                             }
 
@@ -1693,7 +1880,9 @@ import {
                     event.target ===
                     overlay
                 ) {
+
                     close();
+
                 }
 
             }
@@ -1701,7 +1890,7 @@ import {
 
 
         /* =================================================
-           PRINT / SAVE PDF
+           PRINT / PDF
         ================================================= */
 
         overlay
@@ -1748,6 +1937,7 @@ import {
                         );
 
                         return;
+
                     }
 
 
@@ -1776,7 +1966,7 @@ import {
 
 
     /* =====================================================
-       PRINT SLIP
+       PRINT RECEIPT
     ===================================================== */
 
     function printSlip(
@@ -1795,10 +1985,11 @@ import {
         if (!printWindow) {
 
             alert(
-                "Please allow pop-ups to download the fee slip."
+                "Please allow pop-ups to print the fee slip."
             );
 
             return;
+
         }
 
 
@@ -1811,16 +2002,17 @@ import {
             <head>
 
                 <title>
-                    Fee Receipt - ${esc(
-                        student.name
-                    )}
+                    Fee Receipt -
+                    ${esc(student.name)}
                 </title>
+
 
                 <style>
 
                     * {
                         box-sizing:border-box;
                     }
+
 
                     body {
                         margin:0;
@@ -1833,6 +2025,7 @@ import {
                         background:#ffffff;
                     }
 
+
                     .receipt {
                         max-width:600px;
                         margin:auto;
@@ -1841,11 +2034,13 @@ import {
                         overflow:hidden;
                     }
 
+
                     .header {
                         padding:28px;
                         background:#f8fafc;
                         border-bottom:1px solid #e5e7eb;
                     }
+
 
                     .title {
                         font-size:24px;
@@ -1853,15 +2048,18 @@ import {
                         color:#172554;
                     }
 
+
                     .subtitle {
                         margin-top:6px;
                         font-size:13px;
                         color:#64748b;
                     }
 
+
                     .content {
                         padding:28px;
                     }
+
 
                     .grid {
                         display:grid;
@@ -1869,10 +2067,12 @@ import {
                         gap:20px;
                     }
 
+
                     .label {
                         font-size:11px;
                         color:#64748b;
                     }
+
 
                     .value {
                         margin-top:5px;
@@ -1880,17 +2080,20 @@ import {
                         font-weight:700;
                     }
 
+
                     hr {
                         border:0;
                         border-top:1px solid #e5e7eb;
                         margin:25px 0;
                     }
 
+
                     .row {
                         display:flex;
                         justify-content:space-between;
                         margin-bottom:16px;
                     }
+
 
                     .amount {
                         padding:18px;
@@ -1901,10 +2104,12 @@ import {
                         align-items:center;
                     }
 
+
                     .amount strong {
                         font-size:22px;
                         color:#172554;
                     }
+
 
                     .paid {
                         text-align:center;
@@ -1913,12 +2118,14 @@ import {
                         color:#047857;
                     }
 
+
                     .footer {
                         margin-top:28px;
                         text-align:center;
                         color:#94a3b8;
                         font-size:11px;
                     }
+
 
                     @media print {
 
@@ -1941,6 +2148,7 @@ import {
 
                 <div class="receipt">
 
+
                     <div class="header">
 
                         <div class="title">
@@ -1956,9 +2164,12 @@ import {
 
                     <div class="content">
 
+
                         <div class="grid">
 
+
                             <div>
+
                                 <div class="label">
                                     Student Name
                                 </div>
@@ -1969,10 +2180,12 @@ import {
                                         "—"
                                     )}
                                 </div>
+
                             </div>
 
 
                             <div>
+
                                 <div class="label">
                                     Student ID
                                 </div>
@@ -1983,10 +2196,28 @@ import {
                                         "—"
                                     )}
                                 </div>
+
                             </div>
 
 
                             <div>
+
+                                <div class="label">
+                                    Father Name
+                                </div>
+
+                                <div class="value">
+                                    ${esc(
+                                        student.fatherName ||
+                                        "—"
+                                    )}
+                                </div>
+
+                            </div>
+
+
+                            <div>
+
                                 <div class="label">
                                     Course
                                 </div>
@@ -1997,10 +2228,12 @@ import {
                                         "—"
                                     )}
                                 </div>
+
                             </div>
 
 
                             <div>
+
                                 <div class="label">
                                     Batch
                                 </div>
@@ -2011,7 +2244,9 @@ import {
                                         "—"
                                     )}
                                 </div>
+
                             </div>
+
 
                         </div>
 
@@ -2073,6 +2308,7 @@ import {
                             Thank you for your payment.
                         </div>
 
+
                     </div>
 
                 </div>
@@ -2115,6 +2351,7 @@ Sir Syed Hassan Ali Coaching
 
 Student: ${student.name || "—"}
 Student ID: ${student.studentId || "—"}
+Father Name: ${student.fatherName || "—"}
 Course: ${student.course || "—"}
 Batch: ${student.batch || "—"}
 
@@ -2128,6 +2365,39 @@ Thank you for your payment.
         `.trim();
 
     }
+
+
+    /* =====================================================
+       MAKE START AVAILABLE
+    ===================================================== */
+
+    window.startFeesManagement =
+        start;
+
+
+    /* =====================================================
+       START AUTOMATICALLY
+    ===================================================== */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+
+    } else {
+
+        start();
+
+    }
+
 
 })();
 
@@ -2165,7 +2435,8 @@ function today() {
         "-" +
         String(
             date.getMonth() + 1
-        ).padStart(2, "0") +
+        ).padStart(2, "0"
+        ) +
         "-" +
         String(
             date.getDate()
@@ -2192,7 +2463,9 @@ function formatMonth(
         !year ||
         !month
     ) {
+
         return "—";
+
     }
 
 
@@ -2205,6 +2478,7 @@ function formatMonth(
         {
             month:
                 "long",
+
             year:
                 "numeric"
         }
@@ -2218,7 +2492,9 @@ function formatDate(
 ) {
 
     if (!value) {
+
         return "—";
+
     }
 
 
@@ -2233,7 +2509,9 @@ function formatDate(
             date.getTime()
         )
     ) {
+
         return value;
+
     }
 
 
@@ -2242,8 +2520,10 @@ function formatDate(
         {
             day:
                 "2-digit",
+
             month:
                 "short",
+
             year:
                 "numeric"
         }
@@ -2272,22 +2552,27 @@ function esc(
     return String(
         value ?? ""
     )
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
@@ -2303,6 +2588,7 @@ function escAttr(
     return esc(
         value
     )
+
         .replace(
             /`/g,
             "&#096;"
@@ -2362,7 +2648,9 @@ function toast(
 
 
     if (old) {
+
         old.remove();
+
     }
 
 
@@ -2395,76 +2683,3 @@ function toast(
     );
 
 }
-
-
-function totalEl() {
-    return document.getElementById(
-        "feeTotalStudents"
-    );
-}
-
-
-function paidEl() {
-    return document.getElementById(
-        "feePaidStudents"
-    );
-}
-
-
-function pendingEl() {
-    return document.getElementById(
-        "feePendingStudents"
-    );
-}
-
-
-function collectedEl() {
-    return document.getElementById(
-        "feeCollectedAmount"
-    );
-}
-
-
-/* =========================================================
-   START
-========================================================= */
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        () => {
-
-            const event =
-                new Event(
-                    "fees-ready"
-                );
-
-            document.dispatchEvent(
-                event
-            );
-
-            if (
-                typeof window.startFeesManagement ===
-                "function"
-            ) {
-                window.startFeesManagement();
-            }
-
-        },
-        {
-            once:
-                true
-        }
-    );
-
-}
-
-
-/*
-If the page already loaded,
-the main module starts itself above.
-*/
