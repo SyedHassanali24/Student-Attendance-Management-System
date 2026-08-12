@@ -2543,17 +2543,6 @@ function toast(message) {
 
 
 
-import {
-    collection,
-    doc,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    onSnapshot,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-
 /*
 =========================================================
  SIR SYED HASSAN ALI COACHING
