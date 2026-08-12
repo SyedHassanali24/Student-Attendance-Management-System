@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Dashboard | Sir Syed Hassan Ali Coaching</title>
+
+    <link rel="stylesheet" href="./css/student-dashboard.css?v=1">
+</head>
+
+<body>
+
+<div class="student-app">
+
+    <!-- SIDEBAR -->
+    <aside class="student-sidebar">
+
+        <div class="student-brand">
+            <div class="brand-logo">SS</div>
+
+            <div>
+                <strong>Sir Syed Hassan Ali</strong>
+                <span>Student Portal</span>
+            </div>
+        </div>
+
+        <nav class="student-nav">
+
+            <button class="nav-item active" data-section="dashboard">
+                <span>⌂</span>
+                Dashboard
+            </button>
+
+            <button class="nav-item" data-section="attendance">
+                <span>◷</span>
+                Attendance
+            </button>
+
+            <button class="nav-item" data-section="fees">
+                <span>₨</span>
+                Fee Status
+            </button>
+
+            <button class="nav-item" data-section="results">
+                <span>▣</span>
+                Results
+            </button>
+
+            <button class="nav-item" data-section="announcements">
+                <span>◉</span>
+                Announcements
+            </button>
+
+        </nav>
+
+        <button id="studentLogout" class="logout-btn">
+            <span>↪</span>
+            Logout
+        </button>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="student-main">
+
+        <!-- TOPBAR -->
+        <header class="student-topbar">
+
+            <div>
+                <div class="eyebrow">STUDENT PORTAL</div>
+                <h1 id="pageTitle">Dashboard</h1>
+                <p>Welcome back to your learning dashboard.</p>
+            </div>
+
+            <div class="profile-mini">
+
+                <div class="profile-avatar" id="profileAvatar">
+                    S
+                </div>
+
+                <div>
+                    <strong id="topStudentName">
+                        Student
+                    </strong>
+
+                    <span id="topStudentId">
+                        Student ID
+                    </span>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="dashboard-section active">
+
+            <div class="welcome-card">
+
+                <div>
+                    <span class="welcome-label">
+                        Good to see you 👋
+                    </span>
+
+                    <h2>
+                        Welcome,
+                        <span id="welcomeName">Student</span>
+                    </h2>
+
+                    <p>
+                        Track your attendance, fees, results and important announcements from one place.
+                    </p>
+                </div>
+
+                <div class="welcome-badge">
+                    <span>Student ID</span>
+                    <strong id="welcomeStudentId">—</strong>
+                </div>
+
+            </div>
+
+
+            <!-- STAT CARDS -->
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon blue">
+                        ◷
+                    </div>
+
+                    <div>
+                        <span>Attendance</span>
+                        <strong id="attendancePercent">0%</strong>
+                        <small>Overall attendance</small>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">
+                        ✓
+                    </div>
+
+                    <div>
+                        <span>Present</span>
+                        <strong id="presentDays">0</strong>
+                        <small>Present days</small>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon red">
+                        !
+                    </div>
+
+                    <div>
+                        <span>Absent</span>
+                        <strong id="absentDays">0</strong>
+                        <small>Absent days</small>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon amber">
+                        ₨
+                    </div>
+
+                    <div>
+                        <span>This Month Fee</span>
+                        <strong id="feeStatus">Pending</strong>
+                        <small id="feeMonthLabel">Current month</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CHART AREA -->
+            <div class="dashboard-grid">
+
+                <div class="dashboard-card chart-card">
+
+                    <div class="card-heading">
+
+                        <div>
+                            <h3>Attendance Overview</h3>
+                            <p>Your attendance distribution</p>
+                        </div>
+
+                        <span class="status-pill" id="attendanceStatus">
+                            Good
+                        </span>
+
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="attendancePieChart"></canvas>
+                    </div>
+
+                    <div class="chart-legend">
+
+                        <div>
+                            <i class="dot present"></i>
+                            Present
+                            <strong id="legendPresent">0</strong>
+                        </div>
+
+                        <div>
+                            <i class="dot absent"></i>
+                            Absent
+                            <strong id="legendAbsent">0</strong>
+                        </div>
+
+                        <div>
+                            <i class="dot late"></i>
+                            Late
+                            <strong id="legendLate">0</strong>
+                        </div>
+
+                        <div>
+                            <i class="dot leave"></i>
+                            Leave
+                            <strong id="legendLeave">0</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-card chart-card">
+
+                    <div class="card-heading">
+
+                        <div>
+                            <h3>Attendance Trend</h3>
+                            <p>Recent attendance activity</p>
+                        </div>
+
+                    </div>
+
+                    <div class="chart-wrap line-chart-wrap">
+                        <canvas id="attendanceLineChart"></canvas>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- INFORMATION -->
+            <div class="dashboard-grid bottom-grid">
+
+                <div class="dashboard-card">
+
+                    <div class="card-heading">
+                        <div>
+                            <h3>My Profile</h3>
+                            <p>Your registered information</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-details">
+
+                        <div>
+                            <span>Name</span>
+                            <strong id="profileName">—</strong>
+                        </div>
+
+                        <div>
+                            <span>Student ID</span>
+                            <strong id="profileStudentId">—</strong>
+                        </div>
+
+                        <div>
+                            <span>Father Name</span>
+                            <strong id="profileFatherName">—</strong>
+                        </div>
+
+                        <div>
+                            <span>Course</span>
+                            <strong id="profileCourse">—</strong>
+                        </div>
+
+                        <div>
+                            <span>Batch</span>
+                            <strong id="profileBatch">—</strong>
+                        </div>
+
+                        <div>
+                            <span>Phone</span>
+                            <strong id="profilePhone">—</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-card">
+
+                    <div class="card-heading">
+
+                        <div>
+                            <h3>Quick Overview</h3>
+                            <p>Latest information</p>
+                        </div>
+
+                    </div>
+
+                    <div class="overview-list">
+
+                        <div class="overview-item">
+                            <span class="overview-icon">✓</span>
+
+                            <div>
+                                <strong>Attendance</strong>
+                                <small id="overviewAttendance">
+                                    Loading...
+                                </small>
+                            </div>
+                        </div>
+
+
+                        <div class="overview-item">
+                            <span class="overview-icon">₨</span>
+
+                            <div>
+                                <strong>Fee</strong>
+                                <small id="overviewFee">
+                                    Loading...
+                                </small>
+                            </div>
+                        </div>
+
+
+                        <div class="overview-item">
+                            <span class="overview-icon">▣</span>
+
+                            <div>
+                                <strong>Results</strong>
+                                <small id="overviewResults">
+                                    No result published yet
+                                </small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ATTENDANCE -->
+        <section id="attendance" class="dashboard-section">
+
+            <div class="section-header">
+                <div>
+                    <h2>Attendance</h2>
+                    <p>Your complete attendance history</p>
+                </div>
+            </div>
+
+            <div class="attendance-summary">
+
+                <div class="summary-box">
+                    <span>Attendance</span>
+                    <strong id="attendancePagePercent">0%</strong>
+                </div>
+
+                <div class="summary-box">
+                    <span>Present</span>
+                    <strong id="attendancePagePresent">0</strong>
+                </div>
+
+                <div class="summary-box">
+                    <span>Absent</span>
+                    <strong id="attendancePageAbsent">0</strong>
+                </div>
+
+                <div class="summary-box">
+                    <span>Late</span>
+                    <strong id="attendancePageLate">0</strong>
+                </div>
+
+                <div class="summary-box">
+                    <span>Leave</span>
+                    <strong id="attendancePageLeave">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-card">
+
+                <div class="card-heading">
+
+                    <div>
+                        <h3>Attendance History</h3>
+                        <p>Daily attendance records</p>
+                    </div>
+
+                </div>
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Course</th>
+                                <th>Batch</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="attendanceTableBody">
+
+                            <tr>
+                                <td colspan="4">
+                                    Loading attendance...
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- FEES -->
+        <section id="fees" class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Fee Status</h2>
+                    <p>View your monthly fee payment status</p>
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-card">
+
+                <div class="fee-status-card">
+
+                    <div class="fee-status-icon">
+                        ₨
+                    </div>
+
+                    <div>
+                        <span>Current Month</span>
+
+                        <h3 id="feePageMonth">
+                            —
+                        </h3>
+
+                        <p id="feePageStatus">
+                            Checking payment status...
+                        </p>
+                    </div>
+
+                    <span
+                        class="fee-badge"
+                        id="feePageBadge">
+                        Pending
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-card">
+
+                <div class="card-heading">
+                    <div>
+                        <h3>Payment History</h3>
+                        <p>Your previous fee payments</p>
+                    </div>
+                </div>
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Month</th>
+                                <th>Amount</th>
+                                <th>Payment Date</th>
+                                <th>Status</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="feeTableBody">
+
+                            <tr>
+                                <td colspan="4">
+                                    Loading fee records...
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- RESULTS -->
+        <section id="results" class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Results</h2>
+                    <p>View your published academic results</p>
+                </div>
+
+            </div>
+
+
+            <div id="resultsContainer">
+
+                <div class="empty-panel">
+                    <div>▣</div>
+                    <h3>No Published Results</h3>
+                    <p>
+                        Your results will appear here once they are published by the administration.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ANNOUNCEMENTS -->
+        <section id="announcements" class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Announcements</h2>
+                    <p>Latest updates from the coaching</p>
+                </div>
+
+            </div>
+
+
+            <div id="announcementsContainer">
+
+                <div class="empty-panel">
+                    <div>◉</div>
+                    <h3>No Announcements</h3>
+                    <p>
+                        New announcements will appear here.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <footer class="student-footer">
+            © 2026 Sir Syed Hassan Ali Coaching Management System
+        </footer>
+
+    </main>
+
+</div>
+
+
+<!-- CHART.JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- STUDENT DASHBOARD JS -->
+<script
+    type="module"
+    src="./javascript/student-dashboard.js?v=1">
+</script>
+
+</body>
+</html>
