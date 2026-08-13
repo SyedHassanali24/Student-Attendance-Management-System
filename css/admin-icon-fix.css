@@ -1,0 +1,6 @@
+/* Standard icon fixes for admin fee summary cards */
+.dashboard .fee-summary-icon::before{font-family:"Font Awesome 6 Free"!important;font-weight:900!important;font-size:17px!important;}
+.dashboard .fee-summary-icon:not(.paid):not(.pending):not(.amount)::before{content:"\f0c0"!important;}
+.dashboard .fee-summary-icon.paid::before{content:"\f00c"!important;}
+.dashboard .fee-summary-icon.pending::before{content:"\f071"!important;}
+.dashboard .fee-summary-icon.amount::before{content:"\f3d1"!important;}
