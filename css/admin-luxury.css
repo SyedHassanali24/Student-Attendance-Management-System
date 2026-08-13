@@ -1,0 +1,49 @@
+/* =========================================================
+   ADMIN LUXURY UI OVERRIDES
+   Scoped to the admin dashboard. Uses standard Font Awesome icons.
+========================================================= */
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
+
+.dashboard {
+  --lux-navy: #071a33;
+  --lux-navy-2: #0b2b52;
+  --lux-blue: #123f7a;
+  --lux-gold: #c9a45c;
+  --lux-gold-soft: #f7f0e2;
+  --lux-bg: #f4f7fb;
+  --lux-card: rgba(255,255,255,.96);
+  --lux-border: #e5eaf1;
+  --lux-text: #10233f;
+  --lux-muted: #718096;
+  --lux-shadow: 0 14px 35px rgba(7,26,51,.08);
+}
+.dashboard .sidebar{width:278px!important;background:linear-gradient(180deg,var(--lux-navy) 0%,#0a2341 55%,#061629 100%)!important;padding:22px 15px!important;border-right:1px solid rgba(201,164,92,.14)!important;box-shadow:12px 0 35px rgba(7,26,51,.12)!important}
+.dashboard .brand{padding:4px 8px 22px!important;gap:12px!important;border-bottom-color:rgba(255,255,255,.10)!important}
+.dashboard .brand-icon,.dashboard .admin-avatar{background-color:#fff!important;background-image:url("../assets/logo.png")!important;background-repeat:no-repeat!important;background-position:center!important;background-size:88% auto!important;color:transparent!important;font-size:0!important;border:1px solid rgba(201,164,92,.35)!important;box-shadow:0 7px 20px rgba(0,0,0,.16)!important}
+.dashboard .brand-icon{width:50px!important;height:50px!important;border-radius:14px!important;flex-shrink:0!important}
+.dashboard .brand-text h2{color:#fff!important;font-weight:750!important;letter-spacing:-.2px!important}
+.dashboard .brand-text span{color:#b7c4d6!important}
+.dashboard .menu{gap:5px!important;margin-top:24px!important}
+.dashboard .menu-item,.dashboard .logout{position:relative!important;border:1px solid transparent!important;border-radius:12px!important;padding:12px 13px!important;color:#b8c5d6!important;font-weight:600!important}
+.dashboard .menu-item::before,.dashboard .logout::before{width:22px!important;display:inline-flex!important;justify-content:center!important;font-family:"Font Awesome 6 Free"!important;font-weight:900!important;font-size:15px!important;color:#9fb0c7!important;flex-shrink:0!important}
+.dashboard .menu-item:nth-child(1)::before{content:"\f3fd"}.dashboard .menu-item:nth-child(2)::before{content:"\f0c0"}.dashboard .menu-item:nth-child(3)::before{content:"\f029"}.dashboard .menu-item:nth-child(4)::before{content:"\f155"}.dashboard .menu-item:nth-child(5)::before{content:"\f1ea"}.dashboard .menu-item:nth-child(6)::before{content:"\f559"}.dashboard .menu-item:nth-child(7)::before{content:"\f0a1"}.dashboard .logout::before{content:"\f2f5"}
+.dashboard .menu-item:hover{background:rgba(255,255,255,.055)!important;border-color:rgba(201,164,92,.12)!important;color:#fff!important;transform:translateX(2px)!important}
+.dashboard .menu-item:hover::before,.dashboard .menu-item.active::before,.dashboard .logout:hover::before{color:#e3c47d!important}
+.dashboard .menu-item.active{background:linear-gradient(135deg,#174c8f,#103866)!important;border-color:rgba(201,164,92,.30)!important;color:#fff!important;box-shadow:0 10px 24px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.08)!important}
+.dashboard .logout{background:rgba(255,255,255,.035)!important;border-color:rgba(255,255,255,.08)!important}.dashboard .logout:hover{background:#8d2028!important;border-color:#b34b52!important}
+.dashboard .main{width:calc(100% - 278px)!important;margin-left:278px!important;padding:26px 28px 34px!important;background:radial-gradient(circle at 92% 2%,rgba(201,164,92,.08),transparent 25%),var(--lux-bg)!important}
+.dashboard .topbar{min-height:88px!important;padding:16px 22px!important;margin-bottom:24px!important;border:1px solid var(--lux-border)!important;border-radius:18px!important;background:rgba(255,255,255,.94)!important;box-shadow:var(--lux-shadow)!important;backdrop-filter:blur(12px)!important}
+.dashboard .topbar-left h1{color:var(--lux-text)!important;font-size:26px!important;font-weight:800!important;letter-spacing:-.5px!important}.dashboard .topbar-left p{color:var(--lux-muted)!important}
+.dashboard .admin-user{gap:12px!important;padding:5px 8px 5px 5px!important;border:1px solid #e8edf3!important;border-radius:14px!important;background:#fff!important}
+.dashboard .admin-avatar{width:48px!important;height:48px!important;border-radius:12px!important;background-size:92% auto!important}.dashboard .admin-details strong{color:var(--lux-text)!important;font-size:13px!important;font-weight:800!important}.dashboard .admin-details span{color:var(--lux-gold)!important;font-weight:700!important}
+.dashboard .stats-grid{gap:18px!important;margin-bottom:22px!important}.dashboard .stat-card{position:relative!important;overflow:hidden!important;min-height:122px!important;padding:21px!important;border:1px solid var(--lux-border)!important;border-radius:17px!important;background:var(--lux-card)!important;box-shadow:var(--lux-shadow)!important}.dashboard .stat-card::after{content:""!important;position:absolute!important;right:-35px!important;top:-45px!important;width:110px!important;height:110px!important;border-radius:50%!important;background:rgba(201,164,92,.07)!important}.dashboard .stat-card:hover{transform:translateY(-4px)!important;box-shadow:0 20px 42px rgba(7,26,51,.12)!important}
+.dashboard .stat-icon,.dashboard .fee-summary-icon{font-size:0!important;position:relative!important}.dashboard .stat-icon::before,.dashboard .fee-summary-icon::before{font-family:"Font Awesome 6 Free"!important;font-weight:900!important;font-size:18px!important}.dashboard .students-icon::before{content:"\f0c0"}.dashboard .attendance-icon::before{content:"\f2f2"}.dashboard .course-icon::before{content:"\f02d"}.dashboard .success-icon::before{content:"\f201"}
+.dashboard .stat-icon{width:52px!important;height:52px!important;border-radius:14px!important;background:var(--lux-gold-soft)!important;color:var(--lux-blue)!important}.dashboard .attendance-icon{background:#eaf8f2!important;color:#087f5b!important}.dashboard .course-icon{background:#edf3fb!important;color:#174c8f!important}.dashboard .success-icon{background:#f2edff!important;color:#6841c6!important}
+.dashboard .stat-card span{color:var(--lux-muted)!important;font-weight:600!important}.dashboard .stat-card h2{color:var(--lux-text)!important;font-size:29px!important;font-weight:800!important}
+.dashboard .panel{border:1px solid var(--lux-border)!important;border-radius:18px!important;background:rgba(255,255,255,.97)!important;box-shadow:var(--lux-shadow)!important;padding:23px!important}.dashboard .panel-header h2,.dashboard .panel-header h3{color:var(--lux-text)!important;font-weight:800!important}.dashboard .panel-header p{color:var(--lux-muted)!important}
+.dashboard .primary-btn{background:linear-gradient(135deg,#174c8f,#0d3564)!important;border:1px solid rgba(201,164,92,.28)!important;box-shadow:0 8px 18px rgba(13,53,100,.18)!important}.dashboard .primary-btn:hover{background:linear-gradient(135deg,#1d5aa5,#123f7a)!important}
+.dashboard th{background:#f7f9fc!important;color:#6d7b8f!important;font-weight:800!important}.dashboard td{color:#33445b!important}.dashboard tbody tr:hover{background:#fbfcfe!important}
+.dashboard .fee-summary-card{border:1px solid var(--lux-border)!important;border-radius:15px!important;box-shadow:0 8px 22px rgba(7,26,51,.045)!important}.dashboard .fee-summary-icon{background:#edf3fb!important;color:#174c8f!important}.dashboard .fee-summary-icon.paid{background:#eaf8f2!important;color:#087f5b!important}.dashboard .fee-summary-icon.pending{background:#fff4e8!important;color:#b45309!important}.dashboard .fee-summary-icon.amount{background:var(--lux-gold-soft)!important;color:#8b6b2e!important}
+.dashboard .coming-soon>div,.dashboard .empty-icon,.dashboard .placeholder-icon{font-size:0!important}.dashboard .coming-soon>div::before,.dashboard .empty-icon::before,.dashboard .placeholder-icon::before{font-family:"Font Awesome 6 Free"!important;font-weight:900!important;font-size:42px!important;color:var(--lux-gold)!important;content:"\f135"!important}.dashboard .empty-icon::before{content:"\f1ea"!important}.dashboard .placeholder-icon::before{content:"\f029"!important}
+@media (max-width:800px){.dashboard .sidebar{width:220px!important}.dashboard .main{width:calc(100% - 220px)!important;margin-left:220px!important}}
+@media (max-width:650px){.dashboard .sidebar{width:70px!important}.dashboard .main{width:calc(100% - 70px)!important;margin-left:70px!important}.dashboard .brand-icon{width:42px!important;height:42px!important}.dashboard .admin-user{padding:0!important;border:0!important;background:transparent!important}.dashboard .admin-avatar{width:42px!important;height:42px!important}}
