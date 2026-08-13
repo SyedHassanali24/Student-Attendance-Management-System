@@ -1,597 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-    <!-- Character Encoding -->
     <meta charset="UTF-8">
-
-    <!-- Responsive Design -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sir Syed Hassan Ali Coaching | Coaching Management System</title>
+    <meta name="description" content="Sir Syed Hassan Ali Coaching Management System — quality education, attendance, fees, tests, results and announcements in one platform.">
 
-    <!-- Website Title -->
-    <title>Sir Syed Hassan Ali Coaching Management System</title>
-
-    <!-- Website Description -->
-    <meta name="description" content="Smart Coaching Management System">
-
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet">
-
-    <!-- Lucide Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- CSS -->
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/responsive.css">
-
 </head>
-
-
 <body>
 
-    <!-- ==========================================
-         HEADER
-    =========================================== -->
-
-    <header class="header">
-
-        <div class="container">
-
-            <!-- Logo -->
-            <a href="index.html" class="logo">
-
-                <div class="logo-icon">
-                    SS
-                </div>
-
-                <div class="logo-text">
-
-                    <h2>Sir Syed Hassan Ali</h2>
-
-                    <span>
-                        Coaching Management System
-                    </span>
-
-                </div>
-
-            </a>
-
-
-            <!-- Desktop Navigation -->
-            <nav class="navbar">
-
-                <ul class="nav-list">
-
-                    <li>
-                        <a href="#home" class="nav-link">
-                            Home
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="#features" class="nav-link">
-                            Features
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="#about" class="nav-link">
-                            About
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="#contact" class="nav-link">
-                            Contact
-                        </a>
-                    </li>
-
-                </ul>
-
-            </nav>
-
-
-            <!-- Header Buttons -->
-            <div class="header-actions">
-
-                <a href="login.html" class="btn btn-outline">
-                    Student Login
-                </a>
-
-                <a href="admin-login.html" class="btn btn-primary">
-                    Admin Login
-                </a>
-
+<header class="header">
+    <div class="container">
+        <a href="#home" class="logo">
+            <div class="logo-icon" style="padding:0;overflow:hidden;background:#fff;">
+                <img src="assets/logo.png" alt="Sir Syed Hassan Ali Coaching logo" style="width:100%;height:100%;object-fit:contain;">
             </div>
+            <div class="logo-text">
+                <h2>Sir Syed Hassan Ali</h2>
+                <span>Coaching Management System</span>
+            </div>
+        </a>
 
+        <nav class="navbar">
+            <ul class="nav-list">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </nav>
 
-            <!-- Mobile Menu -->
-            <button class="menu-btn" id="menuBtn">
-                ☰
-            </button>
-
+        <div class="header-actions">
+            <a href="login.html" class="btn btn-outline">Student Login</a>
+            <a href="admin-login.html" class="btn btn-primary">Admin Login</a>
         </div>
 
-    </header>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+    </div>
+</header>
 
-
-
-    <!-- ==========================================
-         MAIN CONTENT
-    =========================================== -->
-
-    <main>
-
-
-        <!-- ==========================================
-             HERO SECTION
-        =========================================== -->
-
-        <section class="hero" id="home">
-
-            <div class="container hero-container">
-
-
-                <!-- Hero Left -->
-                <div class="hero-content">
-
-                    <span class="hero-badge">
-                        Smart Coaching Management System
-                    </span>
-
-                    <h1>
-                        Manage Your Coaching With One Smart Platform
-                    </h1>
-
-                    <p>
-                        Attendance, QR Scanner, Fees, Monthly Tests,
-                        Results and Announcements — all in one secure
-                        management system.
-                    </p>
-
-
-                    <div class="hero-buttons">
-
-                        <a href="login.html" class="btn btn-primary">
-                            Student Portal
-                        </a>
-
-                        <a href="admin-login.html" class="btn btn-outline">
-                            Admin Panel
-                        </a>
-
-                    </div>
-
+<main>
+    <section class="hero" id="home">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <span class="hero-badge">Sir Syed Hassan Ali Coaching</span>
+                <h1>Quality Education.<br>Strong Foundation.<br>Better Future.</h1>
+                <p>
+                    A trusted coaching institute with <strong>6 years of experience</strong>,
+                    providing academic guidance in Maths, English and Islamic Studies for students
+                    from Class 1 to Intermediate, including O'Levels and A-Levels.
+                </p>
+                <div class="hero-buttons">
+                    <a href="login.html" class="btn btn-primary">Student Portal</a>
+                    <a href="admin-login.html" class="btn btn-outline">Admin Panel</a>
                 </div>
-
-
-                <!-- Hero Right -->
-                <div class="hero-image">
-
-                    <img src="images/hero.png"
-                         alt="Sir Syed Hassan Ali Coaching Management System">
-
-                </div>
-
             </div>
 
-        </section>
+            <div class="hero-image" style="display:flex;align-items:center;justify-content:center;">
+                <img src="assets/logo.png" alt="Sir Syed Hassan Ali Coaching" style="max-width:320px;width:100%;height:auto;object-fit:contain;">
+            </div>
+        </div>
+    </section>
 
-
-
-        <!-- ==========================================
-             STATISTICS SECTION
-        =========================================== -->
-
-        <section class="stats" id="statistics">
-
-            <div class="container">
-
-                <div class="section-title">
-
-                    <h2>
-                        Coaching Overview
-                    </h2>
-
-                    <p>
-                        Real-time statistics will be displayed here
-                        after connecting with Firebase.
-                    </p>
-
-                </div>
-
-
-                <div class="stats-grid">
-
-
-                    <div class="stat-card">
-
-                        <h3 id="studentCount">
-                            250
-                        </h3>
-
-                        <p>
-                            Total Students
-                        </p>
-
-                    </div>
-
-
-                    <div class="stat-card">
-
-                        <h3 id="attendanceToday">
-                            185
-                        </h3>
-
-                        <p>
-                            Today's Attendance
-                        </p>
-
-                    </div>
-
-
-                    <div class="stat-card">
-
-                        <h3 id="activeCourses">
-                            12
-                        </h3>
-
-                        <p>
-                            Active Courses
-                        </p>
-
-                    </div>
-
-
-                    <div class="stat-card">
-
-                        <h3 id="successRate">
-                            98%
-                        </h3>
-
-                        <p>
-                            Success Rate
-                        </p>
-
-                    </div>
-
-                </div>
-
+    <section class="stats" id="statistics">
+        <div class="container">
+            <div class="section-title">
+                <h2>Coaching Overview</h2>
+                <p>Live information from the coaching management system.</p>
             </div>
 
-        </section>
-
-
-
-        <!-- ==========================================
-             FEATURES SECTION
-        =========================================== -->
-
-        <section class="features" id="features">
-
-            <div class="container">
-
-                <div class="section-title">
-
-                    <h2>
-                        Powerful Features
-                    </h2>
-
-                    <p>
-                        Everything you need to manage your coaching
-                        efficiently from one dashboard.
-                    </p>
-
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="studentCount">0</h3>
+                    <p>Total Students</p>
                 </div>
-
-
-                <div class="features-grid">
-
-
-                    <div class="feature-card">
-
-                        <div class="feature-icon">
-                            📷
-                        </div>
-
-                        <h3>
-                            QR Attendance
-                        </h3>
-
-                        <p>
-                            Mark attendance instantly using a single
-                            Android device.
-                        </p>
-
-                    </div>
-
-
-                    <div class="feature-card">
-
-                        <div class="feature-icon">
-                            👨‍🎓
-                        </div>
-
-                        <h3>
-                            Student Management
-                        </h3>
-
-                        <p>
-                            Add, edit and manage all students from
-                            one place.
-                        </p>
-
-                    </div>
-
-
-                    <div class="feature-card">
-
-                        <div class="feature-icon">
-                            💰
-                        </div>
-
-                        <h3>
-                            Fee Management
-                        </h3>
-
-                        <p>
-                            Track paid and unpaid monthly fees with
-                            complete history.
-                        </p>
-
-                    </div>
-
-
-                    <div class="feature-card">
-
-                        <div class="feature-icon">
-                            📝
-                        </div>
-
-                        <h3>
-                            Monthly Tests
-                        </h3>
-
-                        <p>
-                            Upload and manage monthly test marks easily.
-                        </p>
-
-                    </div>
-
-
-                    <div class="feature-card">
-
-                        <div class="feature-icon">
-                            🎓
-                        </div>
-
-                        <h3>
-                            Results
-                        </h3>
-
-                        <p>
-                            Publish results securely for students
-                            and parents.
-                        </p>
-
-                    </div>
-
-
-                    <div class="feature-card">
-
-                        <div class="feature-icon">
-                            📢
-                        </div>
-
-                        <h3>
-                            Announcements
-                        </h3>
-
-                        <p>
-                            Send important notices directly to every
-                            student dashboard.
-                        </p>
-
-                    </div>
-
+                <div class="stat-card">
+                    <h3 id="attendanceToday">0</h3>
+                    <p>Today's Attendance</p>
                 </div>
+                <div class="stat-card">
+                    <h3 id="activeCourses">6</h3>
+                    <p>Active Courses</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="successRate">98%</h3>
+                    <p>Success Rate</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Powerful Features</h2>
+                <p>Everything you need to manage coaching, students and parents from one platform.</p>
             </div>
 
-        </section>
-
-
-
-        <!-- ==========================================
-             QR WORKFLOW SECTION
-        =========================================== -->
-
-        <section class="workflow" id="workflow">
-
-            <div class="container">
-
-                <div class="section-title">
-
-                    <h2>
-                        How Our QR Attendance Works
-                    </h2>
-
-                    <p>
-                        A simple and secure process that takes only
-                        a few seconds.
-                    </p>
-
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📷</div>
+                    <h3>QR Attendance</h3>
+                    <p>Fast student attendance with secure QR scanning and accurate time records.</p>
                 </div>
-
-
-                <div class="workflow-grid">
-
-
-                    <div class="workflow-card">
-
-                        <div class="step-number">
-                            1
-                        </div>
-
-                        <div class="workflow-icon">
-                            🎫
-                        </div>
-
-                        <h3>
-                            Bring Your QR Card
-                        </h3>
-
-                        <p>
-                            Every student receives a unique QR card
-                            during admission.
-                        </p>
-
-                    </div>
-
-
-                    <div class="workflow-card">
-
-                        <div class="step-number">
-                            2
-                        </div>
-
-                        <div class="workflow-icon">
-                            📷
-                        </div>
-
-                        <h3>
-                            Scan QR Code
-                        </h3>
-
-                        <p>
-                            Scan your QR card using the Android scanner
-                            at reception.
-                        </p>
-
-                    </div>
-
-
-                    <div class="workflow-card">
-
-                        <div class="step-number">
-                            3
-                        </div>
-
-                        <div class="workflow-icon">
-                            ✅
-                        </div>
-
-                        <h3>
-                            Attendance Saved
-                        </h3>
-
-                        <p>
-                            Attendance is recorded instantly with the
-                            current date and time.
-                        </p>
-
-                    </div>
-
-
-                    <div class="workflow-card">
-
-                        <div class="step-number">
-                            4
-                        </div>
-
-                        <div class="workflow-icon">
-                            📊
-                        </div>
-
-                        <h3>
-                            Dashboard Updated
-                        </h3>
-
-                        <p>
-                            Attendance, reports and statistics update
-                            automatically.
-                        </p>
-
-                    </div>
-
+                <div class="feature-card">
+                    <div class="feature-icon">👨‍🎓</div>
+                    <h3>Student Management</h3>
+                    <p>Manage student profiles, IDs, photos, batches and portal accounts in one place.</p>
                 </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>Fee Management</h3>
+                    <p>Track monthly fees, payment history and professional fee receipts.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Monthly Tests</h3>
+                    <p>Manage monthly tests and academic performance records.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎓</div>
+                    <h3>Results</h3>
+                    <p>Maintain and publish student results for students and parents.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📢</div>
+                    <h3>Announcements</h3>
+                    <p>Share important coaching notices and updates with students.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
+    <section class="workflow" id="workflow">
+        <div class="container">
+            <div class="section-title">
+                <h2>How Our QR Attendance Works</h2>
+                <p>A simple and secure process for accurate attendance records.</p>
             </div>
 
-        </section>
-
-
-
-        <!-- ==========================================
-             ABOUT SECTION
-        =========================================== -->
-
-        <section class="about" id="about">
-
-            <div class="container">
-
-                <div class="section-title">
-
-                    <h2>
-                        About Our System
-                    </h2>
-
-                    <p>
-                        A smart digital platform designed to simplify
-                        coaching management.
-                    </p>
-
+            <div class="workflow-grid">
+                <div class="workflow-card">
+                    <div class="step-number">1</div>
+                    <div class="workflow-icon">🎫</div>
+                    <h3>Bring Your QR Card</h3>
+                    <p>Every student receives a unique QR-enabled ID card.</p>
                 </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- ==========================================
-             CONTACT SECTION
-        =========================================== -->
-
-        <section class="contact" id="contact">
-
-            <div class="container">
-
-                <div class="section-title">
-
-                    <h2>
-                        Contact Us
-                    </h2>
-
-                    <p>
-                        For any assistance, please contact the
-                        coaching administration.
-                    </p>
-
+                <div class="workflow-card">
+                    <div class="step-number">2</div>
+                    <div class="workflow-icon">📷</div>
+                    <h3>Scan QR Code</h3>
+                    <p>Scan the student's QR card at the coaching entrance.</p>
                 </div>
-
+                <div class="workflow-card">
+                    <div class="step-number">3</div>
+                    <div class="workflow-icon">✅</div>
+                    <h3>Attendance Saved</h3>
+                    <p>Attendance is recorded with the student's date and time.</p>
+                </div>
+                <div class="workflow-card">
+                    <div class="step-number">4</div>
+                    <div class="workflow-icon">📊</div>
+                    <h3>Dashboard Updated</h3>
+                    <p>Attendance reports and statistics update automatically.</p>
+                </div>
             </div>
+        </div>
+    </section>
 
-        </section>
+    <section class="about" id="about">
+        <div class="container">
+            <div class="section-title">
+                <h2>About Sir Syed Hassan Ali Coaching</h2>
+                <p>
+                    For the last <strong>6 years</strong>, we have focused on building strong academic
+                    foundations and helping students achieve excellent results. Our academic focus includes
+                    <strong>Maths, English and Islamic Studies</strong>, along with support for
+                    <strong>O'Levels, A-Levels</strong> and regular school classes from Class 1 to Intermediate.
+                    Our students' failing ratio is <strong>almost negligible</strong>, reflecting our commitment
+                    to consistent academic guidance and student progress.
+                </p>
+            </div>
+        </div>
+    </section>
 
+    <section class="contact" id="contact">
+        <div class="container">
+            <div class="section-title">
+                <h2>Contact Us</h2>
+                <p>For admissions, academic guidance or any assistance, contact the coaching administration.</p>
+                <p><strong>Address:</strong> House #L-19, Sector L-1 Memarabad, Surjani Town, Karachi, Near Baba Decoration</p>
+                <p><strong>Phone / WhatsApp:</strong> <a href="https://wa.me/923132956206" target="_blank" rel="noopener noreferrer">0313-2956206</a></p>
+                <p><strong>Email:</strong> <a href="mailto:eastwala12@gmail.com">eastwala12@gmail.com</a></p>
+                <p><strong>Facebook:</strong> <a href="https://www.facebook.com/share/1Mup5KM16s/" target="_blank" rel="noopener noreferrer">Visit our Facebook Page</a></p>
+            </div>
+        </div>
+    </section>
+</main>
 
-    </main>
-
-
-
-    <!-- ==========================================
-         JAVASCRIPT
-    =========================================== -->
-
-    <script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js"></script>
 
 </body>
-
 </html>
