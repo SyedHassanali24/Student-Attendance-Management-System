@@ -1,11 +1,8 @@
 /* =========================================================
-   SSHACMS FEE MANAGEMENT — CLEAN LOADER
+   SSHACMS FEE MANAGEMENT — LOCAL ADMIN LOADER
 
-   The previous fees.js had the fee-management source pasted
-   twice, which broke the module and the fee receipt/slip flow.
-
-   This file intentionally loads the last clean, working fee
-   module from an immutable commit.
+   Loads the local admin fee module so Fee Management does
+   not depend on an external jsDelivr copy.
 ========================================================= */
 
-import "https://cdn.jsdelivr.net/gh/SyedHassanali24/Student-Attendance-Management-System@63e3faec1dbbd546a1dfea2c77fd44d400cb1693/javascript/fees.js";
+import "./admin-fees.js?v=1";
