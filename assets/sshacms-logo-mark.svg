@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sir Syed Hassan Ali Coaching logo">
+<rect width="512" height="512" rx="56" fill="#ffffff"/>
+<g transform="translate(0,4)">
+<path d="M256 38v28" stroke="#0b2f5b" stroke-width="10" stroke-linecap="round"/>
+<path d="M244 67h24l-5 18h-14z" fill="#0b2f5b"/>
+<path d="M207 88h98l-14 26h-70z" fill="#0b2f5b"/>
+<path d="M217 114h78v23h-78z" fill="#c9a45c"/>
+<path d="M225 136h62v72l-9 12h-44l-9-12z" fill="#fff" stroke="#0b2f5b" stroke-width="8"/>
+<path d="M240 145v63M272 145v63" stroke="#0b2f5b" stroke-width="7"/>
+<path d="M208 207h96l-14 28h-68z" fill="#0b2f5b"/>
+<path d="M218 235h76l-20 139h-36z" fill="#0b2f5b"/>
+<path d="M256 257v117" stroke="#fff" stroke-width="7"/>
+<path d="M245 287h22v30h-22z" fill="#fff"/>
+<path d="M234 327h44v47h-44z" fill="#fff"/>
+<path d="M226 374h60l16 22h-92z" fill="#0b2f5b"/>
+<path d="M80 338l84-30 41 18-85 25z" fill="#c9a45c"/>
+<path d="M432 338l-84-30-41 18 85 25z" fill="#c9a45c"/>
+<path d="M75 342l105 18 76 39 76-39 105-18-74 85-107-14-107 14z" fill="#fff" stroke="#0b2f5b" stroke-width="10"/>
+<path d="M75 385l102 17 79 31 79-31 102-17" fill="none" stroke="#0b2f5b" stroke-width="10"/>
+<path d="M95 411l92 13 69 26 69-26 92-13" fill="none" stroke="#0b2f5b" stroke-width="8"/>
+</g></svg>
