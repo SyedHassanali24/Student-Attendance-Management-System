@@ -6,3 +6,7 @@
 ========================================================= */
 
 import "./admin-fees.js?v=1";
+
+/* Admin attendance enhancement: camera switching, check-in/out,
+   late rule, leave and coaching-off controls. */
+import "./attendance-enhancer.js?v=1";
