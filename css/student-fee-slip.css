@@ -1,0 +1,205 @@
+/* =========================================================
+   SSHACMS — STUDENT FEE SLIP
+========================================================= */
+
+.student-slip-modal {
+    width: min(720px, 95vw);
+    max-height: 92vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 25px 70px rgba(15, 23, 42, .25);
+}
+
+.student-slip-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.student-slip-brand {
+    font-size: 18px;
+    font-weight: 800;
+    color: #172554;
+}
+
+.student-slip-subtitle {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.student-slip-close {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.student-slip-paper {
+    margin: 20px;
+    padding: 28px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.student-slip-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.student-slip-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.student-slip-muted {
+    margin-top: 5px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.student-slip-paid {
+    padding: 7px 11px;
+    border-radius: 8px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.student-slip-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 24px;
+}
+
+.student-slip-grid span {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.student-slip-grid strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+    color: #0f172a;
+}
+
+.student-slip-divider {
+    height: 1px;
+    margin: 24px 0;
+    background: #e2e8f0;
+}
+
+.student-slip-amount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-top: 24px;
+    padding: 18px;
+    border-radius: 13px;
+    background: #f1f5f9;
+}
+
+.student-slip-amount span {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.student-slip-amount strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 25px;
+    color: #172554;
+}
+
+.student-slip-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.student-slip-note {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 9px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+}
+
+.student-slip-success {
+    margin-top: 24px;
+    text-align: center;
+    color: #15803d;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.student-slip-thanks {
+    margin-top: 5px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.student-slip-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    padding: 0 20px 20px;
+}
+
+.student-slip-actions button {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+@media (max-width: 600px) {
+    .student-slip-paper {
+        margin: 12px;
+        padding: 20px;
+    }
+
+    .student-slip-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .student-slip-actions {
+        flex-direction: column;
+    }
+
+    .student-slip-actions button {
+        width: 100%;
+    }
+}
