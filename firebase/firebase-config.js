@@ -1,14 +1,9 @@
 import { initializeApp }
 from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, serverTimestamp, increment, writeBatch }
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, serverTimestamp, increment, writeBatch, onSnapshot }
 from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-import { getAuth, onAuthStateChanged }
-from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-import { getStorage }
-from "https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyB1wfjw-zsIDxUMvAYvbbHlvNRQ4zRsgmM",
@@ -20,83 +15,48 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-console.log("✅ Firebase Connected Successfully");
-
-/* =========================================================
-   LIFETIME STUDENT COUNTER
-   The public homepage uses settings/publicStats.totalStudents.
-   This number is cumulative: deleting a student never reduces it.
-========================================================= */
+console.log("Firebase Connected Successfully");
 
 const publicStatsRef = doc(db, "settings", "publicStats");
-
 let lifetimeCounterReady = Promise.resolve();
 
 async function ensureLifetimeStudentCounter() {
-
     const [studentsSnapshot, statsSnapshot] = await Promise.all([
         getDocs(collection(db, "students")),
         getDoc(publicStatsRef)
     ]);
 
     const currentStudents = studentsSnapshot.size;
-    const savedTotal = Number(
-        statsSnapshot.data()?.totalStudents || 0
-    );
+    const savedTotal = Number(statsSnapshot.data()?.totalStudents || 0);
 
-    // First-time setup: start from the students that already exist.
-    // If the saved lifetime total is higher, never reduce it.
     if (!statsSnapshot.exists() || savedTotal < currentStudents) {
-        await setDoc(
-            publicStatsRef,
-            {
-                totalStudents: currentStudents,
-                updatedAt: serverTimestamp()
-            },
-            { merge: true }
-        );
+        await setDoc(publicStatsRef, {
+            totalStudents: currentStudents,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
     }
 }
 
 function setupCumulativeStudentCreation() {
-
     const studentForm = document.getElementById("studentForm");
+    if (!studentForm) return;
 
-    if (!studentForm) {
-        return;
-    }
-
-    /*
-       This capture listener runs before the older admin.js submit handler.
-       It takes over only for NEW students. Editing existing students keeps
-       using the existing admin.js logic.
-    */
     studentForm.addEventListener("submit", async event => {
-
         const editId = document.getElementById("editStudentId")?.value;
-
-        if (editId) {
-            return;
-        }
+        if (editId) return;
 
         event.preventDefault();
         event.stopImmediatePropagation();
 
         const saveButton = document.getElementById("saveStudentBtn");
         const message = document.getElementById("formMessage");
-
         if (saveButton) {
             saveButton.disabled = true;
             saveButton.textContent = "Saving Student...";
-        }
-
-        if (message) {
-            message.textContent = "Saving student...";
         }
 
         const studentData = {
@@ -109,99 +69,80 @@ function setupCumulativeStudentCreation() {
         };
 
         try {
-
             await lifetimeCounterReady;
-
-            const studentsCollection = collection(db, "students");
-            const studentRef = doc(studentsCollection);
-
+            const studentRef = doc(collection(db, "students"));
             const batch = writeBatch(db);
 
             batch.set(studentRef, {
                 ...studentData,
-                studentId: generateStudentId(),
+                studentId: "STU-" + Math.floor(100000 + Math.random() * 900000),
                 createdAt: serverTimestamp()
             });
 
-            batch.set(
-                publicStatsRef,
-                {
-                    totalStudents: increment(1),
-                    updatedAt: serverTimestamp()
-                },
-                { merge: true }
-            );
+            batch.set(publicStatsRef, {
+                totalStudents: increment(1),
+                updatedAt: serverTimestamp()
+            }, { merge: true });
 
-            // Student creation and lifetime counter update happen atomically.
             await batch.commit();
 
-            if (message) {
-                message.textContent = "Student added successfully.";
-            }
-
+            if (message) message.textContent = "Student added successfully.";
             studentForm.reset();
-
-            const modal = document.getElementById("studentModal");
-            modal?.classList.remove("show");
-
+            document.getElementById("studentModal")?.classList.remove("show");
         } catch (error) {
-
             console.error("Student save error:", error);
-
-            if (message) {
-                message.textContent =
-                    "Error: " + error.message;
-            }
-
+            if (message) message.textContent = "Error: " + error.message;
         } finally {
-
             if (saveButton) {
                 saveButton.disabled = false;
                 saveButton.textContent = "Save Student";
             }
-
         }
-
     }, true);
 }
 
-function generateStudentId() {
-
-    return (
-        "STU-" +
-        Math.floor(100000 + Math.random() * 900000)
-    );
-}
-
 if (window.location.pathname.includes("admin-dashboard.html")) {
-
     onAuthStateChanged(auth, user => {
-
-        if (!user) {
-            return;
-        }
-
-        lifetimeCounterReady = ensureLifetimeStudentCounter()
-            .catch(error => {
-                console.error(
-                    "Lifetime student counter initialization failed:",
-                    error
-                );
-            });
-
+        if (!user) return;
+        lifetimeCounterReady = ensureLifetimeStudentCounter().catch(error => console.error("Lifetime counter initialization failed:", error));
         setupCumulativeStudentCreation();
-
     });
 
     const loadFeeModule = () => {
         if (auth.currentUser) {
-            import("../javascript/fees.js").catch(error => {
-                console.error("Fee module load error:", error);
-            });
+            import("../javascript/fees.js").catch(error => console.error("Fee module load error:", error));
         } else {
             setTimeout(loadFeeModule, 150);
         }
     };
-
     loadFeeModule();
+}
+
+if (window.location.pathname.endsWith("/") || window.location.pathname.endsWith("index.html")) {
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+
+    const todayKey = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+
+    onSnapshot(publicStatsRef, snapshot => {
+        setText("studentCount", Number(snapshot.data()?.totalStudents || 0));
+    }, error => console.error("Homepage student counter error:", error));
+
+    onSnapshot(collection(db, "attendance"), snapshot => {
+        const today = todayKey();
+        const unique = new Set();
+        snapshot.docs.forEach(item => {
+            const record = item.data();
+            if (record.date === today) unique.add(record.studentDocId || record.studentId || item.id);
+        });
+        setText("attendanceToday", unique.size);
+    }, error => console.error("Homepage attendance stats error:", error));
+
+    setText("activeCourses", 6);
+    setText("successRate", "98%");
 }
