@@ -1,0 +1,87 @@
+/* ADMIN WIDTH FIX
+   Keeps the page itself locked to the viewport.
+   Only the table-wrapper is allowed to scroll horizontally. */
+
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.dashboard {
+  width: 100% !important;
+  max-width: 100vw !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+.dashboard .main {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  width: calc(100vw - 270px) !important;
+  max-width: calc(100vw - 270px) !important;
+  overflow-x: hidden !important;
+}
+
+.dashboard .page,
+.dashboard .page.active,
+.dashboard .panel,
+.dashboard .panel-header,
+.dashboard .student-tools,
+.dashboard .fee-tools {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* The table may be wider than a phone, but its scroll must stay INSIDE this box. */
+.dashboard .table-wrapper {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box !important;
+}
+
+.dashboard .table-wrapper table {
+  width: max-content !important;
+  min-width: 850px !important;
+  max-width: none !important;
+}
+
+@media (max-width: 800px) {
+  .dashboard .sidebar {
+    width: 76px !important;
+  }
+
+  .dashboard .main {
+    width: calc(100vw - 76px) !important;
+    max-width: calc(100vw - 76px) !important;
+    margin-left: 76px !important;
+    flex: 0 0 calc(100vw - 76px) !important;
+  }
+
+  .dashboard .panel {
+    overflow: hidden !important;
+  }
+
+  .dashboard .table-wrapper {
+    overflow-x: auto !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard .sidebar {
+    width: 64px !important;
+  }
+
+  .dashboard .main {
+    width: calc(100vw - 64px) !important;
+    max-width: calc(100vw - 64px) !important;
+    margin-left: 64px !important;
+    flex-basis: calc(100vw - 64px) !important;
+  }
+}
