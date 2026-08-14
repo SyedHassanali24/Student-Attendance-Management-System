@@ -95,3 +95,16 @@ input,select,textarea,button{max-width:100%}
 /* TOUCH + LONG CONTENT */
 @media (pointer:coarse){.btn,.primary-btn,.secondary-btn,.action-btn,.menu-item,.nav-item,.logout,.logout-btn{min-height:42px}}
 .dashboard td,.student-main td,.dashboard-card,.panel,.profile-details strong,.profile-details div,.topbar,.student-topbar{overflow-wrap:anywhere}
+
+/* ADMIN WIDTH GUARD — keep the student-management panel inside the mobile viewport.
+   The table itself remains horizontally scrollable; only the page/panel width is locked. */
+.dashboard .main{max-width:calc(100vw - 270px);overflow-x:hidden}
+.dashboard .panel{width:100%;max-width:100%}
+.dashboard .table-wrapper{min-width:0;max-width:100%;width:100%;overflow-x:auto;overflow-y:hidden}
+.dashboard .table-wrapper table{max-width:none}
+@media (max-width:800px){
+ .dashboard .main{max-width:calc(100vw - 76px);overflow-x:hidden}
+}
+@media (max-width:380px){
+ .dashboard .main{max-width:calc(100vw - 64px)}
+}
