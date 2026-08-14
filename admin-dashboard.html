@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard | Sir Syed Hassan Ali Coaching</title>
-<link rel="stylesheet" href="./css/style.css?v=8">
-<link rel="stylesheet" href="./css/admin.css?v=8">
-<link rel="stylesheet" href="./css/fees.css?v=3">
-<link rel="stylesheet" href="./css/responsive.css?v=7">
+<link rel="stylesheet" href="./css/style.css?v=9">
+<link rel="stylesheet" href="./css/admin.css?v=9">
+<link rel="stylesheet" href="./css/fees.css?v=4">
+<link rel="stylesheet" href="./css/responsive.css?v=8">
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<script src="./javascript/qr-short-id-compat.js?v=1"></script>
+<script src="./javascript/qr-short-id-compat.js?v=2"></script>
 </head>
 <body>
 <div class="dashboard"><aside class="sidebar"><div class="brand"><div class="brand-icon">SS</div><div class="brand-text"><h2>Sir Syed Hassan Ali</h2><span>Coaching Management</span></div></div><nav class="menu"><button class="menu-item active" data-page="overview">📊 <span>Dashboard</span></button><button class="menu-item" data-page="students">👨‍🎓 <span>Student Management</span></button><button class="menu-item" data-page="attendance">📷 <span>QR Attendance</span></button><button class="menu-item" data-page="fees">💰 <span>Fee Management</span></button><button class="menu-item" data-page="tests">📝 <span>Monthly Tests</span></button><button class="menu-item" data-page="results">🎓 <span>Results</span></button><button class="menu-item" data-page="announcements">📢 <span>Announcements</span></button></nav><button id="logoutBtn" class="logout">🚪 <span>Logout</span></button></aside>
@@ -23,6 +23,5 @@
 <section id="announcements" class="page"><div class="panel"><div class="panel-header"><div><h2>📢 Announcements</h2><p>Manage coaching announcements</p></div></div><div class="coming-soon"><div>📢</div><h3>Announcements</h3><p>Announcement management module is ready for expansion.</p></div></div></section>
 </main></div>
 <div id="studentModal" class="modal" aria-hidden="true"><div class="modal-content"><div class="modal-header"><div><h2 id="modalTitle">Add Student</h2><p>Create or update a student record</p></div><button type="button" id="closeModal" class="close-btn" aria-label="Close">×</button></div><form id="studentForm"><input type="hidden" id="editStudentId"><div class="form-grid"><div class="form-group"><label for="studentName">Student Name</label><input id="studentName" required></div><div class="form-group"><label for="fatherName">Father Name</label><input id="fatherName" required></div><div class="form-group"><label for="phone">Phone</label><input id="phone" required></div><div class="form-group"><label for="course">Course</label><input id="course" required></div><div class="form-group"><label for="batch">Batch</label><input id="batch" required></div><div class="form-group"><label for="admissionDate">Admission Date</label><input id="admissionDate" type="date" required></div></div><div id="formMessage" class="form-message"></div><div class="modal-actions"><button type="button" id="cancelBtn" class="secondary-btn">Cancel</button><button type="submit" id="saveStudentBtn" class="primary-btn">Save Student</button></div></form></div></div>
-<script type="module" src="./javascript/admin.js?v=8"></script><script type="module" src="./javascript/admin-fees.js?v=3"></script>
-<script type="module" src="./javascript/student-photo-admin.js?v=8"></script>
+<script type="module" src="./javascript/admin.js?v=9"></script>
 </body></html>
