@@ -1,15 +1,15 @@
 /* =========================================================
    SSHACMS FEE MANAGEMENT — LOCAL ADMIN LOADER
-
-   Loads the local admin fee module so Fee Management does
-   not depend on an external jsDelivr copy.
+   Stable local modules only.
 ========================================================= */
 
-/* Install the FINAL attendance freeze guard before the
-   attendance enhancement module is evaluated. */
-import "./attendance-freeze-fix.js?v=3";
-import "./admin-fees.js?v=3";
+/* Freeze guard prevents accidental MutationObserver render loops. */
+import "./attendance-freeze-fix.js?v=4";
 
-/* Admin attendance enhancement: camera switching, check-in/out,
-   late rule, leave and coaching-off controls. */
-import "./attendance-enhancer.js?v=3";
+/* Admin fee management + direct one-click PDF receipt. */
+import "./admin-fees.js?v=4";
+
+/* Freeze-safe attendance enhancement.
+   This module deliberately does NOT observe or rewrite the attendance table;
+   admin.js remains the single owner of that table. */
+import "./attendance-enhancer-safe.js?v=1";
