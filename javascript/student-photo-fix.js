@@ -2,62 +2,33 @@ import { db } from "../firebase/firebase-config.js";
 import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 (() => {
-  const style = document.createElement('style');
-  style.textContent = `
-    #studentsTableBody td:nth-child(2){width:180px!important;min-width:180px!important;max-width:180px!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;}
-    #studentsTableBody td:nth-child(2) .student-name-wrap{display:flex!important;align-items:center!important;width:100%!important;min-width:0!important;overflow:hidden!important;}
-    .student-name-text{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
-    .student-photo-thumb{width:36px!important;height:36px!important;min-width:36px!important;border-radius:50%!important;object-fit:cover!important;margin-right:8px!important;display:block!important;}
-  `;
-  document.head.appendChild(style);
+  const style=document.createElement('style');
+  style.textContent=`
+    #studentsTableBody td:nth-child(2){width:180px!important;min-width:180px!important;max-width:180px!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;vertical-align:middle!important}
+    #studentsTableBody td:nth-child(2) .student-name-wrap{display:flex!important;align-items:center!important;width:100%!important;min-width:0!important;max-width:100%!important;overflow:hidden!important}
+    .student-name-text{display:block!important;min-width:0!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+    .student-photo-thumb{width:36px!important;height:36px!important;min-width:36px!important;border-radius:50%!important;object-fit:cover!important;margin-right:8px!important;display:block!important}
+  `;document.head.appendChild(style);
 
-  const idOf = el => el?.dataset?.id || el?.closest('tr')?.querySelector('[data-id]')?.dataset?.id || '';
+  const getId=el=>el?.dataset?.id||el?.closest('tr')?.querySelector('[data-id]')?.dataset?.id||'';
+  const compress=file=>new Promise((resolve,reject)=>{if(!file?.type?.startsWith('image/'))return reject(new Error('Please select an image.'));const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),s=Math.min(1,520/img.width,620/img.height);c.width=Math.max(1,img.width*s);c.height=Math.max(1,img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.82));};img.onerror=()=>reject(new Error('Invalid image.'));img.src=r.result};r.onerror=()=>reject(new Error('Image could not be read.'));r.readAsDataURL(file)});
 
-  function compress(file){
-    return new Promise((resolve,reject)=>{
-      if(!file?.type?.startsWith('image/')) return reject(new Error('Please select an image.'));
-      const r=new FileReader();
-      r.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const s=Math.min(1,520/img.width,620/img.height);c.width=Math.max(1,img.width*s);c.height=Math.max(1,img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.82));};img.onerror=()=>reject(new Error('Invalid image.'));img.src=r.result;};
-      r.onerror=()=>reject(new Error('Image could not be read.'));r.readAsDataURL(file);
-    });
-  }
+  function renderPhoto(id,photo){document.querySelectorAll('#studentsTableBody tr').forEach(row=>{if(!row.querySelector(`[data-id="${CSS.escape(id)}"]`))return;const cell=row.querySelectorAll('td')[1];if(!cell)return;const old=cell.querySelector('.student-name-text')?.textContent||cell.textContent.trim()||'Student';cell.innerHTML='';const wrap=document.createElement('div');wrap.className='student-name-wrap';if(photo){const img=document.createElement('img');img.className='student-photo-thumb';img.src=photo;img.alt='Student photo';wrap.appendChild(img)}const span=document.createElement('span');span.className='student-name-text';span.textContent=old;span.title=old;wrap.appendChild(span);cell.appendChild(wrap)})}
 
-  async function savePhoto(button,file){
-    const id=idOf(button);if(!id)return;
-    try{
-      button.disabled=true;const photo=await compress(file);await updateDoc(doc(db,'students',id),{photo,photoUpdatedAt:new Date().toISOString()});
-      button.textContent='✓ Photo';setTimeout(()=>{button.textContent='📷 Photo';button.disabled=false;},900);renderPhoto(id,photo);
-    }catch(e){button.disabled=false;alert('Photo save failed: '+e.message);}
-  }
+  async function savePhoto(button,file){const id=getId(button);if(!id)return;try{button.disabled=true;const photo=await compress(file);await updateDoc(doc(db,'students',id),{photo,photoUpdatedAt:new Date().toISOString()});renderPhoto(id,photo);button.textContent='✓ Photo Saved';setTimeout(()=>{button.textContent='📷 Photo';button.disabled=false},1000)}catch(e){button.disabled=false;alert('Photo save failed: '+e.message)}}
 
   function choosePhoto(button){
     const input=document.createElement('input');input.type='file';input.accept='image/*';
-    document.body.appendChild(input);
-    input.onchange=()=>{const f=input.files?.[0];input.remove();if(f)savePhoto(button,f);};
-    input.click();
+    /* No capture attribute: Android/iPhone can offer Camera + Gallery/Files. */
+    input.style.position='fixed';input.style.left='-9999px';document.body.appendChild(input);
+    input.onchange=()=>{const f=input.files?.[0];input.remove();if(f)savePhoto(button,f)};input.click();
   }
 
-  function renderPhoto(id,photo){
-    document.querySelectorAll('#studentsTableBody tr').forEach(row=>{
-      if(!row.querySelector(`[data-id="${CSS.escape(id)}"]`))return;
-      const cell=row.querySelectorAll('td')[1];if(!cell)return;
-      const name=cell.querySelector('.student-name-text')?.textContent||cell.textContent.trim()||'Student';
-      cell.innerHTML='';const wrap=document.createElement('div');wrap.className='student-name-wrap';
-      if(photo){const img=document.createElement('img');img.className='student-photo-thumb';img.src=photo;img.alt='Student photo';wrap.appendChild(img);}
-      const span=document.createElement('span');span.className='student-name-text';span.textContent=name;span.title=name;wrap.appendChild(span);cell.appendChild(wrap);
-    });
-  }
+  async function decorate(){for(const row of document.querySelectorAll('#studentsTableBody tr')){const id=row.querySelector('[data-id]')?.dataset?.id,cells=row.querySelectorAll('td'),cell=cells[1];if(!id||!cell)continue;if(!cell.querySelector('.student-name-wrap')){const name=cell.textContent.trim()||'Student';cell.textContent='';const wrap=document.createElement('div');wrap.className='student-name-wrap';const span=document.createElement('span');span.className='student-name-text';span.textContent=name;span.title=name;wrap.appendChild(span);cell.appendChild(wrap)}const actions=row.querySelector('.action-buttons');if(actions&&!actions.querySelector('.student-photo-action')){const b=document.createElement('button');b.type='button';b.className='action-btn student-photo-action';b.dataset.id=id;b.textContent='📷 Photo';actions.insertBefore(b,actions.firstChild)}try{const snap=await getDoc(doc(db,'students',id));if(snap.exists()&&snap.data().photo)renderPhoto(id,snap.data().photo)}catch(e){console.warn('photo read failed',e)}}}
 
-  async function decorate(){
-    for(const row of document.querySelectorAll('#studentsTableBody tr')){
-      const id=row.querySelector('[data-id]')?.dataset?.id;const cells=row.querySelectorAll('td');const cell=cells[1];if(!id||!cell)continue;
-      if(!cell.querySelector('.student-name-wrap')){const name=cell.textContent.trim()||'Student';cell.innerHTML=`<div class="student-name-wrap"><span class="student-name-text"></span></div>`;cell.querySelector('.student-name-text').textContent=name;}
-      const actions=row.querySelector('.action-buttons');
-      if(actions&&!actions.querySelector('.student-photo-action')){const b=document.createElement('button');b.type='button';b.className='action-btn student-photo-action';b.dataset.id=id;b.textContent='📷 Photo';actions.insertBefore(b,actions.firstChild);}
-      try{const snap=await getDoc(doc(db,'students',id));if(snap.exists()&&snap.data().photo)renderPhoto(id,snap.data().photo);}catch(e){console.warn(e);}
-    }
-  }
+  async function openPhotoIDCard(id){const snap=await getDoc(doc(db,'students',id));if(!snap.exists())return alert('Student not found.');const s=snap.data(),w=window.open('','_blank','width=520,height=760');if(!w)return alert('Please allow pop-ups for ID cards.');const photo=s.photo?`<img src="${s.photo}" alt="Student Photo">`:`<span>${String(s.name||'S').charAt(0).toUpperCase()}</span>`;w.document.write(`<!doctype html><html><head><title>Student ID Card</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;background:#eef2f7;font-family:Arial,sans-serif;min-height:100vh;display:grid;place-items:center}.card{width:360px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 18px 50px #102a5226}.head{background:#0b2f63;color:#fff;text-align:center;padding:22px}.head h2{margin:0;font-size:19px}.head p{margin:6px 0 0;font-size:12px;opacity:.85}.body{text-align:center;padding:22px}.photo{width:105px;height:105px;margin:0 auto 14px;border-radius:50%;overflow:hidden;background:#e8edf5;display:grid;place-items:center;color:#0b2f63;font-size:38px;font-weight:800}.photo img{width:100%;height:100%;object-fit:cover;display:block}.name{font-size:21px;font-weight:800;color:#102a52;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.id{font-size:12px;color:#6b7788;margin:5px 0 16px}.row{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #e7ebf1;padding:9px 0;font-size:12px;text-align:left}.row b{color:#102a52}.row span{color:#55657a;text-align:right;overflow:hidden;text-overflow:ellipsis}.print{margin-top:14px;padding:10px 18px;border:0;border-radius:9px;background:#0b2f63;color:#fff;font-weight:700}@media print{body{background:#fff}.card{box-shadow:none}.print{display:none}}</style></head><body><div class="card"><div class="head"><h2>SIR SYED HASSAN ALI COACHING</h2><p>Student Identity Card</p></div><div class="body"><div class="photo">${photo}</div><div class="name">${String(s.name||'Student').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}</div><div class="id">${String(s.studentId||id)}</div><div class="row"><b>Father Name</b><span>${String(s.fatherName||'-')}</span></div><div class="row"><b>Course</b><span>${String(s.course||'-')}</span></div><div class="row"><b>Batch</b><span>${String(s.batch||'-')}</span></div><button class="print" onclick="window.print()">Print / Save PDF</button></div></div></body></html>`);w.document.close()}
 
-  document.addEventListener('click',e=>{const b=e.target.closest('.student-photo-action');if(b){e.preventDefault();e.stopImmediatePropagation();choosePhoto(b);}},true);
-  const body=document.getElementById('studentsTableBody');if(body){new MutationObserver(decorate).observe(body,{childList:true,subtree:true});decorate();}
+  document.addEventListener('click',e=>{const photoBtn=e.target.closest('.student-photo-action');if(photoBtn){e.preventDefault();e.stopImmediatePropagation();choosePhoto(photoBtn);return}const idBtn=e.target.closest('.id-card-btn');if(idBtn){e.preventDefault();e.stopImmediatePropagation();openPhotoIDCard(idBtn.dataset.id).catch(err=>alert('ID card error: '+err.message))}},true);
+  const body=document.getElementById('studentsTableBody');if(body)new MutationObserver(decorate).observe(body,{childList:true,subtree:true});
+  decorate();
 })();
