@@ -1,27 +1,23 @@
-/* SSHACMS — FINAL ADMIN WIDTH / MOBILE TABLE ISOLATION
-   Desktop keeps the existing table. On mobile ONLY Student Management
-   becomes stacked cards so no horizontal page/table growth is possible.
-*/
-html,body{width:100%;max-width:100%;overflow-x:clip!important}
-.dashboard{width:100%;max-width:100vw;min-width:0;overflow-x:clip!important}
-.dashboard .main{box-sizing:border-box!important;min-width:0!important;width:calc(100vw - 270px)!important;max-width:calc(100vw - 270px)!important;overflow-x:clip!important}
-.dashboard .page,.dashboard .panel,.dashboard .panel-header,.dashboard .student-tools,.dashboard .fee-tools{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
-.dashboard .table-wrapper{box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important}
-.dashboard .table-wrapper table{width:100%;min-width:850px;max-width:none}
+/* SSHACMS — FINAL STUDENT MANAGEMENT WIDTH LOCK */
+html,body{width:100%;max-width:100%;overflow-x:hidden!important}
+.dashboard{width:100%;max-width:100%;min-width:0;overflow-x:hidden!important}
+.dashboard .main{box-sizing:border-box!important;min-width:0!important;overflow-x:hidden!important}
+.dashboard .page,.dashboard .panel,.dashboard .panel-header,.dashboard .student-tools{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+#students{min-width:0!important;max-width:100%!important;overflow:hidden!important}
+#students .panel{min-width:0!important;max-width:100%!important;overflow:hidden!important}
+#students .table-wrapper{box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:auto;overflow-y:hidden}
+#students .table-wrapper table{max-width:none}
 
-@media(max-width:800px){
- .dashboard .sidebar{width:76px!important;min-width:76px!important;max-width:76px!important}
- .dashboard .main{width:calc(100vw - 76px)!important;max-width:calc(100vw - 76px)!important;min-width:0!important;margin-left:76px!important;flex:0 0 calc(100vw - 76px)!important;overflow-x:clip!important}
- .dashboard .page,.dashboard .panel{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:clip!important}
-
- /* Student Management: remove the horizontal scroller completely. */
- #students .table-wrapper{width:100%!important;max-width:100%!important;min-width:0!important;overflow:visible!important}
+/* Mobile: Student Management becomes fixed-width cards. */
+@media(max-width:800px), (pointer:coarse) and (max-width:1100px){
+ .dashboard .main{min-width:0!important;overflow-x:hidden!important}
+ #students .table-wrapper{width:100%!important;max-width:100%!important;min-width:0!important;overflow:hidden!important}
  #students .table-wrapper table,#students .table-wrapper tbody,#students .table-wrapper tr,#students .table-wrapper td{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
- #students .table-wrapper table{table-layout:auto!important;border-collapse:separate!important;border-spacing:0!important}
+ #students .table-wrapper table{table-layout:fixed!important;border-collapse:separate!important;border-spacing:0!important;overflow:hidden!important}
  #students .table-wrapper thead{display:none!important}
- #students .table-wrapper tbody{overflow:visible!important}
+ #students .table-wrapper tbody{overflow:hidden!important}
  #students .table-wrapper tr{margin:0 0 12px!important;padding:10px!important;background:#fff!important;border:1px solid #e5e7eb!important;border-radius:12px!important;box-shadow:0 3px 12px rgba(15,23,42,.04)!important;overflow:hidden!important}
- #students .table-wrapper td{display:grid!important;grid-template-columns:minmax(92px,34%) minmax(0,1fr)!important;gap:8px!important;align-items:center!important;padding:8px 4px!important;border-bottom:1px solid #f0f2f5!important;font-size:11px!important;line-height:1.35!important;color:#374151!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+ #students .table-wrapper td{display:grid!important;grid-template-columns:minmax(82px,32%) minmax(0,1fr)!important;gap:8px!important;align-items:center!important;padding:8px 4px!important;border-bottom:1px solid #f0f2f5!important;font-size:11px!important;line-height:1.35!important;color:#374151!important;white-space:normal!important;overflow:hidden!important;overflow-wrap:anywhere!important;word-break:break-word!important}
  #students .table-wrapper td:last-child{border-bottom:0!important;display:block!important;padding-top:10px!important}
  #students .table-wrapper td::before{font-size:9px!important;font-weight:800!important;color:#6b7280!important;text-transform:uppercase!important;letter-spacing:.35px!important}
  #students .table-wrapper td:nth-child(1)::before{content:'Student ID'}
@@ -31,15 +27,12 @@ html,body{width:100%;max-width:100%;overflow-x:clip!important}
  #students .table-wrapper td:nth-child(5)::before{content:'Course / Batch'}
  #students .table-wrapper td:nth-child(6)::before{content:'Admission Date'}
  #students .table-wrapper td:nth-child(7)::before{content:'Actions'}
- #students .table-wrapper td.empty{display:block!important;text-align:center!important;padding:25px 10px!important}
+ #students .table-wrapper td.empty{display:block!important;width:100%!important;text-align:center!important;padding:25px 10px!important}
  #students .table-wrapper td.empty::before{content:none!important}
- #students .action-buttons{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;width:100%!important;min-width:0!important}
- #students .action-btn{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:8px 4px!important;font-size:9px!important;white-space:normal!important;overflow-wrap:anywhere!important}
+ #students .action-buttons{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;width:100%!important;max-width:100%!important;min-width:0!important}
+ #students .action-btn{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:8px 4px!important;font-size:9px!important;white-space:normal!important;overflow:hidden!important;overflow-wrap:anywhere!important}
 }
-
-@media(max-width:380px){
- .dashboard .sidebar{width:64px!important;min-width:64px!important;max-width:64px!important}
- .dashboard .main{width:calc(100vw - 64px)!important;max-width:calc(100vw - 64px)!important;margin-left:64px!important;flex-basis:calc(100vw - 64px)!important}
- #students .table-wrapper td{grid-template-columns:minmax(82px,34%) minmax(0,1fr)!important;font-size:10px!important}
+@media(max-width:380px), (pointer:coarse) and (max-width:420px){
+ #students .table-wrapper td{grid-template-columns:minmax(76px,34%) minmax(0,1fr)!important;font-size:10px!important}
  #students .action-buttons{grid-template-columns:1fr!important}
 }
