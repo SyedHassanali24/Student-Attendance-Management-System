@@ -10,32 +10,10 @@
 <link rel="stylesheet" href="./css/responsive.css?v=13">
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script src="./javascript/qr-short-id-compat.js?v=3"></script>
-<script>
-window.showAdminPage = function(id) {
-  var pages = document.querySelectorAll('.page');
-  var items = document.querySelectorAll('.menu-item');
-  var target = document.getElementById(id) || document.getElementById('overview');
-  pages.forEach(function(page){ page.classList.toggle('active', page === target); });
-  items.forEach(function(item){ item.classList.toggle('active', item.getAttribute('data-page') === target.id); });
-  var active = Array.prototype.find.call(items, function(item){ return item.getAttribute('data-page') === target.id; });
-  var title = document.getElementById('pageTitle');
-  if (title) title.textContent = active ? active.textContent.replace(/\s+/g,' ').trim() : 'Dashboard';
-  if (window.location.hash !== '#' + target.id) history.replaceState(null,'','#' + target.id);
-};
-window.addEventListener('error', function(e){ console.error('Admin dashboard error:', e.error || e.message); });
-window.addEventListener('unhandledrejection', function(e){ console.error('Admin dashboard promise error:', e.reason); });
-document.addEventListener('DOMContentLoaded', function(){
-  document.querySelectorAll('.menu-item').forEach(function(btn){
-    btn.type = 'button';
-    btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); window.showAdminPage(btn.getAttribute('data-page')); });
-  });
-  var hash = location.hash.replace('#','');
-  window.showAdminPage(hash || 'overview');
-});
-</script>
+<script>window.showAdminPage=function(id){var p=document.querySelectorAll('.page'),i=document.querySelectorAll('.menu-item'),t=document.getElementById(id)||document.getElementById('overview');p.forEach(function(x){x.classList.toggle('active',x===t)});i.forEach(function(x){x.classList.toggle('active',x.getAttribute('data-page')===t.id)});var a=Array.prototype.find.call(i,function(x){return x.getAttribute('data-page')===t.id}),title=document.getElementById('pageTitle');if(title)title.textContent=a?a.textContent.replace(/\s+/g,' ').trim():'Dashboard'};document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.menu-item').forEach(function(b){b.type='button';b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();window.showAdminPage(b.getAttribute('data-page'))})});window.showAdminPage(location.hash.replace('#','')||'overview')});</script>
 </head>
 <body>
-<div class="dashboard"><aside class="sidebar"><div class="brand"><div class="brand-icon">SS</div><div class="brand-text"><h2>Sir Syed Hassan Ali</h2><span>Coaching Management</span></div></div><nav class="menu"><button type="button" class="menu-item active" data-page="overview" onclick="showAdminPage('overview')">📊 <span>Dashboard</span></button><button type="button" class="menu-item" data-page="students" onclick="showAdminPage('students')">👨‍🎓 <span>Student Management</span></button><button type="button" class="menu-item" data-page="attendance" onclick="showAdminPage('attendance')">📷 <span>QR Attendance</span></button><button type="button" class="menu-item" data-page="fees" onclick="showAdminPage('fees')">💰 <span>Fee Management</span></button><button type="button" class="menu-item" data-page="tests" onclick="showAdminPage('tests')">📝 <span>Monthly Tests</span></button><button type="button" class="menu-item" data-page="results" onclick="showAdminPage('results')">🎓 <span>Results</span></button><button type="button" class="menu-item" data-page="announcements" onclick="showAdminPage('announcements')">📢 <span>Announcements</span></button></nav><button id="logoutBtn" class="logout" type="button">🚪 <span>Logout</span></button></aside>
+<div class="dashboard"><aside class="sidebar"><div class="brand"><div class="brand-icon">SS</div><div class="brand-text"><h2>Sir Syed Hassan Ali</h2><span>Coaching Management</span></div></div><nav class="menu"><button type="button" class="menu-item active" data-page="overview">📊 <span>Dashboard</span></button><button type="button" class="menu-item" data-page="students">👨‍🎓 <span>Student Management</span></button><button type="button" class="menu-item" data-page="attendance">📷 <span>QR Attendance</span></button><button type="button" class="menu-item" data-page="fees">💰 <span>Fee Management</span></button><button type="button" class="menu-item" data-page="tests">📝 <span>Monthly Tests</span></button><button type="button" class="menu-item" data-page="results">🎓 <span>Results</span></button><button type="button" class="menu-item" data-page="announcements">📢 <span>Announcements</span></button></nav><button id="logoutBtn" class="logout" type="button">🚪 <span>Logout</span></button></aside>
 <main class="main"><header class="topbar"><div class="topbar-left"><h1 id="pageTitle">Dashboard</h1><p>Sir Syed Hassan Ali Coaching Management System</p></div><div class="admin-user"><div class="admin-avatar">A</div><div class="admin-details"><strong>Administrator</strong><span>Admin</span></div></div></header>
 <section id="overview" class="page active"><div class="stats-grid"><div class="stat-card"><div class="stat-icon students-icon">👨‍🎓</div><div><span>Total Students</span><h2 id="studentCount">0</h2></div></div><div class="stat-card"><div class="stat-icon attendance-icon">📋</div><div><span>Today's Attendance</span><h2 id="attendanceCount">0</h2></div></div><div class="stat-card"><div class="stat-icon course-icon">📚</div><div><span>Active Courses</span><h2 id="courseCount">0</h2></div></div><div class="stat-card"><div class="stat-icon success-icon">📈</div><div><span>Success Rate</span><h2 id="successRate">0%</h2></div></div></div><div class="panel"><div class="panel-header"><div><h2>Recent Activity</h2><p>Latest activity from the system</p></div></div><div id="recentActivity"><div class="empty-state"><div class="empty-icon">📋</div><p>No recent activity yet.</p></div></div></div></section>
 <section id="students" class="page"><div class="panel"><div class="panel-header"><div><h2>Student Management</h2><p>Manage all registered students</p></div><button id="addStudentBtn" type="button" class="primary-btn">+ Add Student</button></div><div class="student-tools"><input type="text" id="studentSearch" placeholder="Search student by name, ID, phone, course or batch..."></div><div class="table-wrapper"><table><thead><tr><th>Student ID</th><th>Name</th><th>Father Name</th><th>Phone</th><th>Course / Batch</th><th>Admission Date</th><th>Actions</th></tr></thead><tbody id="studentsTableBody"><tr><td colspan="7" class="empty">Loading students...</td></tr></tbody></table></div></div></section>
@@ -47,5 +25,5 @@ document.addEventListener('DOMContentLoaded', function(){
 </main></div>
 <div id="studentModal" class="modal" aria-hidden="true"><div class="modal-content"><div class="modal-header"><div><h2 id="modalTitle">Add Student</h2><p>Create or update a student record</p></div><button type="button" id="closeModal" class="close-btn" aria-label="Close">×</button></div><form id="studentForm"><input type="hidden" id="editStudentId"><div class="form-grid"><div class="form-group"><label for="studentName">Student Name</label><input id="studentName" required></div><div class="form-group"><label for="fatherName">Father Name</label><input id="fatherName" required></div><div class="form-group"><label for="phone">Phone</label><input id="phone" required></div><div class="form-group"><label for="course">Course</label><input id="course" required></div><div class="form-group"><label for="batch">Batch</label><input id="batch" required></div><div class="form-group"><label for="admissionDate">Admission Date</label><input id="admissionDate" type="date" required></div></div><div id="formMessage" class="form-message"></div><div class="modal-actions"><button type="button" id="cancelBtn" class="secondary-btn">Cancel</button><button type="submit" id="saveStudentBtn" class="primary-btn">Save Student</button></div></form></div></div>
 <script type="module" src="./javascript/admin.js?v=11"></script>
-<script type="module" src="./javascript/student-photo-fix.js?v=2"></script>
+<script type="module" src="./javascript/student-photo-fix.js?v=4"></script>
 </body></html>
