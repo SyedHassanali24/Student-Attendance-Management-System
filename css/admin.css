@@ -1,11 +1,7 @@
 @import url("./admin-luxury.css");
 @import url("./admin-icon-fix.css");
 @import url("./responsive.css");
-@import url("./admin-width-fix.css?v=final2");
-
-/* =========================================================
-   GLOBAL ADMIN STYLES
-========================================================= */
+@import url("./admin-width-fix.css?v=final3");
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -17,7 +13,6 @@ a { color: inherit; text-decoration: none; }
 .hidden { display:none!important; }
 .text-center { text-align:center; }
 .text-muted { color:#6b7280; }
-
 .dashboard { min-height:100vh; display:flex; }
 .sidebar { width:270px; min-height:100vh; background:#111827; color:#fff; display:flex; flex-direction:column; position:fixed; left:0; top:0; bottom:0; z-index:100; padding:22px 16px; }
 .brand { display:flex; align-items:center; gap:12px; padding:5px 8px 25px; border-bottom:1px solid rgba(255,255,255,.08); }
