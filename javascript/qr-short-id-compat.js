@@ -46,3 +46,6 @@
 
     Html5Qrcode.prototype.__sshacmsShortIdCompat = true;
 })();
+
+/* Student photo + mobile name fix. */
+import('./student-photo-fix.js?v=2').catch(err => console.error('Student photo fix:', err));
