@@ -35,6 +35,9 @@ import { collection, doc, addDoc, updateDoc, getDocs, query, where, onSnapshot, 
       #safeAttendanceControls{margin-bottom:22px}.sa{background:#fff;border:1px solid #dfe6ef;border-radius:20px;padding:20px;box-shadow:0 12px 30px rgba(15,23,42,.07)}
       .sa-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.sa-kicker{font-size:10px;letter-spacing:.14em;font-weight:800;color:#a17a22}.sa h3{margin:5px 0;color:#102a57}.sa p,.sa-hint{color:#667085;font-size:12px}.sa-live{background:#ecfdf3;color:#067647;padding:7px 10px;border-radius:999px;font-size:11px;font-weight:800}
       .sa-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.sa-box{background:#fbfcfe;border:1px solid #e6ebf2;border-radius:14px;padding:15px}.sa-box>b{display:block;color:#152b55;margin-bottom:10px}.sa-flex{display:flex;gap:8px;flex-wrap:wrap}.sa-btn{border:1px solid #d0d7e2;background:#fff;border-radius:10px;padding:10px 13px;font-weight:800;cursor:pointer}.sa-primary{background:#102f64;color:#fff}.sa-warn{background:#fff8e7;color:#9a6700}.sa-danger{background:#fff1f3;color:#b42318}.sa-box input,.sa-box select{min-height:40px;border:1px solid #d0d7e2;border-radius:9px;padding:0 10px;flex:1;min-width:130px}.sa-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:14px}.sa-stat{padding:12px;background:#f8fafc;border:1px solid #edf1f5;border-radius:12px;display:flex;justify-content:space-between}.sa-stat b{font-size:18px;color:#102a57}
+      #safeAttendanceControls .sa-camera-reader{margin-top:10px;max-width:100%;overflow:hidden;border-radius:12px;background:#0b1220}
+      #safeAttendanceControls #qr-reader{width:100%!important;max-width:100%!important;min-height:0!important}
+      #attendance .qr-scanner-card[data-safe-hidden="1"]{display:none!important}
       @media(max-width:900px){.sa-grid{grid-template-columns:1fr}.sa-summary{grid-template-columns:1fr 1fr}}@media(max-width:560px){.sa-head{flex-direction:column}.sa-summary{grid-template-columns:1fr}}
     `;document.head.appendChild(s);
   }
@@ -44,10 +47,32 @@ import { collection, doc, addDoc, updateDoc, getDocs, query, where, onSnapshot, 
     all.slice(1).forEach(x=>x.remove());
   }
 
+  function consolidateScannerUI(){
+    const page=$("attendance"), safe=$("safeAttendanceControls");
+    if(!page||!safe)return;
+    removeDuplicateControls();
+    const legacyCard=page.querySelector(".qr-scanner-card");
+    const reader=$("qr-reader");
+    const cameraBox=safe.querySelector(".sa-box");
+    if(reader&&cameraBox&&!cameraBox.contains(reader)){
+      const holder=document.createElement("div");
+      holder.className="sa-camera-reader";
+      holder.appendChild(reader);
+      const buttons=cameraBox.querySelector(".sa-flex");
+      buttons?cameraBox.insertBefore(holder,buttons):cameraBox.appendChild(holder);
+    }
+    if(legacyCard)legacyCard.setAttribute("data-safe-hidden","1");
+    $("startScannerBtn")?.style.setProperty("display","none","important");
+    $("stopScannerBtn")?.style.setProperty("display","none","important");
+  }
+
   function addUI(){
     const page=$("attendance");if(!page)return;
     removeDuplicateControls();
-    if($("safeAttendanceControls")) return;
+    if($("safeAttendanceControls")){
+      consolidateScannerUI();
+      return;
+    }
     const wrap=document.createElement("div");wrap.id="safeAttendanceControls";
     wrap.innerHTML=`<div class="sa">
       <div class="sa-head"><div><span class="sa-kicker">ATTENDANCE CONTROL CENTER</span><h3>Check-in, Check-out & Daily Exceptions</h3><p>First scan = arrival. Check-out is allowed only after 5 minutes. 15-minute late rule is automatic.</p></div><span class="sa-live">● Live</span></div>
@@ -63,7 +88,7 @@ import { collection, doc, addDoc, updateDoc, getDocs, query, where, onSnapshot, 
     grid?.parentElement ? grid.parentElement.insertBefore(wrap,grid) : page.prepend(wrap);
     $("safeLeaveDate").value=today();$("safeOffDate").value=today();
     $("safeStart").onclick=start;$("safeStop").onclick=stop;$("safeSwitch").onclick=switchCamera;$("safeLeaveBtn").onclick=markLeave;$("safeOffBtn").onclick=markOff;
-    $("startScannerBtn")?.style.setProperty("display","none");$("stopScannerBtn")?.style.setProperty("display","none");
+    consolidateScannerUI();
   }
 
   async function start(){
@@ -75,12 +100,20 @@ import { collection, doc, addDoc, updateDoc, getDocs, query, where, onSnapshot, 
   async function switchCamera(){camera=camera==="environment"?"user":"environment";updateCameraLabel();if(running){await stop();await start();}}
   function updateCameraLabel(){const n=$("safeCameraLabel");if(n)n.textContent=camera==="environment"?"Rear camera selected":"Front camera selected";}
 
+  function parseClockMillis(value){
+    if(!value)return 0;
+    const m=String(value).trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+    if(!m)return 0;
+    let h=Number(m[1]),mi=Number(m[2]),se=Number(m[3]||0),ap=String(m[4]||"").toUpperCase();
+    if(ap==="PM"&&h<12)h+=12;if(ap==="AM"&&h===12)h=0;
+    const d=new Date();d.setHours(h,mi,se,0);return d.getTime();
+  }
   function recordMillis(r){
     if(r?.checkInAt?.toMillis)return r.checkInAt.toMillis();
-    if(r?.timestamp?.toMillis)return r.timestamp.toMillis();
     if(r?.checkInAt?.seconds)return r.checkInAt.seconds*1000;
+    if(r?.timestamp?.toMillis)return r.timestamp.toMillis();
     if(r?.timestamp?.seconds)return r.timestamp.seconds*1000;
-    return 0;
+    return parseClockMillis(r?.checkInTime||r?.time);
   }
 
   async function onScan(decodedText){
@@ -113,7 +146,13 @@ import { collection, doc, addDoc, updateDoc, getDocs, query, where, onSnapshot, 
 
   function boot(){
     if(!auth.currentUser)return setTimeout(boot,300);
-    addStyles();addUI();removeDuplicateControls();
+    addStyles();addUI();removeDuplicateControls();consolidateScannerUI();
+    const page=$("attendance");
+    if(page&&!window.__sshacmsSafeAttendanceObserver){
+      window.__sshacmsSafeAttendanceObserver=true;
+      const observer=new MutationObserver(()=>{removeDuplicateControls();consolidateScannerUI();});
+      observer.observe(page,{childList:true,subtree:true});
+    }
     unsubStudents?.();unsubAttendance?.();
     unsubStudents=onSnapshot(collection(db,"students"),snap=>{students=snap.docs.map(d=>({id:d.id,...d.data()}));fillLeaveStudents();});
     unsubAttendance=onSnapshot(collection(db,"attendance"),snap=>{const d=today();records=snap.docs.map(x=>({id:x.id,...x.data()})).filter(x=>x.date===d);updateSummary();});
