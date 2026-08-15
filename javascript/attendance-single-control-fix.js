@@ -1,12 +1,39 @@
 /* SSHACMS — SINGLE ATTENDANCE CONTROL FIX
-   Keep exactly one enhanced Attendance Control Center on the admin page.
+   Keep exactly ONE enhanced Attendance Control Center on the admin page.
+   Also removes duplicate/orphaned copies created by older cached scripts.
 */
 (() => {
   function dedupe() {
-    const panels = [...document.querySelectorAll('#safeAttendanceControls')];
-    panels.slice(1).forEach(panel => panel.remove());
-    panels.forEach((panel, index) => {
-      panel.style.display = index === 0 ? '' : 'none';
+    const page = document.getElementById('attendance');
+    if (!page) return;
+
+    const controls = [...page.querySelectorAll('#safeAttendanceControls')];
+    controls.slice(1).forEach(panel => panel.remove());
+
+    /* Older versions can leave an enhanced .sa panel without the expected id. */
+    const panels = [...page.querySelectorAll('.sa')].filter(panel => {
+      const heading = panel.querySelector('h3');
+      return heading && /Check-in, Check-out/i.test(heading.textContent || '');
+    });
+
+    const keep = page.querySelector('#safeAttendanceControls .sa') || panels[0];
+    panels.forEach(panel => {
+      if (panel !== keep) panel.closest('#safeAttendanceControls')?.remove() || panel.remove();
+    });
+
+    if (keep) {
+      const parent = keep.closest('#safeAttendanceControls');
+      if (parent) parent.style.display = '';
+    }
+
+    /* The original QR scanner card is no longer a second scanner UI. */
+    page.querySelectorAll('.qr-scanner-card').forEach(card => {
+      card.setAttribute('data-safe-hidden', '1');
+      card.style.setProperty('display', 'none', 'important');
+    });
+
+    page.querySelectorAll('#startScannerBtn,#stopScannerBtn').forEach(btn => {
+      btn.style.setProperty('display', 'none', 'important');
     });
   }
 
