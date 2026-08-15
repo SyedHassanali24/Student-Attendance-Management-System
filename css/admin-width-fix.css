@@ -1,4 +1,7 @@
-/* SSHACMS — FINAL STUDENT MANAGEMENT WIDTH LOCK */
+/* SSHACMS — FINAL STUDENT MANAGEMENT WIDTH LOCK
+   Mobile Student Management is rendered as fixed-width cards.
+   No horizontal page/table growth. Desktop remains unchanged.
+*/
 html,body{width:100%;max-width:100%;overflow-x:hidden!important}
 .dashboard{width:100%;max-width:100%;min-width:0;overflow-x:hidden!important}
 .dashboard .main{box-sizing:border-box!important;min-width:0!important;overflow-x:hidden!important}
@@ -8,7 +11,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden!important}
 #students .table-wrapper{box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:auto;overflow-y:hidden}
 #students .table-wrapper table{max-width:none}
 
-/* Mobile: Student Management becomes fixed-width cards. */
+/* Mobile / touch: never allow the Student Management table to create width. */
 @media(max-width:800px), (pointer:coarse) and (max-width:1100px){
  .dashboard .main{min-width:0!important;overflow-x:hidden!important}
  #students .table-wrapper{width:100%!important;max-width:100%!important;min-width:0!important;overflow:hidden!important}
