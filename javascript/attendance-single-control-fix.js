@@ -1,72 +1,47 @@
-/* SSHACMS — FINAL SINGLE ATTENDANCE CONTROL GUARD
-   Keep exactly ONE Attendance Control Center.
-   The first enhanced control panel is the only one allowed to remain.
-   If an older/cached enhancer recreates another panel, remove it immediately.
-   No student data, styling, scanner logic, or other dashboard section is changed.
+/* SSHACMS — REMOVE ENHANCED ATTENDANCE CONTROL CENTER
+   Keep the original QR Attendance UI and functionality.
+   The separate enhanced "ATTENDANCE CONTROL CENTER" is intentionally disabled.
 */
 (() => {
-  if (window.__sshacmsFinalSingleControlGuardV3) return;
-  window.__sshacmsFinalSingleControlGuardV3 = true;
+  if (window.__sshacmsAttendanceControlRemovalV1) return;
+  window.__sshacmsAttendanceControlRemovalV1 = true;
+
+  // Prevent attendance-enhancer-safe.js from creating the enhanced control panel.
+  window.__sshacmsFinalAttendanceLoaded = true;
 
   function cleanup() {
     const page = document.getElementById('attendance');
     if (!page) return;
 
-    const wrappers = [...page.querySelectorAll('#safeAttendanceControls')];
-    if (wrappers.length > 1) wrappers.slice(1).forEach(wrapper => wrapper.remove());
+    // Remove any enhanced control center that may already have been created.
+    page.querySelectorAll('#safeAttendanceControls, .sa').forEach(el => el.remove());
 
-    const panels = [...page.querySelectorAll('.sa')].filter(panel => {
-      const heading = panel.querySelector('h3');
-      return heading && /Check-in, Check-out/i.test(heading.textContent || '');
-    });
-
-    if (panels.length > 1) {
-      const keep = panels[0];
-      panels.slice(1).forEach(panel => {
-        const wrapper = panel.closest('#safeAttendanceControls');
-        if (wrapper && wrapper !== keep.closest('#safeAttendanceControls')) wrapper.remove();
-        else panel.remove();
-      });
-    }
-
-    const allWrappers = [...page.querySelectorAll('#safeAttendanceControls')];
-    allWrappers.slice(1).forEach(wrapper => wrapper.remove());
-
+    // Restore the original QR scanner UI that the old guard used to hide.
     page.querySelectorAll('.qr-scanner-card').forEach(card => {
-      card.setAttribute('data-safe-hidden', '1');
-      card.style.setProperty('display', 'none', 'important');
+      card.removeAttribute('data-safe-hidden');
+      card.style.removeProperty('display');
     });
-    page.querySelectorAll('#startScannerBtn,#stopScannerBtn').forEach(btn => {
-      btn.style.setProperty('display', 'none', 'important');
+    page.querySelectorAll('#startScannerBtn, #stopScannerBtn').forEach(btn => {
+      btn.style.removeProperty('display');
     });
-  }
-
-  function boot() {
-    cleanup();
-    const page = document.getElementById('attendance');
-    if (!page) return;
-
-    if (!window.__sshacmsAttendanceSingleControlObserverV3) {
-      window.__sshacmsAttendanceSingleControlObserverV3 = new MutationObserver(() => cleanup());
-      window.__sshacmsAttendanceSingleControlObserverV3.observe(page, {
-        childList: true,
-        subtree: true
-      });
-    }
-
-    let elapsed = 0;
-    const fastTimer = setInterval(() => {
-      cleanup();
-      elapsed += 100;
-      if (elapsed >= 10000) clearInterval(fastTimer);
-    }, 100);
-
-    [12000, 15000, 20000, 30000].forEach(ms => setTimeout(cleanup, ms));
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, { once: true });
+    document.addEventListener('DOMContentLoaded', cleanup, { once: true });
   } else {
-    boot();
+    cleanup();
+  }
+
+  // Protect the original attendance page if another script injects the panel later.
+  const observer = new MutationObserver(cleanup);
+  const startObserver = () => {
+    const page = document.getElementById('attendance');
+    if (page) observer.observe(page, { childList: true, subtree: true });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startObserver, { once: true });
+  } else {
+    startObserver();
   }
 })();
