@@ -18,3 +18,6 @@ import "./fee-download.js?v=1";
 
 /* Student-specific profile + professional sidebar fix */
 import "./student-dashboard-polish.js?v=1";
+
+/* Published results + exact PDF download */
+import "./student-results.js?v=1";
