@@ -1,28 +1,47 @@
 /* =========================================================
    SSHACMS — FEE SLIP DOWNLOAD ENGINE
-   Direct one-click PDF for Admin + Student Portal.
+   One-click PDF for Admin + Student Portal.
+
+   IMPORTANT:
+   - Admin receipt keeps its existing design/workflow.
+   - Student portal uses the SAME receipt PDF directly from
+     the fee-history Receipt button; no extra modal/buttons.
 ========================================================= */
 
 import { db } from "../firebase/firebase-config.js";
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-/* Load html2pdf automatically; no extra HTML edit is required. */
 function ensurePdfLibrary(){
     if(window.html2pdf) return Promise.resolve();
     if(window.__sshacmsPdfPromise) return window.__sshacmsPdfPromise;
     window.__sshacmsPdfPromise = new Promise((resolve,reject)=>{
         const s=document.createElement("script");
         s.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-        s.onload=resolve; s.onerror=reject; document.head.appendChild(s);
+        s.onload=resolve;
+        s.onerror=reject;
+        document.head.appendChild(s);
     });
     return window.__sshacmsPdfPromise;
 }
 
-function safe(v){return String(v??"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+function safe(v){
+    return String(v??"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+}
 function money(v){return Number(v||0).toLocaleString("en-PK");}
-function monthName(v){if(!v)return"—";const[y,m]=String(v).split("-");return new Date(Number(y),Number(m)-1,1).toLocaleDateString("en-US",{month:"long",year:"numeric"});}
-function dateName(v){if(!v)return"—";const d=new Date(`${v}T00:00:00`);return Number.isNaN(d.getTime())?v:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});}
-function filename(s,p){const n=String(s?.name||"Student").trim().replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"");return`Fee-Slip-${n||"Student"}-${p?.month||"receipt"}.pdf`;}
+function monthName(v){
+    if(!v)return"—";
+    const[y,m]=String(v).split("-");
+    return new Date(Number(y),Number(m)-1,1).toLocaleDateString("en-US",{month:"long",year:"numeric"});
+}
+function dateName(v){
+    if(!v)return"—";
+    const d=new Date(`${v}T00:00:00`);
+    return Number.isNaN(d.getTime())?v:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+}
+function filename(s,p){
+    const n=String(s?.name||"Student").trim().replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"");
+    return`Fee-Slip-${n||"Student"}-${p?.month||"receipt"}.pdf`;
+}
 
 function receiptHTML(student,payment){return`<div class="fee-pdf-sheet">
 <div class="fee-pdf-top"></div><div class="fee-pdf-header"><img src="${safe(new URL("./assets/logo.png",location.href).href)}" class="fee-pdf-logo"><div class="fee-pdf-brand"><h1>SIR SYED HASSAN ALI COACHING</h1><p>Learn Today, Better Future Tomorrow</p><small>House: #L-19, Sector L-1 Memarabad Surjani Town Karachi, Near Baba Decoration<br>Phone: 0313-2956206</small></div><div class="fee-pdf-badge">FEE<br>RECEIPT</div></div>
@@ -38,13 +57,66 @@ async function downloadElement(element,name){
     try{
         await ensurePdfLibrary();
         await window.html2pdf().set({margin:0,filename:name,image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#fff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["avoid-all","css","legacy"]}}).from(element).save();
-    }catch(e){console.error("Fee PDF download failed",e);alert("Fee slip PDF download failed. Please try again.");}
+    }catch(e){
+        console.error("Fee PDF download failed",e);
+        alert("Fee slip PDF download failed. Please try again.");
+        throw e;
+    }
 }
 
-function addStudentPortalDownloadButtons(){document.querySelectorAll(".student-slip-modal").forEach(modal=>{if(modal.querySelector("[data-fee-download]")||!modal.querySelector(".student-slip-paper"))return;const actions=modal.querySelector(".student-slip-actions");if(!actions)return;const b=document.createElement("button");b.type="button";b.className="primary-btn";b.dataset.feeDownload="true";b.textContent="⬇ Download PDF";b.addEventListener("click",()=>{const p=modal.querySelector(".student-slip-paper");const n=(document.getElementById("topStudentName")?.textContent||"Student").trim().replace(/[^a-z0-9]+/gi,"-");downloadElement(p,`Fee-Slip-${n||"Student"}.pdf`);});actions.insertBefore(b,actions.firstChild);});}
+/* Shared direct-download function. Both Admin and Student use this exact receipt. */
+export async function downloadFeeReceipt(student,payment){
+    if(!student||!payment) throw new Error("Student/payment record is missing.");
+    const wrap=document.createElement("div");
+    wrap.className="fee-pdf-wrap";
+    wrap.innerHTML=styles()+receiptHTML(student,payment);
+    document.body.appendChild(wrap);
+    try{
+        await new Promise(r=>setTimeout(r,150));
+        await downloadElement(wrap.querySelector(".fee-pdf-sheet"),filename(student,payment));
+    }finally{
+        setTimeout(()=>wrap.remove(),500);
+    }
+}
 
-function addAdminDownloadButtons(){const body=document.getElementById("feesTableBody");if(!body)return;body.querySelectorAll("tr").forEach(row=>{if(row.querySelector("[data-admin-fee-download]"))return;const cells=row.querySelectorAll("td");if(cells.length<9||!cells[5]?.textContent.toLowerCase().includes("paid"))return;const studentId=cells[0].textContent.trim();const actionCell=cells[8];if(!studentId||studentId==="—"||!actionCell)return;const b=document.createElement("button");b.type="button";b.className="fee-action success";b.dataset.adminFeeDownload="true";b.textContent="⬇ Download";b.style.marginLeft="6px";b.addEventListener("click",async()=>{b.disabled=true;try{const ss=await getDocs(query(collection(db,"students"),where("studentId","==",studentId)));if(ss.empty)throw new Error("Student record not found.");const sd=ss.docs[0],student={id:sd.id,...sd.data()},month=document.getElementById("feeMonth")?.value||"";const fs=await getDocs(query(collection(db,"fees"),where("studentDocId","==",sd.id)));const payment=fs.docs.map(d=>({id:d.id,...d.data()})).find(f=>f.status==="paid"&&f.month===month);if(!payment)throw new Error("Paid fee record for this month was not found.");const wrap=document.createElement("div");wrap.className="fee-pdf-wrap";wrap.innerHTML=styles()+receiptHTML(student,payment);document.body.appendChild(wrap);await new Promise(r=>setTimeout(r,300));await downloadElement(wrap.querySelector(".fee-pdf-sheet"),filename(student,payment));setTimeout(()=>wrap.remove(),1500);}catch(e){console.error(e);alert(e.message||"Unable to download fee slip.");}finally{b.disabled=false;}});actionCell.appendChild(b);});}
+/* Admin-only enhancement. Student portal does NOT receive a modal or extra buttons. */
+function addAdminDownloadButtons(){
+    const body=document.getElementById("feesTableBody");
+    if(!body)return;
+    body.querySelectorAll("tr").forEach(row=>{
+        if(row.querySelector("[data-admin-fee-download]"))return;
+        const cells=row.querySelectorAll("td");
+        if(cells.length<9||!cells[5]?.textContent.toLowerCase().includes("paid"))return;
+        const studentId=cells[0].textContent.trim();
+        const actionCell=cells[8];
+        if(!studentId||studentId==="—"||!actionCell)return;
+        const b=document.createElement("button");
+        b.type="button";
+        b.className="fee-action success";
+        b.dataset.adminFeeDownload="true";
+        b.textContent="⬇ Download";
+        b.style.marginLeft="6px";
+        b.addEventListener("click",async()=>{
+            b.disabled=true;
+            try{
+                const ss=await getDocs(query(collection(db,"students"),where("studentId","==",studentId)));
+                if(ss.empty)throw new Error("Student record not found.");
+                const sd=ss.docs[0],student={id:sd.id,...sd.data()},month=document.getElementById("feeMonth")?.value||"";
+                const fs=await getDocs(query(collection(db,"fees"),where("studentDocId","==",sd.id)));
+                const payment=fs.docs.map(d=>({id:d.id,...d.data()})).find(f=>f.status==="paid"&&f.month===month);
+                if(!payment)throw new Error("Paid fee record for this month was not found.");
+                await downloadFeeReceipt(student,payment);
+            }catch(e){
+                console.error(e);
+                alert(e.message||"Unable to download fee slip.");
+            }finally{
+                b.disabled=false;
+            }
+        });
+        actionCell.appendChild(b);
+    });
+}
 
-const observer=new MutationObserver(()=>{addStudentPortalDownloadButtons();addAdminDownloadButtons();});
+const observer=new MutationObserver(()=>addAdminDownloadButtons());
 observer.observe(document.body,{childList:true,subtree:true});
-addStudentPortalDownloadButtons();addAdminDownloadButtons();
+addAdminDownloadButtons();
