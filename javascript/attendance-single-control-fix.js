@@ -1,7 +1,4 @@
-/* SSHACMS — REMOVE ENHANCED ATTENDANCE CONTROL CENTER
-   Keep the original QR Attendance UI and functionality.
-   The separate enhanced "ATTENDANCE CONTROL CENTER" is intentionally disabled.
-*/
+/* SSHACMS — REMOVE ENHANCED ATTENDANCE CONTROL CENTER */
 (() => {
   if (window.__sshacmsAttendanceControlRemovalV1) return;
   window.__sshacmsAttendanceControlRemovalV1 = true;
@@ -17,7 +14,15 @@
   const observer = new MutationObserver(cleanup);
   const startObserver = () => { const page = document.getElementById('attendance'); if (page) observer.observe(page, { childList: true, subtree: true }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startObserver, { once: true }); else startObserver();
-})();
 
-/* Results Management — loaded after the admin page exists. */
-import './results-admin.js?v=1';
+  /* Results Management module */
+  const loadResultsAdmin = () => {
+    if (document.querySelector('script[data-results-admin]')) return;
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = './javascript/results-admin.js?v=1';
+    script.dataset.resultsAdmin = '1';
+    document.body.appendChild(script);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadResultsAdmin, { once: true }); else loadResultsAdmin();
+})();
