@@ -15,3 +15,6 @@ import "./student-fee-slip.js?v=2";
 
 /* Direct one-click PDF download enhancement */
 import "./fee-download.js?v=1";
+
+/* Student-specific profile + professional sidebar fix */
+import "./student-dashboard-polish.js?v=1";
