@@ -2,24 +2,37 @@ import { auth, db } from '../firebase/firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
-/* Keep a valid Firebase session active while checking admin authorization. */
+/* Admin authorization guard. Never signs the user out just because the
+   authorization document is temporarily unavailable. */
 onAuthStateChanged(auth, async user => {
   if (!user) { location.replace('admin-login.html'); return; }
+
   try {
     const snap = await getDoc(doc(db, 'admins', user.uid));
-    const data = snap.exists() ? snap.data() : null;
-    const role = String(data?.role || '').trim().toLowerCase();
-    const allowedRoles = ['admin', 'super admin', 'superadmin', 'administrator'];
-
-    if (!data || data.active === false || (role && !allowedRoles.includes(role))) {
-      showAdminSecurityNotice('Firebase login successful, but this account is not registered with active administrator permission.');
+    if (!snap.exists()) {
+      showAdminSecurityNotice('Firebase login successful, lekin is account ke liye admins/' + user.uid + ' document nahi mila.');
       return;
     }
 
-    window.dispatchEvent(new CustomEvent('sshacms-admin-authorized', { detail: { uid: user.uid } }));
+    const data = snap.data() || {};
+    const role = String(data.role || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const allowedRoles = new Set(['admin', 'super admin', 'superadmin', 'administrator']);
+
+    if (data.active === false) {
+      showAdminSecurityNotice('Ye administrator account inactive hai. Firestore admins record mein active ko true karein.');
+      return;
+    }
+    if (role && !allowedRoles.has(role)) {
+      showAdminSecurityNotice('Is account ka administrator role valid nahi hai. Current role: ' + data.role);
+      return;
+    }
+
+    // Keep the dashboard informed that the account has passed authorization.
+    window.dispatchEvent(new CustomEvent('sshacms-admin-authorized', { detail: { uid: user.uid, role: data.role || 'Admin' } }));
+    document.documentElement.dataset.adminAuthorized = 'true';
   } catch (e) {
     console.error('Admin security check failed:', e);
-    showAdminSecurityNotice('Admin verification could not be completed because of a temporary Firebase/network permission issue. Your login session is still active.');
+    showAdminSecurityNotice('Admin verification temporarily unavailable. Aapka Firebase login session active hai; page ko refresh karke dobara try karein.');
   }
 });
 
