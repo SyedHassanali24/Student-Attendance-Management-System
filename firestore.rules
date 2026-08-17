@@ -8,7 +8,11 @@ service cloud.firestore {
 
     match /admins/{uid} { allow read: if signedIn() && request.auth.uid == uid; allow write: if false; }
     match /settings/publicStats { allow get: if true; allow write: if admin(); }
-    match /students/{studentId} { allow get: if admin() || ownStudent(); allow list: if admin(); allow create, update, delete: if admin(); }
+    match /students/{studentId} {
+      allow get: if admin() || ownStudent();
+      allow list: if admin() || (signedIn() && resource.data.uid == request.auth.uid && resource.data.loginEnabled == true);
+      allow create, update, delete: if admin();
+    }
     match /attendance/{id} { allow read: if admin() || ownAttendance(resource); allow create, update, delete: if admin(); }
     match /fees/{id} { allow read: if admin() || ownAttendance(resource); allow create, update, delete: if admin(); }
     match /results/{id} { allow read: if admin() || ownAttendance(resource); allow create, update, delete: if admin(); }
