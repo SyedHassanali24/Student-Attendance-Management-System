@@ -8,22 +8,71 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/responsive.css">
+
+    <style>
+        .brand-logo-image {
+            width: 58px;
+            height: 58px;
+            display: block;
+            object-fit: contain;
+            flex: 0 0 58px;
+        }
+        .hero-image {
+            min-height: 420px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 30px;
+            background: #eef4ff;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, .12);
+        }
+        .hero-image::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(13, 43, 86, .10), rgba(255,255,255,.02));
+            pointer-events: none;
+        }
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            min-height: 420px;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+        }
+        .hero-image-badge {
+            position: absolute;
+            z-index: 2;
+            left: 22px;
+            bottom: 22px;
+            padding: 11px 16px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.94);
+            color: #0f2b55;
+            font-weight: 700;
+            font-size: 13px;
+            box-shadow: 0 12px 30px rgba(15,23,42,.16);
+            backdrop-filter: blur(8px);
+        }
+        @media (max-width: 800px) {
+            .hero-image { min-height: 300px; }
+            .hero-image img { min-height: 300px; }
+        }
+    </style>
 </head>
 <body>
 
 <header class="header">
     <div class="container">
         <a href="#home" class="logo">
-            <div class="logo-icon" style="padding:0;overflow:hidden;background:#fff;">
-                <img src="assets/logo.png" alt="Sir Syed Hassan Ali Coaching logo" style="width:100%;height:100%;object-fit:contain;">
-            </div>
+            <img class="brand-logo-image" src="assets/sshacms-logo-mark.svg" alt="Sir Syed Hassan Ali Coaching logo">
             <div class="logo-text">
                 <h2>Sir Syed Hassan Ali</h2>
                 <span>Coaching Management System</span>
@@ -65,8 +114,9 @@
                 </div>
             </div>
 
-            <div class="hero-image" style="display:flex;align-items:center;justify-content:center;">
-                <img src="assets/logo.png" alt="Sir Syed Hassan Ali Coaching" style="max-width:320px;width:100%;height:auto;object-fit:contain;">
+            <div class="hero-image" aria-label="Students learning in a professional classroom">
+                <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=85" alt="Students learning together in a classroom">
+                <div class="hero-image-badge">Focused learning • Better future</div>
             </div>
         </div>
     </section>
@@ -79,33 +129,17 @@
             </div>
 
             <div class="stats-grid">
-                <div class="stat-card">
-                    <h3 id="studentCount">0</h3>
-                    <p>Total Students</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="attendanceToday">0</h3>
-                    <p>Today's Attendance</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="activeCourses">6</h3>
-                    <p>Active Courses</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="successRate">98%</h3>
-                    <p>Success Rate</p>
-                </div>
+                <div class="stat-card"><h3 id="studentCount">0</h3><p>Total Students</p></div>
+                <div class="stat-card"><h3 id="attendanceToday">0</h3><p>Today's Attendance</p></div>
+                <div class="stat-card"><h3 id="activeCourses">6</h3><p>Active Courses</p></div>
+                <div class="stat-card"><h3 id="successRate">98%</h3><p>Success Rate</p></div>
             </div>
         </div>
     </section>
 
     <section class="features" id="features">
         <div class="container">
-            <div class="section-title">
-                <h2>Powerful Features</h2>
-                <p>Everything you need to manage coaching, students and parents from one platform.</p>
-            </div>
-
+            <div class="section-title"><h2>Powerful Features</h2><p>Everything you need to manage coaching, students and parents from one platform.</p></div>
             <div class="features-grid">
                 <div class="feature-card"><div class="feature-icon">📷</div><h3>QR Attendance</h3><p>Fast student attendance with secure QR scanning and accurate time records.</p></div>
                 <div class="feature-card"><div class="feature-icon">👨‍🎓</div><h3>Student Management</h3><p>Manage student profiles, IDs, photos, batches and portal accounts in one place.</p></div>
@@ -119,10 +153,7 @@
 
     <section class="workflow" id="workflow">
         <div class="container">
-            <div class="section-title">
-                <h2>How Our QR Attendance Works</h2>
-                <p>A simple and secure process for accurate attendance records.</p>
-            </div>
+            <div class="section-title"><h2>How Our QR Attendance Works</h2><p>A simple and secure process for accurate attendance records.</p></div>
             <div class="workflow-grid">
                 <div class="workflow-card"><div class="step-number">1</div><div class="workflow-icon">🎫</div><h3>Bring Your QR Card</h3><p>Every student receives a unique QR-enabled ID card.</p></div>
                 <div class="workflow-card"><div class="step-number">2</div><div class="workflow-icon">📷</div><h3>Scan QR Code</h3><p>Scan the student's QR card at the coaching entrance.</p></div>
@@ -134,28 +165,13 @@
 
     <section class="about" id="about">
         <div class="container">
-            <div class="section-title">
-                <h2>About Sir Syed Hassan Ali Coaching</h2>
-                <p>
-                    For the last <strong>6 years</strong>, we have focused on building strong academic foundations and helping students achieve excellent results.
-                    Our academic focus includes <strong>Maths, English and Islamic Studies</strong>, along with support for
-                    <strong>O'Levels, A-Levels</strong> and regular school classes from Class 1 to Intermediate.
-                    Our students' failing ratio is <strong>almost negligible</strong>, reflecting our commitment to consistent academic guidance and student progress.
-                </p>
-            </div>
+            <div class="section-title"><h2>About Sir Syed Hassan Ali Coaching</h2><p>For the last <strong>6 years</strong>, we have focused on building strong academic foundations and helping students achieve excellent results. Our academic focus includes <strong>Maths, English and Islamic Studies</strong>, along with support for <strong>O'Levels, A-Levels</strong> and regular school classes from Class 1 to Intermediate. Our students' failing ratio is <strong>almost negligible</strong>, reflecting our commitment to consistent academic guidance and student progress.</p></div>
         </div>
     </section>
 
     <section class="contact" id="contact">
         <div class="container">
-            <div class="section-title">
-                <h2>Contact Us</h2>
-                <p>For admissions, academic guidance or any assistance, contact the coaching administration.</p>
-                <p><strong>Address:</strong> House #L-19, Sector L-1 Memarabad, Surjani Town, Karachi, Near Baba Decoration</p>
-                <p><strong>Phone / WhatsApp:</strong> <a href="https://wa.me/923132956206" target="_blank" rel="noopener noreferrer">0313-2956206</a></p>
-                <p><strong>Email:</strong> <a href="mailto:eastwala12@gmail.com">eastwala12@gmail.com</a></p>
-                <p><strong>Facebook:</strong> <a href="https://www.facebook.com/share/1Mup5KM16s/" target="_blank" rel="noopener noreferrer">Visit our Facebook Page</a></p>
-            </div>
+            <div class="section-title"><h2>Contact Us</h2><p>For admissions, academic guidance or any assistance, contact the coaching administration.</p><p><strong>Address:</strong> House #L-19, Sector L-1 Memarabad, Surjani Town, Karachi, Near Baba Decoration</p><p><strong>Phone / WhatsApp:</strong> <a href="https://wa.me/923132956206" target="_blank" rel="noopener noreferrer">0313-2956206</a></p><p><strong>Email:</strong> <a href="mailto:eastwala12@gmail.com">eastwala12@gmail.com</a></p><p><strong>Facebook:</strong> <a href="https://www.facebook.com/share/1Mup5KM16s/" target="_blank" rel="noopener noreferrer">Visit our Facebook Page</a></p></div>
         </div>
     </section>
 </main>
