@@ -1,0 +1,40 @@
+/* SSHACMS Notes / Study Materials
+   Admin: upload PDF/image and target a course/batch.
+   Student: automatically sees only materials matching their course/batch.
+*/
+import { auth, db, storage } from '../firebase/firebase-config.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js';
+
+const MAX = 15 * 1024 * 1024;
+const isFile = f => f && ['application/pdf','image/png','image/jpeg','image/webp'].includes(f.type) && f.size <= MAX;
+const esc = s => String(s ?? '').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+function adminUI(){
+  const page=document.getElementById('materials'); if(!page)return;
+  page.innerHTML=`<div class="panel"><div class="panel-header"><div><h2>📚 Notes & Study Materials</h2><p>Upload PDF/image notes and publish them to a selected course or batch.</p></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"><input id="matTitle" placeholder="Material title"><input id="matCourse" placeholder="Course (e.g. English)"><input id="matBatch" placeholder="Class / Batch (e.g. Class 9)"><input id="matFile" type="file" accept="application/pdf,image/png,image/jpeg,image/webp"><button id="matUpload" class="primary-btn">Upload & Publish</button></div><p id="matMsg" style="margin-top:10px"></p><div class="table-wrapper" style="margin-top:18px"><table><thead><tr><th>Title</th><th>Course</th><th>Batch</th><th>Type</th><th>Open</th></tr></thead><tbody id="matRows"><tr><td colspan="5">Loading...</td></tr></tbody></table></div></div>`;
+  document.getElementById('matUpload').onclick=async()=>{
+    const title=document.getElementById('matTitle').value.trim(), course=document.getElementById('matCourse').value.trim(), batch=document.getElementById('matBatch').value.trim(), file=document.getElementById('matFile').files[0], msg=document.getElementById('matMsg');
+    if(!title||!course||!batch||!file)return msg.textContent='Please fill title, course, batch and choose a PDF/image.';
+    if(!isFile(file))return msg.textContent='Only PDF, PNG, JPG or WEBP up to 15 MB are allowed.';
+    const user=auth.currentUser;if(!user)return msg.textContent='Admin session expired. Please login again.';
+    try{msg.textContent='Uploading...';const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');const path=`materials/${user.uid}/${Date.now()}-${safe}`;const storageRef=ref(storage,path);await uploadBytes(storageRef,file,{contentType:file.type,customMetadata:{course,batch}});const url=await getDownloadURL(storageRef);await addDoc(collection(db,'materials'),{title,course,batch,fileName:file.name,fileType:file.type,size:file.size,url,storagePath:path,published:true,createdBy:user.uid,createdAt:serverTimestamp()});msg.textContent='Published successfully.';document.getElementById('matTitle').value='';document.getElementById('matFile').value='';}catch(e){console.error(e);msg.textContent='Upload failed. Check Firebase Storage/Firestore rules.';}
+  };
+  onSnapshot(query(collection(db,'materials'),orderBy('createdAt','desc')),snap=>{const rows=document.getElementById('matRows');rows.innerHTML=snap.docs.map(d=>{const x=d.data();return `<tr><td>${esc(x.title)}</td><td>${esc(x.course)}</td><td>${esc(x.batch)}</td><td>${esc(x.fileType)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">Open</a></td></tr>`}).join('')||'<tr><td colspan="5">No materials yet.</td></tr>';},e=>console.error(e));
+}
+
+async function studentUI(student){
+  const container=document.getElementById('materialsContainer');if(!container)return;
+  const course=String(student?.course||'').trim(), batch=String(student?.batch||'').trim();
+  container.innerHTML='<div class="empty-panel"><div>📚</div><h3>Loading Notes</h3><p>Fetching your class materials…</p></div>';
+  try{
+    const snap=await getDocs(query(collection(db,'materials'),where('published','==',true),where('course','==',course),where('batch','==',batch)));
+    const docs=snap.docs.sort((a,b)=>((b.data().createdAt?.seconds||0)-(a.data().createdAt?.seconds||0)));
+    if(!docs.length){container.innerHTML='<div class="empty-panel"><div>📚</div><h3>No Notes Yet</h3><p>Your teacher has not uploaded notes for your class yet.</p></div>';return;}
+    container.innerHTML=docs.map(d=>{const x=d.data(), icon=x.fileType==='application/pdf'?'📄':'🖼️';return `<div class="dashboard-card" style="margin-bottom:12px"><div class="card-heading"><div><h3>${esc(icon+' '+x.title)}</h3><p>${esc(x.fileName||'Study material')} • ${esc(x.course)} • ${esc(x.batch)}</p></div><a class="primary-btn" href="${esc(x.url)}" target="_blank" rel="noopener">Open / Save</a></div></div>`}).join('');
+  }catch(e){console.error(e);container.innerHTML='<div class="empty-panel"><h3>Unable to load materials</h3><p>Please contact administration.</p></div>';}
+}
+
+if(document.getElementById('admin-dashboard')||document.getElementById('materials')) adminUI();
+if(document.getElementById('materialsContainer')) onAuthStateChanged(auth,async user=>{if(!user){document.getElementById('materialsContainer').innerHTML='<div class="empty-panel"><h3>Please login</h3></div>';return;}const sid=localStorage.getItem('studentDocId');if(!sid)return;try{const s=await getDocs(query(collection(db,'students'),where('__name__','==',sid)));if(!s.empty)studentUI(s.docs[0].data());}catch(e){console.error(e)}});
