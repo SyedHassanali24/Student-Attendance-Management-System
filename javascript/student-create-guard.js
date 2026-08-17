@@ -1,39 +1,90 @@
-/* SSHACMS — STUDENT ACCOUNT + CREATION GUARD
-   - Keeps student creation a real admin action.
-   - Creates a Firebase Auth account without logging the admin out.
-   - Stores the admin-only credential record separately from students.
-   - Adds one Login/Credentials button per student.
-   - Keeps student names on one stable line.
+/* SSHACMS — STUDENT ACCOUNT CREATION FIX
+   Creates a Firebase Auth login for every NEW student without logging the admin out.
+   Password is entered by the admin and is NEVER stored in Firestore.
+   A password can be changed later by using the Firebase Authentication console.
 */
 (() => {
-  if (window.__sshacmsStudentAccountManager) return;
-  window.__sshacmsStudentAccountManager = true;
+  if (window.__sshacmsStudentAccountFix) return;
+  window.__sshacmsStudentAccountFix = true;
 
   const $ = id => document.getElementById(id);
   const form = $('studentForm');
   const save = $('saveStudentBtn');
   const modal = $('studentModal');
-  const message = $('formMessage');
   if (!form || !save || !modal) return;
 
-  let userActionUntil = 0;
-  let consumed = false;
-  let lastSubmit = 0;
   let firebase = null;
   let secondaryAuth = null;
+  let armedUntil = 0;
+  let submitting = false;
 
   const escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, m => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'
   }[m]));
 
-  const arm = () => {
-    userActionUntil = Date.now() + 1800;
-    consumed = false;
-  };
-  save.addEventListener('pointerdown', arm, { capture: true });
-  save.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') arm();
-  }, { capture: true });
+  function emailFor(studentId) {
+    return String(studentId || '').trim().toUpperCase().replace(/\s+/g, '') + '@students.sshacms.local';
+  }
+
+  function addPasswordField() {
+    if ($('studentPassword')) return;
+    const grid = form.querySelector('.form-grid');
+    if (!grid) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'form-group student-login-password-group';
+    wrap.innerHTML = `
+      <label for="studentPassword">Student Login Password <span style="color:#d92d20">*</span></label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="studentPassword" type="password" minlength="6" autocomplete="new-password" placeholder="Minimum 6 characters" style="flex:1;min-width:0" required>
+        <button type="button" id="studentPasswordToggle" class="secondary-btn" style="height:42px;padding:0 13px">👁 Show</button>
+      </div>
+      <small style="display:block;margin-top:5px;color:#667085;font-size:11px">Ye password Student Portal login ke liye hoga. System is password ko database mein save nahi karega.</small>`;
+    grid.appendChild(wrap);
+    $('studentPasswordToggle')?.addEventListener('click', () => {
+      const input = $('studentPassword');
+      if (!input) return;
+      input.type = input.type === 'password' ? 'text' : 'password';
+      $('studentPasswordToggle').textContent = input.type === 'password' ? '👁 Show' : '🙈 Hide';
+    });
+  }
+
+  function addStyles() {
+    if ($('sshacmsStudentFixStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'sshacmsStudentFixStyles';
+    style.textContent = `
+      .student-login-password-group{grid-column:1/-1!important}
+      #studentsTableBody td:nth-child(2){min-width:180px!important;max-width:220px!important}
+      #studentsTableBody .student-name-fixed{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px;line-height:1.3}
+      #studentsTableBody .student-login-action{background:#eef6ff!important;color:#174c8f!important;border:1px solid #cfe0f5!important}
+      .ssh-login-modal{position:fixed;inset:0;background:rgba(7,26,51,.62);display:none;align-items:center;justify-content:center;padding:18px;z-index:6000}
+      .ssh-login-modal.show{display:flex}.ssh-login-card{width:min(430px,100%);background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.3)}
+      .ssh-login-head{background:linear-gradient(135deg,#071a33,#245bd8);color:#fff;padding:18px 20px}.ssh-login-head h3{margin:0}.ssh-login-head p{margin:5px 0 0;font-size:12px;opacity:.85}
+      .ssh-login-body{padding:20px}.ssh-login-row{margin-bottom:14px}.ssh-login-row label{display:block;font-size:11px;font-weight:800;color:#667085;text-transform:uppercase;margin-bottom:6px}.ssh-login-row input{width:100%;box-sizing:border-box;height:44px;padding:0 12px;border:1px solid #d0d5dd;border-radius:9px;font-weight:700}
+      .ssh-login-actions{display:flex;gap:8px;justify-content:flex-end}.ssh-login-actions button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}.ssh-primary{background:#174c8f;color:#fff}.ssh-secondary{background:#eef2f6;color:#344054}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function addLoginModal() {
+    if ($('sshStudentLoginModal')) return;
+    const el = document.createElement('div');
+    el.id = 'sshStudentLoginModal';
+    el.className = 'ssh-login-modal';
+    el.innerHTML = `
+      <div class="ssh-login-card" role="dialog" aria-modal="true">
+        <div class="ssh-login-head"><h3>🔐 Student Login</h3><p id="sshLoginStudentName">Student credentials</p></div>
+        <div class="ssh-login-body">
+          <div class="ssh-login-row"><label>Student ID</label><input id="sshLoginStudentId" readonly></div>
+          <div class="ssh-login-row"><label>Login email (system)</label><input id="sshLoginEmail" readonly></div>
+          <p style="font-size:12px;color:#667085;line-height:1.5">Password Firebase Authentication mein securely managed hota hai, is liye system purana password dobara show nahi karta.</p>
+          <div class="ssh-login-actions"><button type="button" id="sshLoginClose" class="ssh-secondary">Close</button></div>
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
+    $('sshLoginClose')?.addEventListener('click', () => el.classList.remove('show'));
+  }
 
   async function loadFirebase() {
     if (firebase) return firebase;
@@ -51,158 +102,56 @@
     return firebase;
   }
 
-  function emailFor(studentId) {
-    return String(studentId || '').trim().toUpperCase().replace(/\s+/g, '') + '@students.sshacms.local';
-  }
-
-  function getPasswordInput() { return $('studentPassword'); }
-
-  function ensurePasswordField() {
-    if ($('studentPassword')) return $('studentPassword');
-    const wrap = document.createElement('div');
-    wrap.className = 'form-group student-login-password-group';
-    wrap.innerHTML = `
-      <label for="studentPassword">Student Login Password</label>
-      <div class="student-password-box">
-        <input id="studentPassword" type="password" minlength="6" autocomplete="new-password" placeholder="Set password (minimum 6 characters)">
-        <button type="button" id="studentPasswordToggle" class="student-password-toggle" aria-label="Show password">👁</button>
-      </div>
-      <small id="studentPasswordHint">Required when creating a new student login. Leave blank while editing if you do not want to change it.</small>`;
-    const grid = form.querySelector('.form-grid');
-    if (grid) grid.appendChild(wrap);
-    const input = $('studentPassword');
-    $('studentPasswordToggle')?.addEventListener('click', () => {
-      input.type = input.type === 'password' ? 'text' : 'password';
-      $('studentPasswordToggle').textContent = input.type === 'password' ? '👁' : '🙈';
-    });
-    return input;
-  }
-
-  function injectStyles() {
-    if ($('sshacmsStudentAccountStyles')) return;
-    const style = document.createElement('style');
-    style.id = 'sshacmsStudentAccountStyles';
-    style.textContent = `
-      .student-login-password-group{grid-column:1/-1!important}
-      .student-password-box{display:flex;gap:8px;align-items:center}
-      .student-password-box input{flex:1;min-width:0}
-      .student-password-toggle{width:44px;height:42px;border:1px solid #d1d5db;border-radius:8px;background:#f8fafc;cursor:pointer}
-      #studentPasswordHint{color:#6b7280;font-size:11px;line-height:1.45}
-      #studentsTableBody td:nth-child(2){min-width:180px!important;width:180px!important;max-width:180px!important}
-      #studentsTableBody td:nth-child(2),#studentsTableBody td:nth-child(2) *{overflow-wrap:normal!important;word-break:normal!important}
-      #studentsTableBody .student-name-wrap{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;width:100%!important}
-      #studentsTableBody .student-name-text{display:block!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;line-height:1.25!important}
-      .student-login-action{background:#eef6ff!important;color:#174c8f!important;border:1px solid #cfe0f5!important}
-      .credential-modal-backdrop{position:fixed;inset:0;background:rgba(7,26,51,.58);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:18px;z-index:5000}
-      .credential-modal-backdrop.show{display:flex}
-      .credential-modal{width:min(460px,100%);background:#fff;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.28);overflow:hidden;border:1px solid #e5eaf1}
-      .credential-head{padding:18px 20px;background:linear-gradient(135deg,#071a33,#174c8f);color:#fff}
-      .credential-head h3{margin:0;font-size:18px}.credential-head p{margin:5px 0 0;font-size:12px;opacity:.84}
-      .credential-body{padding:20px}.credential-row{margin-bottom:14px}.credential-row label{display:block;font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
-      .credential-value{display:flex;align-items:center;gap:8px}.credential-value input{flex:1;min-width:0;height:44px;padding:0 12px;border:1px solid #d5dce7;border-radius:9px;background:#f8fafc;font-weight:700;color:#10233f}
-      .credential-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.credential-actions button{border:0;border-radius:9px;padding:10px 13px;font-weight:700;cursor:pointer}.credential-primary{background:#174c8f;color:#fff}.credential-secondary{background:#eef2f7;color:#33445b}.credential-danger{background:#fff1f2;color:#be123c}
-      .credential-note{font-size:11px;color:#64748b;line-height:1.5;margin-top:14px}.credential-status{min-height:18px;font-size:12px;margin-top:10px;color:#174c8f}
-      @media(max-width:700px){.student-login-password-group{grid-column:auto!important}.credential-body{padding:16px}}
-    `;
-    document.head.appendChild(style);
-  }
-
-  function addCredentialModal() {
-    if ($('studentCredentialModal')) return;
-    const el = document.createElement('div');
-    el.id = 'studentCredentialModal';
-    el.className = 'credential-modal-backdrop';
-    el.innerHTML = `
-      <div class="credential-modal" role="dialog" aria-modal="true" aria-labelledby="credentialTitle">
-        <div class="credential-head"><h3 id="credentialTitle">Student Login</h3><p id="credentialStudentLabel">Student credentials</p></div>
-        <div class="credential-body">
-          <div class="credential-row"><label>Student ID</label><div class="credential-value"><input id="credentialStudentId" readonly></div></div>
-          <div class="credential-row"><label>Password</label><div class="credential-value"><input id="credentialPassword" type="password" readonly><button type="button" id="credentialToggle" class="credential-secondary" style="padding:10px">👁 Show</button></div></div>
-          <div id="credentialActions" class="credential-actions"></div>
-          <div id="credentialStatus" class="credential-status"></div>
-          <div class="credential-note">This credential area is visible only to an authenticated administrator. Student passwords cannot be recovered from Firebase Authentication itself, so the system keeps the admin-only credential record needed for the requested “Show Password” feature.</div>
-        </div>
-      </div>`;
-    document.body.appendChild(el);
-    el.addEventListener('click', e => { if (e.target === el) closeCredentialModal(); });
-    $('credentialToggle')?.addEventListener('click', () => {
-      const input = $('credentialPassword');
-      if (!input) return;
-      input.type = input.type === 'password' ? 'text' : 'password';
-      $('credentialToggle').textContent = input.type === 'password' ? '👁 Show' : '🙈 Hide';
-    });
-  }
-
-  function closeCredentialModal() { $('studentCredentialModal')?.classList.remove('show'); }
-
-  function setStatus(text, error=false) {
-    if (message) { message.textContent = text; message.style.color = error ? '#b42318' : '#174c8f'; }
-    const s = $('credentialStatus'); if (s) { s.textContent = text; s.style.color = error ? '#b42318' : '#174c8f'; }
-  }
-
-  async function getStudentById(id) {
-    const { db, doc, getDoc } = await loadFirebase();
-    const snap = await getDoc(doc(db, 'students', id));
-    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
-  }
-
   async function nextStudentId() {
-    const { db, collection, getDocs } = await loadFirebase();
-    const snap = await getDocs(collection(db, 'students'));
+    const f = await loadFirebase();
+    const snap = await f.getDocs(f.collection(f.db, 'students'));
     let max = 0;
     snap.docs.forEach(d => { const m = String(d.data()?.studentId || '').match(/(\d+)$/); if (m) max = Math.max(max, Number(m[1])); });
     return `STU-${String(max + 1).padStart(4,'0')}`;
   }
 
-  async function provisionNewStudent(data, password) {
+  function showMessage(text, error=false) {
+    const el = $('formMessage');
+    if (el) { el.textContent = text; el.style.color = error ? '#b42318' : '#174c8f'; }
+  }
+
+  async function createStudentAccount(data, password) {
     const f = await loadFirebase();
     const studentId = await nextStudentId();
-    if (password.length < 6) throw new Error('Password must be at least 6 characters.');
     const email = emailFor(studentId);
-    let user = null;
+    const credential = await f.createUserWithEmailAndPassword(secondaryAuth, email, password);
+    const user = credential.user;
     try {
-      const cred = await f.createUserWithEmailAndPassword(secondaryAuth, email, password);
-      user = cred.user;
       const studentRef = f.doc(f.collection(f.db, 'students'));
-      await f.setDoc(studentRef, { ...data, studentId, uid:user.uid, loginEnabled:true, createdAt:f.serverTimestamp() });
-      await f.setDoc(f.doc(f.db, 'studentCredentials', studentRef.id), { studentDocId:studentRef.id, studentId, uid:user.uid, password, updatedAt:f.serverTimestamp(), createdAt:f.serverTimestamp() });
+      await f.setDoc(studentRef, {
+        ...data,
+        studentId,
+        uid: user.uid,
+        loginEnabled: true,
+        createdAt: f.serverTimestamp()
+      });
       await f.signOut(secondaryAuth);
-      return { id:studentRef.id, studentId };
+      return { studentId, email, uid:user.uid };
     } catch (error) {
-      try { if (user) await f.deleteUser(user); } catch (_) {}
+      try { await f.deleteUser(user); } catch (_) {}
+      try { await f.signOut(secondaryAuth); } catch (_) {}
       throw error;
     }
   }
 
-  async function updateExistingStudent(id, data, newPassword) {
-    const f = await loadFirebase();
-    const student = await getStudentById(id);
-    if (!student) throw new Error('Student record not found.');
-    await f.updateDoc(f.doc(f.db, 'students', id), data);
-    if (!newPassword) return;
-    if (newPassword.length < 6) throw new Error('Password must be at least 6 characters.');
-    const credSnap = await f.getDoc(f.doc(f.db, 'studentCredentials', id));
-    if (credSnap.exists() && student.uid) {
-      const oldPassword = String(credSnap.data()?.password || '');
-      if (!oldPassword) throw new Error('Existing credential record has no saved password. Create a new login from the Login button.');
-      await f.signInWithEmailAndPassword(secondaryAuth, emailFor(student.studentId), oldPassword);
-      await f.updatePassword(secondaryAuth.currentUser, newPassword);
-      await f.setDoc(f.doc(f.db, 'studentCredentials', id), { password:newPassword, updatedAt:f.serverTimestamp(), uid:student.uid, studentId:student.studentId, studentDocId:id }, { merge:true });
-      await f.signOut(secondaryAuth);
-    } else {
-      throw new Error('This student does not have a login account yet. Use the Login button to create it.');
-    }
-  }
+  function armSubmit() { armedUntil = Date.now() + 2500; }
+  save.addEventListener('pointerdown', armSubmit, {capture:true});
+  save.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') armSubmit(); }, {capture:true});
 
   form.addEventListener('submit', async e => {
-    const now = Date.now();
-    if (now > userActionUntil || consumed || now - lastSubmit < 1200) {
-      e.preventDefault(); e.stopImmediatePropagation(); return;
-    }
-    e.preventDefault(); e.stopImmediatePropagation();
-    consumed = true; lastSubmit = now;
     const editId = $('editStudentId')?.value || '';
-    const password = String(getPasswordInput()?.value || '');
+    // Editing remains owned by admin.js. Password creation is only for NEW students.
+    if (editId || Date.now() > armedUntil || submitting) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    submitting = true;
+
+    const password = String($('studentPassword')?.value || '');
     const data = {
       name: $('studentName')?.value.trim() || '',
       fatherName: $('fatherName')?.value.trim() || '',
@@ -211,103 +160,74 @@
       batch: $('batch')?.value.trim() || '',
       admissionDate: $('admissionDate')?.value || ''
     };
+
     try {
       if (Object.values(data).some(v => !v)) throw new Error('Please fill all student fields.');
-      save.disabled = true; save.textContent = editId ? 'Updating...' : 'Creating Login...';
-      setStatus(editId ? 'Updating student...' : 'Creating student login securely...');
-      if (editId) {
-        await updateExistingStudent(editId, data, password);
-        setStatus('Student updated successfully.');
-      } else {
-        const result = await provisionNewStudent(data, password);
-        setStatus(`Student ${result.studentId} and login created successfully.`);
-      }
-      setTimeout(() => { modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }, 650);
-      setTimeout(() => { if (getPasswordInput()) getPasswordInput().value = ''; }, 800);
+      if (password.length < 6) throw new Error('Student password must be at least 6 characters.');
+      save.disabled = true;
+      save.textContent = 'Creating Login...';
+      showMessage('Creating Student ID + Firebase login...');
+      const result = await createStudentAccount(data, password);
+      showMessage(`✓ ${result.studentId} created successfully. Student can now login with this ID and the password you set.`);
+      const p = $('studentPassword'); if (p) p.value = '';
+      setTimeout(() => { modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }, 900);
     } catch (error) {
-      console.error('Student account error:', error);
-      setStatus(error?.code === 'auth/email-already-in-use' ? 'This Student ID already has a login account.' : (error.message || 'Unable to save student.'), true);
-      consumed = false;
+      console.error('Student account creation failed:', error);
+      let text = error?.message || 'Unable to create student login.';
+      if (error?.code === 'auth/email-already-in-use') text = 'Is Student ID ka Firebase login pehle se maujood hai. Existing student ko Edit karein.';
+      if (error?.code === 'auth/operation-not-allowed') text = 'Firebase Authentication mein Email/Password provider ON nahi hai.';
+      if (error?.code === 'auth/invalid-email') text = 'Generated student login email invalid hai. Student ID check karein.';
+      showMessage(text, true);
+      save.disabled = false;
+      save.textContent = 'Save Student';
     } finally {
-      save.disabled = false; save.textContent = $('editStudentId')?.value ? 'Update Student' : 'Save Student';
+      submitting = false;
     }
-  }, { capture:true });
-
-  function credentialButtonFor(row) {
-    if (row.querySelector('.student-login-action')) return;
-    const id = row.querySelector('[data-id]')?.dataset?.id;
-    if (!id) return;
-    const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'action-btn student-login-action'; btn.dataset.id = id; btn.textContent = '🔐 Login';
-    row.querySelector('.action-buttons')?.appendChild(btn);
-  }
+  }, {capture:true});
 
   function decorateRows() {
     document.querySelectorAll('#studentsTableBody tr').forEach(row => {
       const cells = row.querySelectorAll('td');
       if (!cells.length || cells.length < 7) return;
-      credentialButtonFor(row);
       const nameCell = cells[1];
-      if (nameCell && !nameCell.querySelector('.student-name-wrap')) {
+      if (nameCell && !nameCell.querySelector('.student-name-fixed')) {
         const name = nameCell.textContent.trim() || '-';
         nameCell.textContent = '';
-        const wrap = document.createElement('div'); wrap.className = 'student-name-wrap';
-        const span = document.createElement('span'); span.className = 'student-name-text'; span.textContent = name; span.title = name;
-        wrap.appendChild(span); nameCell.appendChild(wrap);
+        const span = document.createElement('span');
+        span.className = 'student-name-fixed';
+        span.textContent = name;
+        span.title = name;
+        nameCell.appendChild(span);
       }
+      if (row.querySelector('.student-login-action')) return;
+      const id = row.querySelector('[data-id]')?.dataset?.id;
+      if (!id) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'action-btn student-login-action';
+      btn.dataset.id = id;
+      btn.textContent = '🔐 Login';
+      btn.addEventListener('click', async () => {
+        try {
+          const f = await loadFirebase();
+          const snap = await f.getDoc(f.doc(f.db, 'students', id));
+          if (!snap.exists()) throw new Error('Student not found.');
+          const s = snap.data();
+          addLoginModal();
+          $('sshLoginStudentName').textContent = `${s.name || 'Student'} • ${s.course || ''} / ${s.batch || ''}`;
+          $('sshLoginStudentId').value = s.studentId || '-';
+          $('sshLoginEmail').value = emailFor(s.studentId || '');
+          $('sshStudentLoginModal').classList.add('show');
+        } catch (err) { alert('Unable to open student login: ' + err.message); }
+      });
+      row.querySelector('.action-buttons')?.appendChild(btn);
     });
   }
 
-  async function openCredentials(id) {
-    addCredentialModal();
-    const f = await loadFirebase();
-    const student = await getStudentById(id);
-    if (!student) throw new Error('Student not found.');
-    $('credentialStudentId').value = student.studentId || '-';
-    $('credentialStudentLabel').textContent = `${student.name || 'Student'} • ${student.course || ''} / ${student.batch || ''}`;
-    $('credentialPassword').value = '';
-    $('credentialPassword').type = 'password';
-    $('credentialToggle').textContent = '👁 Show';
-    const actions = $('credentialActions'); actions.innerHTML = '';
-    const credSnap = await f.getDoc(f.doc(f.db, 'studentCredentials', id));
-    if (credSnap.exists()) {
-      const saved = String(credSnap.data()?.password || '');
-      $('credentialPassword').value = saved;
-      const copy = document.createElement('button'); copy.type='button'; copy.className='credential-secondary'; copy.textContent='📋 Copy Password';
-      copy.onclick = async () => { try { await navigator.clipboard.writeText(saved); setStatus('Password copied.'); } catch (_) { setStatus('Copy failed.', true); } };
-      actions.appendChild(copy);
-      const close = document.createElement('button'); close.type='button'; close.className='credential-primary'; close.textContent='Done'; close.onclick=closeCredentialModal; actions.appendChild(close);
-    } else {
-      $('credentialPassword').value = '';
-      const create = document.createElement('button'); create.type='button'; create.className='credential-primary'; create.textContent='Create Student Login';
-      create.onclick = async () => {
-        const pw = prompt(`Set a password for ${student.name || student.studentId} (minimum 6 characters):`);
-        if (!pw) return;
-        if (pw.length < 6) return alert('Password must be at least 6 characters.');
-        try {
-          const cred = await f.createUserWithEmailAndPassword(secondaryAuth, emailFor(student.studentId), pw);
-          await f.updateDoc(f.doc(f.db,'students',id), { uid:cred.user.uid, loginEnabled:true });
-          await f.setDoc(f.doc(f.db,'studentCredentials',id), { studentDocId:id, studentId:student.studentId, uid:cred.user.uid, password:pw, createdAt:f.serverTimestamp(), updatedAt:f.serverTimestamp() });
-          await f.signOut(secondaryAuth);
-          $('credentialPassword').value = pw; setStatus('Student login created successfully.');
-        } catch (e) { setStatus(e.message || 'Login creation failed.', true); }
-      };
-      actions.appendChild(create);
-      const close = document.createElement('button'); close.type='button'; close.className='credential-secondary'; close.textContent='Close'; close.onclick=closeCredentialModal; actions.appendChild(close);
-    }
-    $('studentCredentialModal').classList.add('show');
-  }
-
-  document.addEventListener('click', e => {
-    const btn = e.target.closest('.student-login-action');
-    if (!btn) return;
-    e.preventDefault(); e.stopImmediatePropagation();
-    openCredentials(btn.dataset.id).catch(err => { console.error(err); alert('Unable to open student login: ' + err.message); });
-  }, true);
-
   const body = $('studentsTableBody');
   if (body) new MutationObserver(() => requestAnimationFrame(decorateRows)).observe(body, {childList:true, subtree:true});
-
-  ensurePasswordField(); injectStyles(); addCredentialModal();
+  addPasswordField();
+  addStyles();
+  addLoginModal();
   requestAnimationFrame(decorateRows);
 })();
