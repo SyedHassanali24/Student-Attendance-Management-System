@@ -20,4 +20,7 @@ import "./fee-download.js?v=1";
 import "./student-dashboard-polish.js?v=1";
 
 /* Published results + exact PDF download */
-import "./student-results.js?v=1";
+import "./student-results.js?v=2";
+
+/* Live announcements published by admin */
+import "./announcement-student.js?v=1";
