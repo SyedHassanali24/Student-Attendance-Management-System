@@ -4,13 +4,14 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function admin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
     function ownStudent() { return signedIn() && resource.data.uid == request.auth.uid; }
-    function ownStudentById(studentDocId) { return signedIn() && get(/databases/$(database)/documents/students/$(studentDocId)).data.uid == request.auth.uid; }
+    function ownAttendance(r) { return signedIn() && r.data.studentId + '@students.sshacms.local' == request.auth.token.email; }
+
     match /admins/{uid} { allow read: if signedIn() && request.auth.uid == uid; allow write: if false; }
     match /settings/publicStats { allow get: if true; allow write: if admin(); }
     match /students/{studentId} { allow get: if admin() || ownStudent(); allow list: if admin(); allow create, update, delete: if admin(); }
-    match /attendance/{id} { allow read: if admin() || (resource.data.studentDocId is string && ownStudentById(resource.data.studentDocId)); allow create, update, delete: if admin(); }
-    match /fees/{id} { allow read: if admin() || (resource.data.studentDocId is string && ownStudentById(resource.data.studentDocId)); allow create, update, delete: if admin(); }
-    match /results/{id} { allow read: if admin() || (resource.data.studentDocId is string && ownStudentById(resource.data.studentDocId)); allow create, update, delete: if admin(); }
+    match /attendance/{id} { allow read: if admin() || ownAttendance(resource); allow create, update, delete: if admin(); }
+    match /fees/{id} { allow read: if admin() || ownAttendance(resource); allow create, update, delete: if admin(); }
+    match /results/{id} { allow read: if admin() || ownAttendance(resource); allow create, update, delete: if admin(); }
     match /announcements/{id} { allow read: if admin() || (signedIn() && resource.data.published == true); allow create, update, delete: if admin(); }
     match /materials/{id} {
       allow read: if admin() || (signedIn() && resource.data.published == true && request.auth.uid in resource.data.studentUids);
