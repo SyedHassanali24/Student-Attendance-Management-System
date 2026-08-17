@@ -24,21 +24,37 @@
       safe=safe.replace(/(\/login\.html|\/admin-login\.html|\/student-dashboard\.html|\/admin-dashboard\.html)/g,u=>`<a class="ssh-ai-link" href="${u}">${u}</a>`);
       safe=safe.replace(/\n/g,'<br>');d.innerHTML=safe;messages.appendChild(d);messages.scrollTop=messages.scrollHeight;
     };
-    const localAnswer=t=>{const x=t.toLowerCase();if(x.includes('whatsapp')||x.includes('contact'))return'WhatsApp: +92 313 2956206\nEmail: eastwala12@gmail.com';return null};
+    const localAnswer=t=>{
+      const x=t.toLowerCase();
+      if(x.includes('whatsapp')||x.includes('contact')||x.includes('رابطہ'))return'WhatsApp: +92 313 2956206\nEmail: eastwala12@gmail.com';
+      if(x.includes('student portal')||x.includes('student login')||x.includes('طالب علم'))return'[Student Portal](/login.html)';
+      if(x.includes('admin login')||x.includes('admin portal')||x.includes('ایڈمن'))return'[Admin Login](/admin-login.html)';
+      if(x.includes('attendance')||x.includes('حاضری'))return'Attendance dekhne ke liye Student Portal mein login karein: [Student Portal](/login.html) → Attendance. Admin QR Attendance se Present, Late, Leave aur Absent mark kar sakta hai.';
+      if(x.includes('fee')||x.includes('fees')||x.includes('فیس'))return'Fees dekhne ke liye Student Portal mein login karein: [Student Portal](/login.html) → Fees.';
+      if(x.includes('result')||x.includes('نتیجہ'))return'Result publish hone ke baad Student Portal ke Results section mein nazar aayega: [Student Portal](/login.html).';
+      if(x.includes('announcement')||x.includes('اعلان'))return'Published announcements students ke portal mein Announcements section mein nazar aate hain.';
+      if(x.includes('notes')||x.includes('material')||x.includes('نوٹس'))return'Class notes/admin materials selected course aur batch ke students ko publish kiye ja sakte hain. Student Portal mein Notes & Materials section check karein.';
+      return null;
+    };
     async function send(text){
       text=(text||'').trim();if(!text)return;add('user',text);input.value='';
-      const local=localAnswer(text);if(local){add('bot',local);return;}
+      const local=localAnswer(text);
+      if(local){add('bot',local);history.push({role:'user',text},{role:'model',text:local});return;}
       const loading=document.createElement('div');loading.className='ssh-ai-msg ssh-ai-bot';loading.textContent='Thinking…';messages.appendChild(loading);messages.scrollTop=messages.scrollHeight;
       try{
-        const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history,currentPage:location.pathname})});
+        const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
+        const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history,currentPage:location.pathname}),signal:controller.signal});
+        clearTimeout(timer);
         let data={};try{data=await r.json()}catch(_){data={}};
         loading.remove();
         if(!r.ok)throw new Error(data.error||`AI service error (${r.status})`);
         if(!data.text)throw new Error('AI returned an empty response.');
         add('bot',data.text);history.push({role:'user',text},{role:'model',text:data.text});history=history.slice(-10);
       }catch(e){
+        clearTimeout(typeof timer==='undefined'?0:timer);
         console.error('SSHACMS AI:',e);
-        loading.textContent=e.message==='AI service is not configured yet.'?'AI service is not configured on Netlify yet. Please add GEMINI_API_KEY in Netlify environment variables.':'AI assistant is temporarily unavailable. Please try again.';
+        const fallback='AI service abhi temporarily unavailable hai. Lekin main portal ke basic links aur guidance de sakta hoon. Student Portal: /login.html | Admin Login: /admin-login.html | WhatsApp: +92 313 2956206';
+        loading.textContent=fallback;
       }
     }
     launcher.onclick=()=>box.classList.toggle('open');box.querySelector('.ssh-ai-close').onclick=()=>box.classList.remove('open');box.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>send(b.dataset.q));form.onsubmit=e=>{e.preventDefault();send(input.value)};
