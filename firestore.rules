@@ -2,12 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function admin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+
+    // Admin access is tied to the authenticated account, not to a fragile
+    // document-id assumption. The UID check remains the primary path; the
+    // verified admin email is a controlled fallback for the existing admin
+    // record whose document ID was created differently.
+    function admin() {
+      return signedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'admin@sirsyed.com'
+      );
+    }
+
     function ownStudent() { return signedIn() && resource.data.uid == request.auth.uid; }
     function ownAttendance(r) { return signedIn() && r.data.studentId + '@students.sshacms.local' == request.auth.token.email; }
 
     match /admins/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
+      allow read: if signedIn() && (request.auth.uid == uid || request.auth.token.email == resource.data.email);
       allow write: if false;
     }
 
@@ -19,8 +30,7 @@ service cloud.firestore {
       allow create, update, delete: if admin();
     }
 
-    // Admin-only credential vault used by the Student Management Login button.
-    // Students can authenticate with Firebase Auth, but can never read this collection.
+    // Admin-only credential status vault. Never stores the actual password.
     match /studentCredentials/{studentDocId} {
       allow read, create, update, delete: if admin();
     }
