@@ -1,0 +1,18 @@
+import './materials.js';
+
+const css=document.createElement('style');css.textContent=`#materials .panel,#materialsContainer{animation:sshMat .25s ease}@keyframes sshMat{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}.materials-nav-badge{margin-left:auto;font-size:10px;background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:999px}`;document.head.appendChild(css);
+
+function addAdminPage(){
+ const nav=document.querySelector('.menu');if(!nav||document.querySelector('[data-page="materials"]'))return;
+ const b=document.createElement('button');b.type='button';b.className='menu-item';b.dataset.page='materials';b.innerHTML='📚 <span>Notes & Materials</span>';nav.appendChild(b);
+ const main=document.querySelector('main');if(!main)return;const s=document.createElement('section');s.id='materials';s.className='page';main.appendChild(s);
+ b.addEventListener('click',()=>{document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p===s));document.querySelectorAll('.menu-item').forEach(x=>x.classList.toggle('active',x===b));const t=document.getElementById('pageTitle');if(t)t.textContent='Notes & Materials';});
+}
+function addStudentPage(){
+ const nav=document.querySelector('.student-nav');if(!nav||document.querySelector('[data-section="materials"]'))return;
+ const b=document.createElement('button');b.type='button';b.className='nav-item';b.dataset.section='materials';b.innerHTML='<span>📚</span> Notes & Materials';nav.appendChild(b);
+ const main=document.querySelector('.student-main');if(!main)return;const s=document.createElement('section');s.id='materials';s.className='dashboard-section';s.innerHTML='<div class="section-header"><h2>Notes & Study Materials</h2><p>PDFs and images shared by your coaching administration.</p></div><div id="materialsContainer"></div>';main.appendChild(s);
+ b.addEventListener('click',()=>{document.querySelectorAll('.dashboard-section').forEach(p=>p.classList.toggle('active',p===s));document.querySelectorAll('.nav-item').forEach(x=>x.classList.toggle('active',x===b));const t=document.getElementById('pageTitle');if(t)t.textContent='Notes & Materials';});
+}
+if(document.querySelector('.dashboard .sidebar'))addAdminPage();
+if(document.querySelector('.student-sidebar'))addStudentPage();
