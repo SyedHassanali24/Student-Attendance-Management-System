@@ -45,10 +45,24 @@ async function classOptions() {
 
 async function verifyAdmin(user) {
   if (!user) throw new Error('Admin session expired. Please login again.');
+
+  // IMPORTANT: Firestore security rules identify an admin by a document
+  // whose ID is exactly the Firebase Authentication UID.
   const snap = await getDoc(doc(db, 'admins', user.uid));
-  if (!snap.exists()) throw new Error('This account is logged in but is not registered as an administrator. Add this UID to the admins collection first.');
+
+  if (!snap.exists()) {
+    throw new Error(`Admin permission is not configured for this Firebase account. Create an admins/${user.uid} document in Firestore.`);
+  }
+
   const data = snap.data() || {};
-  if (data.active === false || (data.role && data.role !== 'admin')) throw new Error('This account does not have active administrator permission.');
+  const role = String(data.role || '').trim().toLowerCase();
+  const allowedRoles = ['admin', 'super admin', 'administrator'];
+
+  // Your existing Firestore record uses "Super Admin", so it must be accepted.
+  if (data.active === false || (role && !allowedRoles.includes(role))) {
+    throw new Error('This account does not have active administrator permission.');
+  }
+
   return true;
 }
 
