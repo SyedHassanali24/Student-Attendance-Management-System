@@ -1,25 +1,35 @@
 import { auth, db } from '../firebase/firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
-import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+import { doc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
-/* Admin authorization guard. Never signs the user out just because the
-   authorization document is temporarily unavailable. */
+/* Admin authorization guard.
+   First checks the UID document. If the Auth UID changed but the existing
+   administrator record is still keyed by another document ID, it safely
+   falls back to the authenticated administrator email. */
 onAuthStateChanged(auth, async user => {
   if (!user) { location.replace('admin-login.html'); return; }
 
   try {
-    const snap = await getDoc(doc(db, 'admins', user.uid));
-    if (!snap.exists()) {
-      showAdminSecurityNotice('Firebase login successful, lekin is account ke liye admins/' + user.uid + ' document nahi mila.');
+    let data = null;
+    const uidSnap = await getDoc(doc(db, 'admins', user.uid));
+    if (uidSnap.exists()) {
+      data = uidSnap.data() || {};
+    } else if (user.email) {
+      const emailQuery = query(collection(db, 'admins'), where('email', '==', user.email));
+      const emailSnap = await getDocs(emailQuery);
+      if (!emailSnap.empty) data = emailSnap.docs[0].data() || {};
+    }
+
+    if (!data) {
+      showAdminSecurityNotice('Firebase login successful, lekin is account ko administrator record mein authorize nahi kiya gaya.');
       return;
     }
 
-    const data = snap.data() || {};
     const role = String(data.role || '').trim().toLowerCase().replace(/\s+/g, ' ');
     const allowedRoles = new Set(['admin', 'super admin', 'superadmin', 'administrator']);
 
-    if (data.active === false) {
-      showAdminSecurityNotice('Ye administrator account inactive hai. Firestore admins record mein active ko true karein.');
+    if (data.active === false || String(data.Status || '').trim().toLowerCase() === 'inactive') {
+      showAdminSecurityNotice('Ye administrator account inactive hai. Firestore admins record mein active/status check karein.');
       return;
     }
     if (role && !allowedRoles.has(role)) {
@@ -27,12 +37,12 @@ onAuthStateChanged(auth, async user => {
       return;
     }
 
-    // Keep the dashboard informed that the account has passed authorization.
     window.dispatchEvent(new CustomEvent('sshacms-admin-authorized', { detail: { uid: user.uid, role: data.role || 'Admin' } }));
     document.documentElement.dataset.adminAuthorized = 'true';
+    document.documentElement.dataset.adminUid = user.uid;
   } catch (e) {
     console.error('Admin security check failed:', e);
-    showAdminSecurityNotice('Admin verification temporarily unavailable. Aapka Firebase login session active hai; page ko refresh karke dobara try karein.');
+    showAdminSecurityNotice('Admin verification temporarily unavailable. Firebase login active hai; page refresh karke dobara try karein.');
   }
 });
 
