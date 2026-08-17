@@ -15,14 +15,14 @@
   const startObserver = () => { const page = document.getElementById('attendance'); if (page) observer.observe(page, { childList: true, subtree: true }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startObserver, { once: true }); else startObserver();
 
-  /* Results Management module */
-  const loadResultsAdmin = () => {
-    if (document.querySelector('script[data-results-admin]')) return;
+  const loadModule = (src, attr) => {
+    if (document.querySelector(`script[${attr}]`)) return;
     const script = document.createElement('script');
-    script.type = 'module';
-    script.src = './javascript/results-admin.js?v=1';
-    script.dataset.resultsAdmin = '1';
-    document.body.appendChild(script);
+    script.type = 'module'; script.src = src; script.setAttribute(attr, '1'); document.body.appendChild(script);
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadResultsAdmin, { once: true }); else loadResultsAdmin();
+  const loadModules = () => {
+    loadModule('./javascript/results-admin.js?v=2', 'data-results-admin');
+    loadModule('./javascript/admin-announcements.js?v=1', 'data-announcements-admin');
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadModules, { once: true }); else loadModules();
 })();
