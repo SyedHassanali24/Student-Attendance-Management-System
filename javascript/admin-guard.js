@@ -2,16 +2,20 @@ import { auth, db } from '../firebase/firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
 
-/* Do not sign out a valid Firebase session because an authorization lookup fails. */
+/* Keep a valid Firebase session active while checking admin authorization. */
 onAuthStateChanged(auth, async user => {
   if (!user) { location.replace('admin-login.html'); return; }
   try {
     const snap = await getDoc(doc(db, 'admins', user.uid));
     const data = snap.exists() ? snap.data() : null;
-    if (!data || data.active === false || data.role !== 'admin') {
-      showAdminSecurityNotice('Firebase login is successful, but this account is not registered as an administrator yet. Your login session has NOT been signed out.');
+    const role = String(data?.role || '').trim().toLowerCase();
+    const allowedRoles = ['admin', 'super admin', 'superadmin', 'administrator'];
+
+    if (!data || data.active === false || (role && !allowedRoles.includes(role))) {
+      showAdminSecurityNotice('Firebase login successful, but this account is not registered with active administrator permission.');
       return;
     }
+
     window.dispatchEvent(new CustomEvent('sshacms-admin-authorized', { detail: { uid: user.uid } }));
   } catch (e) {
     console.error('Admin security check failed:', e);
