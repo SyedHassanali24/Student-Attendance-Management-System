@@ -7,12 +7,21 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin-login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        .login-logo img{
+            width:96px;
+            height:96px;
+            object-fit:contain;
+            display:block;
+            margin:auto;
+        }
+    </style>
 </head>
 <body>
     <section class="login-section">
         <div class="login-card">
             <div class="login-logo">
-                <img src="assets/logo.png" alt="Sir Syed Hassan Ali Coaching">
+                <img src="assets/sshacms-logo-mark.svg" alt="Sir Syed Hassan Ali Coaching official logo">
             </div>
 
             <h1 class="coaching-name">Sir Syed Hassan Ali</h1>
@@ -29,27 +38,21 @@
                     <label for="password">Password</label>
                     <div class="password-box">
                         <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" required>
-                        <button type="button" id="togglePassword" aria-label="Show or hide password">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
+                        <button type="button" id="togglePassword" aria-label="Show or hide password"><i class="fa-solid fa-eye"></i></button>
                     </div>
                 </div>
 
                 <div class="remember-area">
-                    <label>
-                        <input type="checkbox" id="remember">
-                        Remember Me
-                    </label>
+                    <label><input type="checkbox" id="remember"> Remember Me</label>
                     <a href="#" id="forgotPasswordLink">Forgot Password?</a>
                 </div>
 
                 <p id="loginError" aria-live="polite"></p>
-
                 <button class="login-btn" type="submit" id="loginButton">Login</button>
             </form>
         </div>
     </section>
 
-    <script type="module" src="javascript/admin-login.js?v=3"></script>
+    <script type="module" src="javascript/admin-login.js?v=4"></script>
 </body>
 </html>
