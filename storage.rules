@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid)); }
+
+    match /materials/{materialId}/{fileName} {
+      allow read: if admin() || (
+        signedIn() &&
+        firestore.get(/databases/(default)/documents/materials/$(materialId)).data.published == true &&
+        request.auth.uid in firestore.get(/databases/(default)/documents/materials/$(materialId)).data.studentUids
+      );
+      allow write: if admin() && request.resource.size <= 15 * 1024 * 1024 &&
+        request.resource.contentType.matches('(application/pdf|image/(png|jpeg|webp))');
+    }
+
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}
