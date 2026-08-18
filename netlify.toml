@@ -4,6 +4,15 @@
 [build]
   publish = "."
 
+[context.production]
+  publish = "."
+
+[context.deploy-preview]
+  publish = "."
+
+[context.branch-deploy]
+  publish = "."
+
 [[headers]]
   for = "/*"
   [headers.values]
