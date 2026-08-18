@@ -1,5 +1,10 @@
 import { auth } from "../firebase/firebase-config.js";
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import {
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 const $ = id => document.getElementById(id);
 const loginForm = $("loginForm");
@@ -9,12 +14,28 @@ const togglePassword = $("togglePassword");
 const loginError = $("loginError");
 const forgotPassword = $("forgotPasswordLink");
 const loginButton = $("loginButton");
+const remember = $("remember");
 const FIREBASE_API_KEY = "AIzaSyB1wfjw-zsIDxUMvAYvbbHlvNRQ4zRsgmM";
 
 function message(text, color = "#2563eb") {
   if (!loginError) return;
   loginError.textContent = text;
   loginError.style.color = color;
+}
+
+function setBusy(busy, label = "Login") {
+  if (!loginButton) return;
+  loginButton.disabled = busy;
+  loginButton.textContent = busy ? label : "Login";
+  loginButton.setAttribute("aria-busy", String(busy));
+}
+
+function withTimeout(promise, ms = 15000) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 togglePassword?.addEventListener("click", () => {
@@ -25,7 +46,6 @@ togglePassword?.addEventListener("click", () => {
     : '<i class="fa-solid fa-eye"></i>';
 });
 
-// Reliable password reset: direct Firebase Auth REST request with a hard timeout.
 forgotPassword?.addEventListener("click", async e => {
   e.preventDefault();
   e.stopPropagation();
@@ -86,37 +106,66 @@ function getResetErrorMessage(code) {
 
 loginForm?.addEventListener("submit", async e => {
   e.preventDefault();
+  e.stopPropagation();
+
   const userEmail = String(email?.value || "").trim();
   const userPassword = String(password?.value || "");
   if (!userEmail || !userPassword) {
     message("Email aur password dono enter karein.", "#dc2626");
     return;
   }
-  if (loginButton) loginButton.disabled = true;
-  message("Signing in…", "#2563eb");
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
+    message("Valid email address enter karein.", "#dc2626");
+    email?.focus();
+    return;
+  }
+
+  setBusy(true, "Signing in…");
+  message("Firebase se login verify ho raha hai…", "#2563eb");
+
   try {
-    const credential = await signInWithEmailAndPassword(auth, userEmail, userPassword);
+    const persistence = remember?.checked
+      ? browserLocalPersistence
+      : browserSessionPersistence;
+
+    await withTimeout(setPersistence(auth, persistence));
+    const credential = await withTimeout(
+      signInWithEmailAndPassword(auth, userEmail, userPassword)
+    );
+
     console.log("Admin login successful:", credential.user.email, credential.user.uid);
     message("✓ Login successful. Opening dashboard…", "#059669");
-    window.location.replace("admin-dashboard.html?auth=1");
+    window.location.replace("admin-dashboard.html");
   } catch (error) {
     console.error("Firebase Admin Login Error:", error);
     message(getLoginErrorMessage(error), "#dc2626");
-  } finally {
-    if (loginButton) loginButton.disabled = false;
+    setBusy(false);
   }
 });
 
 function getLoginErrorMessage(error) {
+  if (error?.message === "NETWORK_TIMEOUT") {
+    return "Firebase response mein time lag raha hai. Internet check karke dobara Login karein.";
+  }
+
   switch (error?.code) {
     case "auth/invalid-credential":
-    case "auth/wrong-password": return "Email ya password incorrect hai.";
-    case "auth/user-not-found": return "Is email ka Firebase Authentication account nahi mila.";
-    case "auth/invalid-email": return "Valid email address enter karein.";
-    case "auth/user-disabled": return "Ye Firebase account disabled hai.";
-    case "auth/too-many-requests": return "Bohat zyada attempts ho gaye hain. Kuch minutes baad try karein.";
-    case "auth/network-request-failed": return "Network error. Internet connection check karein.";
-    case "auth/operation-not-allowed": return "Firebase Authentication mein Email/Password provider ON nahi hai.";
-    default: return `Login failed (${error?.code || "unknown-error"}).`;
+    case "auth/wrong-password":
+      return "Email ya password incorrect hai.";
+    case "auth/user-not-found":
+      return "Is email ka Firebase Authentication account nahi mila.";
+    case "auth/invalid-email":
+      return "Valid email address enter karein.";
+    case "auth/user-disabled":
+      return "Ye Firebase account disabled hai.";
+    case "auth/too-many-requests":
+      return "Bohat zyada attempts ho gaye hain. Kuch minutes baad try karein.";
+    case "auth/network-request-failed":
+      return "Network error. Internet connection check karein.";
+    case "auth/operation-not-allowed":
+      return "Firebase Authentication mein Email/Password provider ON nahi hai.";
+    default:
+      return `Login failed (${error?.code || "unknown-error"}).`;
   }
 }
