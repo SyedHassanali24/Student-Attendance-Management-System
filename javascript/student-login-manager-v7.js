@@ -3,12 +3,14 @@
    - Adds password + show/hide field to Add Student modal.
    - Creates Firebase Authentication account without signing the admin out.
    - Never stores plaintext passwords in Firestore/localStorage.
+   - IMPORTANT: Uses the exact Firebase Web App API key from firebase/firebase-config.js.
 */
 (() => {
   if (window.__sshacmsStudentLoginManagerV7) return;
   window.__sshacmsStudentLoginManagerV7 = true;
 
-  const API_KEY = 'AIzaSyB1wfj-wzsIDxUMvAYvbbHlvNRQ4zRsgmM';
+  // MUST exactly match firebase/firebase-config.js.
+  const API_KEY = 'AIzaSyB1wfjw-zsIDxUMvAYvbbHlvNRQ4zRsgmM';
   const $ = id => document.getElementById(id);
   const emailFor = id => String(id || '').trim().toUpperCase().replace(/\s+/g, '') + '@students.sshacms.local';
 
@@ -76,7 +78,7 @@
   async function createAuthAccount(studentId,password){
     const r=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${encodeURIComponent(API_KEY)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:emailFor(studentId),password,returnSecureToken:true})});
     const d=await r.json();
-    if(!r.ok){const code=d?.error?.message||'AUTH_CREATE_FAILED';if(code.includes('OPERATION_NOT_ALLOWED'))throw new Error('Firebase Authentication mein Email/Password provider ON nahi hai.');if(code.includes('EMAIL_EXISTS'))throw new Error('Is Student ID ka login pehle se bana hua hai.');if(code.includes('WEAK_PASSWORD'))throw new Error('Password kam az kam 6 characters ka hona chahiye.');throw new Error('Login create nahi ho saka: '+code);}
+    if(!r.ok){const code=d?.error?.message||'AUTH_CREATE_FAILED';if(code.includes('OPERATION_NOT_ALLOWED'))throw new Error('Firebase Authentication mein Email/Password provider ON nahi hai.');if(code.includes('EMAIL_EXISTS'))throw new Error('Is Student ID ka login pehle se bana hua hai.');if(code.includes('WEAK_PASSWORD'))throw new Error('Password kam az kam 6 characters ka hona chahiye.');if(code.includes('API_KEY_INVALID')||code.includes('INVALID_API_KEY'))throw new Error('Firebase API key invalid hai. firebase-config.js wali exact Web App API key use honi chahiye.');throw new Error('Login create nahi ho saka: '+code);}
     return d;
   }
 
